@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { api, type NewScenarioInput } from "../lib/api-client.ts";
-import type { Project, ResolveResult, Scenario } from "../lib/dto.ts";
+import type { FeasibilityRun, Project, ResolveResult, Scenario } from "../lib/dto.ts";
 import type { ResolveInputBody } from "../lib/validation.ts";
 import { ParcelMap } from "../components/map.tsx";
 import { SearchBar } from "../components/search-bar.tsx";
@@ -11,6 +11,8 @@ import { SiteProfilePanel } from "../components/site-profile.tsx";
 import { CandidatePicker } from "../components/candidate-picker.tsx";
 import { ScenarioForm } from "../components/scenario-form.tsx";
 import { ScenarioCompare } from "../components/scenario-compare.tsx";
+import { RunPanel } from "../components/run-panel.tsx";
+import { RunHistory } from "../components/run-history.tsx";
 import { Button, Card, CardHeader, Empty } from "../components/ui.tsx";
 
 const NOT_FOUND_COPY: Record<string, string> = {
@@ -26,6 +28,10 @@ export function Workspace() {
   const [project, setProject] = useState<Project | null>(null);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [saving, setSaving] = useState(false);
+  const [runs, setRuns] = useState<FeasibilityRun[]>([]);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [runningId, setRunningId] = useState<string | null>(null);
+  const selectedRun = runs.find((r) => r.id === selectedRunId) ?? null;
 
   const profile = result?.kind === "resolved" ? result.profile : null;
 
@@ -39,6 +45,8 @@ export function Workspace() {
       if (res.kind === "resolved") {
         setProject(null);
         setScenarios([]);
+        setRuns([]);
+        setSelectedRunId(null);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong resolving the parcel.");
@@ -71,8 +79,24 @@ export function Workspace() {
     }
   }
 
+  // Scores a saved scenario: the server copies its inputs, pins the snapshots and rule versions, and locks the run.
+  async function runScenario(scenarioId: string) {
+    setRunningId(scenarioId);
+    setError(null);
+    try {
+      const run = await api.runScenario(scenarioId);
+      setRuns((prev) => [run, ...prev]);
+      setSelectedRunId(run.id);
+      setScenarios((prev) => prev.map((s) => (s.id === scenarioId ? { ...s, status: "scored" } : s)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not run the scenario.");
+    } finally {
+      setRunningId(null);
+    }
+  }
+
   return (
-    <main className="grid gap-4 p-4 lg:grid-cols-[1.05fr_0.95fr]">
+    <main className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 p-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
       <div className="flex flex-col gap-4">
         <Card>
           <CardHeader title="Find a parcel" subtitle="Search by address or TAXKEY, or click the map." />
@@ -103,6 +127,7 @@ export function Workspace() {
         {profile ? (
           <>
             <SiteProfilePanel profile={profile} />
+            {selectedRun ? <RunPanel run={selectedRun} /> : null}
             <Card>
               <CardHeader
                 title="New scenario"
@@ -121,7 +146,10 @@ export function Workspace() {
                 ) : undefined}
               />
               <div className="px-4 py-3">
-                <ScenarioCompare scenarios={scenarios} />
+                <RunHistory scenarios={scenarios} runs={runs} selectedRunId={selectedRunId} busyScenarioId={runningId} onRun={runScenario} onSelect={setSelectedRunId} />
+                <div className="mt-3">
+                  <ScenarioCompare scenarios={scenarios} runs={runs} />
+                </div>
               </div>
             </Card>
           </>

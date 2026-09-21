@@ -1,5 +1,5 @@
 import type { Envelope } from "./http.ts";
-import type { GeocodeSuggestion, Project, ProjectDetail, ResolveResult, Scenario, ScenarioInputs } from "./dto.ts";
+import type { FeasibilityRun, GeocodeSuggestion, Project, ProjectDetail, ResolveResult, Scenario, ScenarioInputs } from "./dto.ts";
 import type { ResolveInputBody } from "./validation.ts";
 
 // Browser-side wrapper over the route handlers. Unwraps the { ok, data, error } envelope and throws on failure.
@@ -24,4 +24,7 @@ export const api = {
   getProject: (id: string) => fetch(`/api/projects/${id}`).then((r) => unwrap<ProjectDetail>(r)),
   listScenarios: (id: string) => fetch(`/api/projects/${id}/scenarios`).then((r) => unwrap<Scenario[]>(r)),
   createScenario: (id: string, body: NewScenarioInput) => postJson(`/api/projects/${id}/scenarios`, body).then((r) => unwrap<Scenario>(r)),
+  runScenario: (id: string) => postJson(`/api/scenarios/${id}/run`, {}).then((r) => unwrap<FeasibilityRun>(r)),
+  listRuns: (scenarioId: string) => fetch(`/api/scenarios/${scenarioId}/runs`).then((r) => unwrap<FeasibilityRun[]>(r)),
+  getRun: (id: string) => fetch(`/api/runs/${id}`).then((r) => unwrap<FeasibilityRun>(r)),
 };

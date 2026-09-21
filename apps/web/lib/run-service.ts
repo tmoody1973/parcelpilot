@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { auditEvents, calculations, feasibilityRuns, layerSnapshotIdsFor, loadApprovedRules, projects, scenarios, sourceStates, withOrg, computeIntersections } from "@parcelpilot/db";
 import { ScenarioInputs, type Coverage, type EvidenceFlags, type Finding, type ParcelFacts as EngineFacts, type PolicyResult } from "@parcelpilot/contracts";
 import { evaluate, RULES_ENGINE_VERSION } from "@parcelpilot/rules-engine";
@@ -10,7 +10,7 @@ import type { FeasibilityRun } from "./dto.ts";
 import type { OrgContext } from "./tenant.ts";
 
 // "Run this scenario" (03 §4.6, 05 §1–3). In order: copy the scenario, pin the parcel snapshot and the layer
-// snapshots, load the approved rules in force today, evaluate (engine), gate the citations, apply the policy,
+// snapshots, load the reviewed rules in force today, evaluate (engine), gate the citations, apply the policy,
 // then write run + calculations + audit row in one org-scoped transaction and lock. Nothing here computes a
 // number or a status: the engine and the policy do; this file only moves data between them and the tables.
 
@@ -96,6 +96,17 @@ export async function getRun(ctx: OrgContext, runId: string): Promise<Feasibilit
     if (!run) return null;
     const calcs = await tx.select().from(calculations).where(eq(calculations.feasibilityRunId, runId));
     return runDto(run, calcs);
+  });
+}
+
+// Every run for a scenario (or a whole project), newest first, with its calculations.
+export async function listRuns(ctx: OrgContext, by: { scenarioId: string } | { projectId: string }): Promise<FeasibilityRun[]> {
+  return withOrg(appDb(), ctx.orgId, async (tx) => {
+    const where = "scenarioId" in by ? eq(feasibilityRuns.scenarioId, by.scenarioId) : eq(feasibilityRuns.projectId, by.projectId);
+    const runs = await tx.select().from(feasibilityRuns).where(where).orderBy(desc(feasibilityRuns.createdAt));
+    if (runs.length === 0) return [];
+    const calcs = await tx.select().from(calculations).where(inArray(calculations.feasibilityRunId, runs.map((r) => r.id)));
+    return runs.map((r) => runDto(r, calcs.filter((c) => c.feasibilityRunId === r.id)));
   });
 }
 

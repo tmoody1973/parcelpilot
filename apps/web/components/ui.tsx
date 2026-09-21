@@ -16,7 +16,7 @@ export function Button({ variant = "primary", className, ...props }: ButtonHTMLA
 }
 
 export function Card({ children, className }: { children: ReactNode; className?: string }) {
-  return <section className={cx("rounded-lg border border-line bg-surface shadow-sm", className)}>{children}</section>;
+  return <section className={cx("min-w-0 rounded-lg border border-line bg-surface shadow-sm", className)}>{children}</section>;
 }
 
 export function CardHeader({ title, subtitle, action }: { title: ReactNode; subtitle?: ReactNode; action?: ReactNode }) {
@@ -53,11 +53,14 @@ export function Select({ className, children, ...props }: SelectHTMLAttributes<H
   );
 }
 
-export function Badge({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "accent" | "warn" }) {
+export type BadgeTone = "neutral" | "accent" | "warn" | "ok" | "danger";
+export function Badge({ children, tone = "neutral" }: { children: ReactNode; tone?: BadgeTone }) {
   const styles = {
     neutral: "bg-slate-100 text-slate-700",
     accent: "bg-accent-soft text-accent",
     warn: "bg-warn-soft text-warn",
+    ok: "bg-emerald-50 text-emerald-700",
+    danger: "bg-red-50 text-red-700",
   }[tone];
   return <span className={cx("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", styles)}>{children}</span>;
 }
