@@ -10,7 +10,19 @@ export const metadata = {
 // on demand (not at build) keeps `next build` from needing that key; this cascades to all pages below.
 export const dynamic = "force-dynamic";
 
+import { devAuthEnabled } from "../lib/auth-mode.ts";
+
 export default function RootLayout({ children }: { children: ReactNode }) {
+  if (devAuthEnabled()) {
+    return (
+      <html lang="en">
+        <body>
+          <header style={{ padding: "0.75rem 1rem" }}><strong>ParcelPilot</strong> <small>(dev auth mode)</small></header>
+          {children}
+        </body>
+      </html>
+    );
+  }
   return (
     <ClerkProvider>
       <html lang="en">

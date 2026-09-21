@@ -38,7 +38,7 @@ export const users = pgTable("users", {
   authProviderId: text("auth_provider_id"),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   ...timestamps,
-}, (t) => [uniqueIndex("users_email_idx").on(t.email)]);
+}, (t) => [uniqueIndex("users_email_idx").on(t.email), uniqueIndex("users_auth_provider_id_idx").on(t.authProviderId)]);
 
 export const memberships = pgTable("memberships", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),

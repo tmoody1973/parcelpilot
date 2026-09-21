@@ -3,6 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import { projects, scenarios, withOrg } from "@parcelpilot/db";
 import { appDb } from "../../../../../lib/db.ts";
 import { readJsonBody, stringField, withTenant } from "../../../../../lib/http.ts";
+import { parseScenarioInputs, toColumns } from "../../../../../lib/scenario-input.ts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,15 +26,18 @@ export const GET = withTenant(async (ctx, _req: Request, { params }: Params) => 
 // Creates a scenario inside a project the caller owns, after confirming the project is in the org.
 export const POST = withTenant(async (ctx, req: Request, { params }: Params) => {
   const { projectId } = await params;
-  const name = stringField(await readJsonBody(req), "name");
+  const body = await readJsonBody(req);
+  const name = stringField(body, "name");
   if (!name) return NextResponse.json({ error: "name is required" }, { status: 400 });
+  const parsed = parseScenarioInputs((body as { inputs?: unknown })?.inputs, "create");
+  if (!parsed.ok) return parsed.response;
 
   const scenario = await withOrg(appDb(), ctx.orgId, async (tx) => {
     const [project] = await tx.select({ id: projects.id }).from(projects).where(eq(projects.id, projectId));
     if (!project) return null;
     const [created] = await tx
       .insert(scenarios)
-      .values({ orgId: ctx.orgId, projectId, name, createdBy: ctx.userId })
+      .values({ orgId: ctx.orgId, projectId, name, createdBy: ctx.userId, ...toColumns(parsed.inputs) })
       .returning();
     return created;
   });

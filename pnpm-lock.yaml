@@ -26,6 +26,9 @@ importers:
       '@clerk/nextjs':
         specifier: ^6.9.0
         version: 6.39.7(next@15.5.25(@types/node@22.20.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@parcelpilot/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@parcelpilot/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -41,6 +44,9 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.3.0(react@19.3.0)
+      zod:
+        specifier: ^4.1.0
+        version: 4.6.5
     devDependencies:
       '@types/react':
         specifier: ^19.0.0

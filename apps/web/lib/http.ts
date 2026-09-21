@@ -9,7 +9,8 @@ export function withTenant<A extends unknown[]>(
 ): (...args: A) => Promise<Response> {
   return async (...args: A): Promise<Response> => {
     try {
-      return await handler(await requireOrgContext(), ...args);
+      const req = args[0] instanceof Request ? (args[0] as Request) : undefined;
+      return await handler(await requireOrgContext(req), ...args);
     } catch (e) {
       if (e instanceof OrgContextError) return NextResponse.json({ error: e.message }, { status: e.status });
       throw e;

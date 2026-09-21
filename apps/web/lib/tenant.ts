@@ -18,18 +18,37 @@ export class OrgContextError extends Error {
 // purpose: a brand-new org's row is invisible to an RLS-bound app connection until `app.org_id`
 // already equals its id, so the mapping itself cannot bootstrap under RLS. Tenant data reads/writes
 // still go through the app connection and `withOrg`.
-export async function requireOrgContext(): Promise<OrgContext> {
+import { devAuthEnabled } from "./auth-mode.ts";
+export { devAuthEnabled };
+// Development-only identity (see auth-mode.ts): the caller's identity comes from request headers so the API and UI
+// can be exercised locally and in CI without a Clerk instance.
+
+type Identity = { clerkUserId: string; clerkOrgId: string; orgName: string; email: string; fullName: string | null };
+
+async function identityFromRequest(req?: Request): Promise<Identity> {
+  if (devAuthEnabled()) {
+    const h = req?.headers;
+    const clerkUserId = h?.get("x-dev-user") ?? "";
+    const clerkOrgId = h?.get("x-dev-org") ?? "";
+    if (!clerkUserId) throw new OrgContextError(401, "not signed in (dev: set x-dev-user)");
+    if (!clerkOrgId) throw new OrgContextError(403, "no active organization (dev: set x-dev-org)");
+    return { clerkUserId, clerkOrgId, orgName: h?.get("x-dev-org-name") ?? clerkOrgId, email: `${clerkUserId}@dev.local`, fullName: null };
+  }
   const { userId: clerkUserId, orgId: clerkOrgId, orgSlug } = await auth();
   if (!clerkUserId) throw new OrgContextError(401, "not signed in");
   if (!clerkOrgId) throw new OrgContextError(403, "no active organization");
-
   const user = await currentUser();
   const email =
     user?.emailAddresses.find((e) => e.id === user.primaryEmailAddressId)?.emailAddress ??
     user?.emailAddresses[0]?.emailAddress ??
     `${clerkUserId}@clerk.local`;
   const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || null;
-  const orgName = orgSlug ?? clerkOrgId;
+  return { clerkUserId, clerkOrgId, orgName: orgSlug ?? clerkOrgId, email, fullName };
+}
+
+export async function requireOrgContext(req?: Request): Promise<OrgContext> {
+  const { clerkUserId, clerkOrgId, orgName, email, fullName } = await identityFromRequest(req);
+  const orgSlug = orgName;
   const now = new Date();
 
   return serviceDb().transaction(async (tx) => {
@@ -42,7 +61,7 @@ export async function requireOrgContext(): Promise<OrgContext> {
     const [dbUser] = await tx
       .insert(users)
       .values({ email, fullName, authProviderId: clerkUserId, lastLoginAt: now })
-      .onConflictDoUpdate({ target: users.email, set: { authProviderId: clerkUserId, lastLoginAt: now } })
+      .onConflictDoUpdate({ target: users.authProviderId, set: { email, fullName, lastLoginAt: now, updatedAt: now } })
       .returning({ id: users.id });
 
     await tx
