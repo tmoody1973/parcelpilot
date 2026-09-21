@@ -33,3 +33,18 @@ export async function computeIntersections(sql: postgres.Sql, parcelSnapshotId: 
     from gis_intersections where parcel_snapshot_id = ${parcelSnapshotId} order by overlap_ratio desc`;
   return { summary: summarizeIntersections(rows), rows, inserted: inserted.count };
 }
+
+export type IntersectingFeature = { layer_key: string; kind: string; code: string | null; overlap_ratio: number; geometry: unknown };
+
+// Geometry of each intersecting feature for map display, clipped to ~150 m around the parcel so a citywide
+// polygon (a TID, a floodplain zone) does not swamp the view. Edge-touching neighbours (ratio ≈ 0) are excluded.
+export async function intersectingFeatures(sql: postgres.Sql, parcelSnapshotId: string, bufferMeters = 150): Promise<IntersectingFeature[]> {
+  return sql<IntersectingFeature[]>`
+    select i.layer_key, i.kind::text as kind, i.code, i.overlap_ratio::float8 as overlap_ratio,
+           ST_AsGeoJSON(ST_Intersection(f.geometry, ST_Buffer(p.geometry::geography, ${bufferMeters})::geometry))::json as geometry
+    from gis_intersections i
+    join gis_layer_snapshot_features f on f.id = i.feature_id
+    join parcel_snapshots p on p.id = i.parcel_snapshot_id
+    where i.parcel_snapshot_id = ${parcelSnapshotId} and i.overlap_ratio > 0.001 and f.geometry is not null
+    order by i.kind, i.overlap_ratio desc`;
+}

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.9.0",
@@ -16,11 +17,17 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "@parcelpilot/contracts": "workspace:*",
-    "zod": "^4.1.0"
+    "zod": "^4.1.0",
+    "@parcelpilot/zoning-core": "workspace:*",
+    "maplibre-gl": "^6.10.0",
+    "postgres": "^3.4.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/postcss": "^4.3.3",
+    "tailwindcss": "^4.3.3"
   }
 }
