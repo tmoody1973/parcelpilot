@@ -166,3 +166,35 @@ export const gisIntersections = pgTable("gis_intersections", {
   overlapRatio: numeric("overlap_ratio").notNull(),
   computedAt: timestamp("computed_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [uniqueIndex("gis_intersections_parcel_feature_idx").on(t.parcelSnapshotId, t.featureId), index("gis_intersections_parcel_idx").on(t.parcelSnapshotId)]);
+
+// ---- group 6: projects and scenarios (tenant-scoped; docs/planning/03_data_model.md §4.2) ----
+// Both are mutable: a user edits scenario draft fields freely. Feasibility runs (M2) copy inputs at run
+// time, so these tables get no append-only trigger — only org_id RLS, added in migration 0011.
+export const projects = pgTable("projects", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  parcelTaxkey: text("parcel_taxkey").notNull().references(() => parcels.taxkey),
+  parcelSnapshotId: uuid("parcel_snapshot_id").references(() => parcelSnapshots.id), // pins the profile the project opened against
+  name: text("name").notNull(),
+  createdBy: uuid("created_by").references(() => users.id),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
+  ...timestamps,
+}, (t) => [index("projects_org_idx").on(t.orgId), index("projects_parcel_idx").on(t.parcelTaxkey)]);
+
+// status is plain text (draft | analyzed) per the data-model doc, not a pgEnum; the API layer validates it.
+export const scenarios = pgTable("scenarios", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  use: text("use"),
+  units: integer("units"),
+  heightFt: numeric("height_ft"),
+  stories: integer("stories"),
+  parkingSpaces: integer("parking_spaces"),
+  groundFloorCommercialSqft: numeric("ground_floor_commercial_sqft"),
+  draftInputs: jsonb("draft_inputs").notNull().default(sql`'{}'::jsonb`), // full input bag, superset of the typed columns
+  status: text("status").notNull().default("draft"),
+  createdBy: uuid("created_by").references(() => users.id),
+  ...timestamps,
+}, (t) => [index("scenarios_org_idx").on(t.orgId), index("scenarios_project_idx").on(t.projectId)]);
