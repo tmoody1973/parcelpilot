@@ -1,0 +1,17 @@
+{
+  "name": "parcelpilot",
+  "private": true,
+  "packageManager": "pnpm@10.19.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "typecheck": "pnpm -r --if-present typecheck",
+    "build": "pnpm -r --if-present build",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "eslint": "^9.20.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.20.0"
+  }
+}

@@ -1,0 +1,12 @@
+[project]
+name = "parcelpilot-worker-py"
+version = "0.0.0"
+description = "PDF parsing, table extraction, OCR fallback, and embeddings for ParcelPilot."
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+]
+
+[tool.uv]
+dev-dependencies = ["ruff>=0.6"]
