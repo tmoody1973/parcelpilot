@@ -20,5 +20,6 @@
   "PolicyInput": "PolicyInput.schema.json",
   "PolicyResult": "PolicyResult.schema.json",
   "DecisionLayerOutput": "DecisionLayerOutput.schema.json",
-  "CitationGateInput": "CitationGateInput.schema.json"
+  "CitationGateInput": "CitationGateInput.schema.json",
+  "MemoInput": "MemoInput.schema.json"
 }

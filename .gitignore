@@ -17,3 +17,9 @@ data/incentives/
 # copied from node_modules by apps/web predev/prebuild
 apps/web/public/maplibre-gl-worker.mjs
 apps/web/public/maplibre-gl-shared.mjs
+
+# Playwright output (any package)
+apps/web/test-results/
+apps/web/playwright-report/
+**/test-results/
+**/playwright-report/

@@ -10,7 +10,7 @@
     "build": "pnpm -r --if-present build",
     "lint": "eslint .",
     "test": "pnpm -r --if-present test",
-    "lint:copy": "node packages/contracts/src/cli/banned-phrases.ts apps/web/app apps/web/components apps/web/lib packages/zoning-core/templates",
+    "lint:copy": "node packages/contracts/src/cli/banned-phrases.ts apps/web/app apps/web/components apps/web/lib packages/zoning-core/src/memo packages/zoning-core/templates",
     "contracts:emit": "node packages/contracts/src/cli/emit-json-schema.ts",
     "db:migrate": "pnpm --filter @parcelpilot/db db:migrate",
     "db:generate": "pnpm --filter @parcelpilot/db db:generate",

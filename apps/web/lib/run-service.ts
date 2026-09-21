@@ -112,7 +112,8 @@ export async function listRuns(ctx: OrgContext, by: { scenarioId: string } | { p
 
 export function runDto(run: RunRow, calcs: CalcRow[]): FeasibilityRun {
   const r = (run.policyReasons ?? null) as StoredResult | null;
-  const findings = calcs.map((c) => (c.calculationDetail as { finding: Finding }).finding);
+  const order = (c: string) => IN_SCOPE.indexOf(c as (typeof IN_SCOPE)[number]);
+  const findings = calcs.map((c) => (c.calculationDetail as { finding: Finding }).finding).sort((a, b) => order(a.category) - order(b.category));
   return {
     id: run.id, scenario_id: run.scenarioId, project_id: run.projectId, status: run.status,
     final_status: run.finalStatus, route: run.route, risk: r?.risk ?? null, reasons: r?.reasons ?? [], triggers: r?.triggers ?? [], policy_flags: r?.policy_flags ?? null,
