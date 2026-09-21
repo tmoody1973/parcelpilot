@@ -1,0 +1,76 @@
+# Local development stack. Host ports default to values that do not collide with other projects
+# (5432, 9100, 9101, 8000); override any of them in .env (PP_DB_PORT, PP_MINIO_PORT, PP_MINIO_CONSOLE_PORT, PP_WORKER_PORT).
+name: parcelpilot
+
+services:
+  db:
+    build: ./infra/postgres
+    environment:
+      POSTGRES_USER: parcelpilot
+      POSTGRES_PASSWORD: parcelpilot
+      POSTGRES_DB: parcelpilot
+    ports:
+      - "127.0.0.1:${PP_DB_PORT:-5432}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U parcelpilot -d parcelpilot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    image: quay.io/minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: parcelpilot
+      MINIO_ROOT_PASSWORD: parcelpilot-local
+    ports:
+      - "127.0.0.1:${PP_MINIO_PORT:-9100}:9000"
+      - "127.0.0.1:${PP_MINIO_CONSOLE_PORT:-9101}:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio-init:
+    # One-shot: creates the sources bucket on first boot, then exits 0. Idempotent.
+    # MinIO images live on quay.io; the Docker Hub names are no longer pullable.
+    image: quay.io/minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 parcelpilot parcelpilot-local &&
+      mc mb --ignore-existing local/parcelpilot-sources &&
+      mc ls local
+      "
+
+  worker-py:
+    build: ./services/worker-py
+    ports:
+      - "127.0.0.1:${PP_WORKER_PORT:-8000}:8000"
+    environment:
+      DATABASE_URL: postgres://parcelpilot:parcelpilot@db:5432/parcelpilot
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: parcelpilot-sources
+      S3_ACCESS_KEY_ID: parcelpilot
+      S3_SECRET_ACCESS_KEY: parcelpilot-local
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health').status==200 else 1)"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  db-data:
+  minio-data:
