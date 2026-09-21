@@ -65,13 +65,14 @@ export function ParcelMap({ geometry, features = [], onPick }: { geometry: GeoJs
         return;
       }
       // base-zoning polygons are parcel-granular and would just re-draw the parcel; show the other kinds
-      const ctx = features.filter((f) => f.kind !== "base_zoning" && f.geometry).map((f) => ({ type: "Feature" as const, geometry: f.geometry as GeoJSON.Geometry, properties: { kind: f.kind, code: f.code, layer: f.layer_key } }));
+      const ctx = features.filter((f) => f.kind !== "base_zoning" && f.geometry).map((f) => ({ type: "Feature" as const, geometry: f.geometry as never, properties: { kind: f.kind, code: f.code, layer: f.layer_key } }));
       context.setData({ type: "FeatureCollection", features: ctx });
       source.setData({ type: "Feature", geometry, properties: {} });
       m.fitBounds(bounds(geometry), { padding: 60, maxZoom: 18, duration: 600 });
     };
-    if (m.isStyleLoaded()) apply();
-    else m.once("idle", apply);
+    // sources are created in the "load" handler; wait for that, not for "idle" (raster tiles keep the map busy)
+    if (m.getSource("parcel")) apply();
+    else m.once("load", apply);
   }, [geometry, features]);
 
   return <div ref={container} className="h-full w-full" aria-label="Parcel map" data-testid="parcel-map" />;
