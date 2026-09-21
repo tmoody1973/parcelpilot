@@ -1,4 +1,5 @@
 import postgres from "postgres";
+import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import * as schema from "./schema/index.ts";
 
@@ -13,10 +14,12 @@ export function createDb(url: string, opts: { max?: number } = {}) {
   return drizzle(sql, { schema, casing: "snake_case" });
 }
 
-// Runs `fn` inside a transaction with the tenant id set for RLS. `set_config(..., true)` scopes it to the transaction.
+// Runs `fn` inside a transaction with the tenant id set for RLS. `set_config(..., true)` scopes it to
+// the transaction. `orgId` is a bound parameter, never string-interpolated, so a request-supplied
+// value can never break out of the statement.
 export async function withOrg<T>(db: Db, orgId: string, fn: (tx: Parameters<Parameters<Db["transaction"]>[0]>[0]) => Promise<T>): Promise<T> {
   return db.transaction(async (tx) => {
-    await tx.execute(`select set_config('app.org_id', '${orgId.replace(/'/g, "")}', true)`);
+    await tx.execute(sql`select set_config('app.org_id', ${orgId}, true)`);
     return fn(tx);
   });
 }

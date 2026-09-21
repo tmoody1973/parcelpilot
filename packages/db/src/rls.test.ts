@@ -25,11 +25,16 @@ after(async () => {
   await Promise.all([owner.end(), app.end(), service.end()]);
 });
 
-const asOrg = (sql: postgres.Sql, orgId: string | null) =>
-  sql.begin(async (tx) => {
+// Scopes an app connection to `orgId` for one transaction, then runs `q` under RLS. `null` leaves
+// app.org_id unset, which the policies treat as "no org" and match zero rows.
+const scoped = <T>(orgId: string | null, q: (tx: postgres.TransactionSql) => Promise<T>): Promise<T> =>
+  app.begin(async (tx) => {
     await tx`select set_config('app.org_id', ${orgId ?? ""}, true)`;
-    return tx`select org_id from memberships where user_id = ${userId}`;
+    return q(tx);
   });
+
+const asOrg = (orgId: string | null) =>
+  scoped(orgId, (tx) => tx`select org_id from memberships where user_id = ${userId}`);
 
 test("trip-wire: every table with an org_id column has an RLS policy", async () => {
   const rows = await owner`
@@ -41,21 +46,41 @@ test("trip-wire: every table with an org_id column has an RLS policy", async () 
 });
 
 test("app role with org A sees only org A rows", async () => {
-  const rows = await asOrg(app, orgA);
+  const rows = await asOrg(orgA);
   assert.deepEqual(rows.map((r) => r["org_id"]), [orgA]);
 });
 
 test("app role with a wrong org id sees zero rows", async () => {
-  assert.equal((await asOrg(app, "00000000-0000-0000-0000-000000000000")).length, 0);
+  assert.equal((await asOrg("00000000-0000-0000-0000-000000000000")).length, 0);
 });
 
 test("app role with app.org_id unset sees zero rows", async () => {
-  assert.equal((await asOrg(app, null)).length, 0);
+  assert.equal((await asOrg(null)).length, 0);
 });
 
 test("service role bypasses RLS and sees both orgs", async () => {
   const rows = await service`select org_id from memberships where user_id = ${userId} order by org_id`;
   assert.deepEqual(rows.map((r) => r["org_id"]).sort(), [orgA, orgB].sort());
+});
+
+test("app role with org A cannot read org B's projects or scenarios", async () => {
+  const [{ id: projA }] = await owner`insert into projects (org_id, name) values (${orgA}, 'A project') returning id`;
+  const [{ id: projB }] = await owner`insert into projects (org_id, name) values (${orgB}, 'B project') returning id`;
+  await owner`insert into scenarios (org_id, project_id, name) values (${orgB}, ${projB}, 'B scenario')`;
+  try {
+    // reads are filtered to org A: it sees its own project and none of org B's rows.
+    const projects = await scoped(orgA, (tx) => tx`select id, org_id from projects order by name`);
+    assert.deepEqual(projects.map((r) => r["id"]), [projA]);
+    const scenarios = await scoped(orgA, (tx) => tx`select id from scenarios`);
+    assert.equal(scenarios.length, 0);
+    // and the WITH CHECK clause blocks org A from writing a row into org B.
+    await assert.rejects(
+      scoped(orgA, (tx) => tx`insert into projects (org_id, name) values (${orgB}, 'cross-org write')`),
+      /row-level security/,
+    );
+  } finally {
+    await owner`delete from projects where id in (${projA}, ${projB})`; // cascade removes org B's scenario
+  }
 });
 
 test("audit_events rejects UPDATE and DELETE, even for the owner", async () => {

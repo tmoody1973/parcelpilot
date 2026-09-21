@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CoverageBucket, Criticality, FinalStatus, FindingStatus, JevRoute, ReviewStatus, RuleCategory } from "./enums.ts";
+import { ScenarioInputs } from "./scenario.ts";
 
 // A gold case is the expert's answer key for one parcel + one concept (PRD §9.2).
 // Fixtures live in packages/contracts/gold/*.json and are validated by gold-case.test.ts.
@@ -22,19 +23,7 @@ export const GoldParcel = z.object({
   retrieved_at: z.string(),
 });
 
-export const GoldScenario = z.object({
-  use: z.string(),
-  units: z.number().int().nonnegative().optional(),
-  stories: z.number().int().positive().optional(),
-  height_ft: Money.optional(),
-  footprint_sqft: Money.optional(),
-  setback_front_ft: Money.optional(),
-  setback_side_ft: Money.optional(),
-  setback_rear_ft: Money.optional(),
-  parking_spaces: z.number().int().nonnegative().optional(),
-  ground_floor_use: z.enum(["retail", "residential", "none"]),
-  ground_floor_commercial_sqft: Money.optional(),
-});
+export const GoldScenario = ScenarioInputs;
 
 export const GoldFinding = z.object({
   status: FindingStatus,
