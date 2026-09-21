@@ -1,12 +1,10 @@
 import type postgres from "postgres";
+import { withOrgTx } from "./client.ts";
 
 // Tenant-scoped store for projects and scenarios (docs/planning/03_data_model.md §4.2).
-// Every call runs inside a transaction that sets app.org_id, so Row Level Security scopes
+// Every call runs inside a withOrgTx transaction that sets app.org_id, so Row Level Security scopes
 // the rows to one org. Pass the app connection (DATABASE_APP_URL); the service connection
 // bypasses RLS and must not be used here.
-
-export const DEMO_ORG_ID = "00000000-0000-0000-0000-0000000000d1";
-export const DEMO_USER_ID = "00000000-0000-0000-0000-0000000000d2";
 
 export type ProjectRow = {
   id: string;
@@ -53,14 +51,14 @@ export type NewScenario = {
   createdBy?: string | null;
 };
 
-const SCENARIO_COLS = "id, org_id, project_id, name, use, units, height_ft::float8 as height_ft, stories, parking_spaces, ground_floor_commercial_sqft::float8 as ground_floor_commercial_sqft, draft_inputs, status, created_by, created_at, updated_at";
-
-// Runs `fn` inside a transaction with app.org_id set for RLS (mirrors withOrg in client.ts but for a raw postgres.Sql).
-function withOrgTx<T>(sql: postgres.Sql, orgId: string, fn: (tx: postgres.TransactionSql) => Promise<T>): Promise<T> {
-  return sql.begin(async (tx) => {
-    await tx`select set_config('app.org_id', ${orgId}, true)`;
-    return fn(tx);
-  }) as Promise<T>;
+// postgres.js returns numeric columns as strings; coerce the two numeric scenario fields back to numbers.
+type RawScenario = Omit<ScenarioRow, "height_ft" | "ground_floor_commercial_sqft"> & { height_ft: string | number | null; ground_floor_commercial_sqft: string | number | null };
+function toScenarioRow(r: RawScenario): ScenarioRow {
+  return {
+    ...r,
+    height_ft: r.height_ft == null ? null : Number(r.height_ft),
+    ground_floor_commercial_sqft: r.ground_floor_commercial_sqft == null ? null : Number(r.ground_floor_commercial_sqft),
+  };
 }
 
 export function createProjectStore(sql: postgres.Sql) {
@@ -98,26 +96,28 @@ export function createProjectStore(sql: postgres.Sql) {
         // RLS on the WITH CHECK guarantees the project belongs to this org; confirm it exists first for a clean 404.
         const owner = await tx<{ id: string }[]>`select id from projects where id = ${projectId}`;
         if (owner.length === 0) return null;
-        const [row] = await tx<ScenarioRow[]>`
+        const [row] = await tx<RawScenario[]>`
           insert into scenarios (org_id, project_id, name, use, units, height_ft, stories, parking_spaces, ground_floor_commercial_sqft, draft_inputs, created_by)
           values (${orgId}, ${projectId}, ${input.name}, ${input.use ?? null}, ${input.units ?? null}, ${input.heightFt ?? null},
                   ${input.stories ?? null}, ${input.parkingSpaces ?? null}, ${input.groundFloorCommercialSqft ?? null},
                   ${tx.json((input.draftInputs ?? {}) as never)}, ${input.createdBy ?? null})
-          returning ${tx.unsafe(SCENARIO_COLS)}`;
+          returning *`;
         await tx`update projects set updated_at = now() where id = ${projectId}`;
-        return row!;
+        return toScenarioRow(row!);
       });
     },
 
     async listScenarios(orgId: string, projectId: string): Promise<ScenarioRow[]> {
-      return withOrgTx(sql, orgId, (tx) => tx<ScenarioRow[]>`
-        select ${tx.unsafe(SCENARIO_COLS)} from scenarios where project_id = ${projectId} order by created_at asc`);
+      return withOrgTx(sql, orgId, async (tx) => {
+        const rows = await tx<RawScenario[]>`select * from scenarios where project_id = ${projectId} order by created_at asc`;
+        return rows.map(toScenarioRow);
+      });
     },
 
     async getScenario(orgId: string, id: string): Promise<ScenarioRow | null> {
       return withOrgTx(sql, orgId, async (tx) => {
-        const rows = await tx<ScenarioRow[]>`select ${tx.unsafe(SCENARIO_COLS)} from scenarios where id = ${id}`;
-        return rows[0] ?? null;
+        const rows = await tx<RawScenario[]>`select * from scenarios where id = ${id}`;
+        return rows[0] ? toScenarioRow(rows[0]) : null;
       });
     },
   };

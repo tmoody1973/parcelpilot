@@ -20,3 +20,17 @@ export async function withOrg<T>(db: Db, orgId: string, fn: (tx: Parameters<Para
     return fn(tx);
   });
 }
+
+// Same tenant scoping for a raw postgres.Sql (what every store in this package uses). RLS then limits the
+// transaction to one org; unset app.org_id => NULL => zero rows.
+export function withOrgTx<T>(sql: postgres.Sql, orgId: string, fn: (tx: postgres.TransactionSql) => Promise<T>): Promise<T> {
+  return sql.begin(async (tx) => {
+    await tx`select set_config('app.org_id', ${orgId}, true)`;
+    return fn(tx);
+  }) as Promise<T>;
+}
+
+// M1 bootstrap tenant, seeded by migration 0011. There is no auth provider yet (Clerk arrives with MOO-807),
+// so the web app scopes every request to this org until real sign-in exists.
+export const DEMO_ORG_ID = "00000000-0000-0000-0000-0000000000d1";
+export const DEMO_USER_ID = "00000000-0000-0000-0000-0000000000d2";
