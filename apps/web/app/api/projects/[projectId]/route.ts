@@ -4,6 +4,7 @@ import { appDb } from "../../../../lib/db.ts";
 import { fail, ok, readJsonBody, stringField, withTenant } from "../../../../lib/http.ts";
 import { projectDto, scenarioDto } from "../../../../lib/projects-dto.ts";
 import { profileForTaxkey } from "../../../../lib/parcel-service.ts";
+import { listRuns } from "../../../../lib/run-service.ts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,7 +22,8 @@ export const GET = withTenant(async (ctx, _req: Request, { params }: Params) => 
   });
   if (!detail) return fail("not_found", "project not found", 404);
   const profile = detail.project.parcelTaxkey ? await profileForTaxkey(detail.project.parcelTaxkey) : null;
-  return ok({ project: await projectDto(detail.project, detail.rows.length), scenarios: detail.rows.map(scenarioDto), profile });
+  const runs = await listRuns(ctx, { projectId });
+  return ok({ project: await projectDto(detail.project, detail.rows.length), scenarios: detail.rows.map(scenarioDto), profile, runs });
 });
 
 export const PATCH = withTenant(async (ctx, req: Request, { params }: Params) => {

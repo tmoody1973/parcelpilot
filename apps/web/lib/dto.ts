@@ -57,6 +57,7 @@ export type ProjectDetail = {
   project: Project;
   scenarios: Scenario[];
   profile: SiteProfile | null;
+  runs: FeasibilityRun[]; // newest first, across the project's scenarios
 };
 
 // One locked feasibility run (docs/planning/03_data_model.md §4.6). Everything a memo or panel needs, nothing live.
