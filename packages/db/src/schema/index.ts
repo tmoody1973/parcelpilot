@@ -24,9 +24,12 @@ export const organizations = pgTable("organizations", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   slug: text("slug").notNull(),
+  // Clerk organization id (org_...). The app maps each Clerk org onto exactly one row here on first
+  // sign-in. Nullable so seed/test orgs need no Clerk id; unique so the mapping stays one-to-one.
+  clerkOrgId: text("clerk_org_id"),
   plan: text("plan").notNull().default("pilot"),
   ...timestamps,
-}, (t) => [uniqueIndex("organizations_slug_idx").on(t.slug)]);
+}, (t) => [uniqueIndex("organizations_slug_idx").on(t.slug), uniqueIndex("organizations_clerk_org_id_idx").on(t.clerkOrgId)]);
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -44,6 +47,39 @@ export const memberships = pgTable("memberships", {
   role: orgRole("role").notNull().default("member"),
   createdAt: timestamps.createdAt,
 }, (t) => [uniqueIndex("memberships_org_user_idx").on(t.orgId, t.userId), index("memberships_user_idx").on(t.userId)]);
+
+// ---- group 2b: projects and scenarios (tenant-scoped; docs/planning/03_data_model.md §4.2) ----
+// A project is one development idea against one parcel. `parcel_taxkey` references the real parcels
+// key (text taxkey), not the doc's aspirational `parcel_id uuid`; it is nullable because a project
+// can exist before its parcel snapshot is resolved. Tenant isolation is enforced by RLS (migration 0010).
+export const projects = pgTable("projects", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  parcelTaxkey: text("parcel_taxkey").references(() => parcels.taxkey),
+  name: text("name").notNull(),
+  createdBy: uuid("created_by").references(() => users.id),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
+  ...timestamps,
+}, (t) => [index("projects_org_idx").on(t.orgId), index("projects_parcel_idx").on(t.parcelTaxkey)]);
+
+// One proposed development concept inside a project. Draft fields are edited freely; a feasibility
+// run copies them at run time so a later edit never alters a saved run.
+export const scenarios = pgTable("scenarios", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  use: text("use"),
+  units: integer("units"),
+  heightFt: numeric("height_ft"),
+  stories: integer("stories"),
+  parkingSpaces: integer("parking_spaces"),
+  groundFloorCommercialSqft: numeric("ground_floor_commercial_sqft"),
+  draftInputs: jsonb("draft_inputs").notNull().default(sql`'{}'::jsonb`),
+  status: text("status").notNull().default("draft"),
+  createdBy: uuid("created_by").references(() => users.id),
+  ...timestamps,
+}, (t) => [index("scenarios_org_idx").on(t.orgId), index("scenarios_project_idx").on(t.projectId)]);
 
 // ---- group 3: jurisdiction-shared sources (no org_id by design) ----
 export const jurisdictions = pgTable("jurisdictions", {

@@ -58,6 +58,33 @@ test("service role bypasses RLS and sees both orgs", async () => {
   assert.deepEqual(rows.map((r) => r["org_id"]).sort(), [orgA, orgB].sort());
 });
 
+// Scopes an app connection to `orgId` for one transaction, then runs `q` under RLS.
+const scoped = <T>(orgId: string, q: (tx: postgres.TransactionSql) => Promise<T>): Promise<T> =>
+  app.begin(async (tx) => {
+    await tx`select set_config('app.org_id', ${orgId}, true)`;
+    return q(tx);
+  });
+
+test("app role with org A cannot read org B's projects or scenarios", async () => {
+  const [{ id: projA }] = await owner`insert into projects (org_id, name) values (${orgA}, 'A project') returning id`;
+  const [{ id: projB }] = await owner`insert into projects (org_id, name) values (${orgB}, 'B project') returning id`;
+  await owner`insert into scenarios (org_id, project_id, name) values (${orgB}, ${projB}, 'B scenario')`;
+  try {
+    // reads are filtered to org A: it sees its own project and none of org B's rows.
+    const projects = await scoped(orgA, (tx) => tx`select id, org_id from projects order by name`);
+    assert.deepEqual(projects.map((r) => r["id"]), [projA]);
+    const scenarios = await scoped(orgA, (tx) => tx`select id from scenarios`);
+    assert.equal(scenarios.length, 0);
+    // and the WITH CHECK clause blocks org A from writing a row into org B.
+    await assert.rejects(
+      scoped(orgA, (tx) => tx`insert into projects (org_id, name) values (${orgB}, 'cross-org write')`),
+      /row-level security/,
+    );
+  } finally {
+    await owner`delete from projects where id in (${projA}, ${projB})`; // cascade removes org B's scenario
+  }
+});
+
 test("audit_events rejects UPDATE and DELETE, even for the owner", async () => {
   for (const op of ["update", "delete"] as const) {
     await assert.rejects(

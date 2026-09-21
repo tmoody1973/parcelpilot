@@ -71,6 +71,13 @@
       "when": 1790010817140,
       "tag": "0009_gis_intersections_append_only",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790017010542,
+      "tag": "0010_projects_scenarios_clerk_rls",
+      "breakpoints": true
     }
   ]
 }
