@@ -1,30 +1,25 @@
-import { NextResponse } from "next/server";
-import { desc } from "drizzle-orm";
-import { projects, withOrg } from "@parcelpilot/db";
+import { desc, eq, sql as dsql } from "drizzle-orm";
+import { projects, scenarios, withOrg } from "@parcelpilot/db";
 import { appDb } from "../../../lib/db.ts";
-import { readJsonBody, stringField, withTenant } from "../../../lib/http.ts";
+import { fail, ok, readJsonBody, stringField, withTenant } from "../../../lib/http.ts";
+import { projectDto } from "../../../lib/projects-dto.ts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Lists the caller's projects. RLS on the app connection restricts the rows to the caller's org.
 export const GET = withTenant(async (ctx) => {
   const rows = await withOrg(appDb(), ctx.orgId, (tx) =>
-    tx.select().from(projects).orderBy(desc(projects.createdAt)),
+    tx.select({ p: projects, scenario_count: dsql<number>`(select count(*)::int from ${scenarios} s where s.project_id = ${projects.id})` }).from(projects).orderBy(desc(projects.updatedAt)),
   );
-  return NextResponse.json({ projects: rows });
+  return ok(await Promise.all(rows.map((r) => projectDto(r.p, r.scenario_count))));
 });
 
-// Creates a project for the caller's org. `org_id` is set from the resolved context, and the RLS
-// WITH CHECK clause rejects any attempt to write it into another org.
 export const POST = withTenant(async (ctx, req: Request) => {
   const body = await readJsonBody(req);
   const name = stringField(body, "name");
-  if (!name) return NextResponse.json({ error: "name is required" }, { status: 400 });
-  const parcelTaxkey = stringField(body, "parcelTaxkey");
-
-  const [project] = await withOrg(appDb(), ctx.orgId, (tx) =>
-    tx.insert(projects).values({ orgId: ctx.orgId, name, parcelTaxkey, createdBy: ctx.userId }).returning(),
-  );
-  return NextResponse.json({ project }, { status: 201 });
+  if (!name) return fail("invalid_input", "name is required", 400);
+  const parcelTaxkey = stringField(body, "parcel_taxkey") ?? stringField(body, "parcelTaxkey");
+  const [project] = await withOrg(appDb(), ctx.orgId, (tx) => tx.insert(projects).values({ orgId: ctx.orgId, name, parcelTaxkey, createdBy: ctx.userId }).returning());
+  return ok(await projectDto(project!, 0), { status: 201 });
 });
+void eq;

@@ -28,11 +28,12 @@ type Identity = { clerkUserId: string; clerkOrgId: string; orgName: string; emai
 async function identityFromRequest(req?: Request): Promise<Identity> {
   if (devAuthEnabled()) {
     const h = req?.headers;
-    const clerkUserId = h?.get("x-dev-user") ?? "";
-    const clerkOrgId = h?.get("x-dev-org") ?? "";
+    const cookies = Object.fromEntries((h?.get("cookie") ?? "").split(";").map((c) => c.trim().split("=") as [string, string]).filter(([k]) => k));
+    const clerkUserId = h?.get("x-dev-user") ?? cookies["pp-dev-user"] ?? "";
+    const clerkOrgId = h?.get("x-dev-org") ?? cookies["pp-dev-org"] ?? "";
     if (!clerkUserId) throw new OrgContextError(401, "not signed in (dev: set x-dev-user)");
     if (!clerkOrgId) throw new OrgContextError(403, "no active organization (dev: set x-dev-org)");
-    return { clerkUserId, clerkOrgId, orgName: h?.get("x-dev-org-name") ?? clerkOrgId, email: `${clerkUserId}@dev.local`, fullName: null };
+    return { clerkUserId, clerkOrgId, orgName: h?.get("x-dev-org-name") ?? cookies["pp-dev-org-name"] ?? clerkOrgId, email: `${clerkUserId}@dev.local`, fullName: null };
   }
   const { userId: clerkUserId, orgId: clerkOrgId, orgSlug } = await auth();
   if (!clerkUserId) throw new OrgContextError(401, "not signed in");

@@ -1,31 +1,39 @@
 import { NextResponse } from "next/server";
 import { OrgContextError, requireOrgContext, type OrgContext } from "./tenant.ts";
 
-// Wraps a tenant-scoped route handler: it resolves the caller's org context first and passes it in,
-// or returns the matching 401/403 response, so an unscoped caller is rejected before any query runs.
-// `args` are the handler's own Next arguments (the request, and the route params when present).
-export function withTenant<A extends unknown[]>(
-  handler: (ctx: OrgContext, ...args: A) => Promise<Response> | Response,
-): (...args: A) => Promise<Response> {
+// Response envelope for every route handler (docs/planning/02_architecture.md §5): { ok, data, error, meta }.
+export type ApiError = { code: string; message: string; issues?: unknown };
+export type Envelope<T> = { ok: true; data: T; meta?: Record<string, unknown> } | { ok: false; error: ApiError };
+
+export function ok<T>(data: T, init: { status?: number; meta?: Record<string, unknown> } = {}): Response {
+  const body: Envelope<T> = init.meta ? { ok: true, data, meta: init.meta } : { ok: true, data };
+  return NextResponse.json(body, { status: init.status ?? 200 });
+}
+
+export function fail(code: string, message: string, status = 400, issues?: unknown): Response {
+  const body: Envelope<never> = { ok: false, error: issues ? { code, message, issues } : { code, message } };
+  return NextResponse.json(body, { status });
+}
+
+// Wraps a tenant-scoped route handler: resolves the caller's org context first (401/403 as envelopes),
+// turns unexpected throws into a clean 500 envelope, and passes Next's own args through.
+export function withTenant<A extends unknown[]>(handler: (ctx: OrgContext, ...args: A) => Promise<Response> | Response): (...args: A) => Promise<Response> {
   return async (...args: A): Promise<Response> => {
     try {
       const req = args[0] instanceof Request ? (args[0] as Request) : undefined;
       return await handler(await requireOrgContext(req), ...args);
     } catch (e) {
-      if (e instanceof OrgContextError) return NextResponse.json({ error: e.message }, { status: e.status });
-      throw e;
+      if (e instanceof OrgContextError) return fail(e.status === 401 ? "unauthenticated" : "no_active_org", e.message, e.status);
+      return fail("internal_error", e instanceof Error ? e.message : "unexpected error", 500);
     }
   };
 }
 
-// Parses a JSON request body into an object, or an empty object when it is missing or not JSON.
-export async function readJsonBody(req: Request): Promise<Record<string, unknown>> {
-  const body = await req.json().catch(() => null);
-  return body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+export async function readJsonBody(req: Request): Promise<unknown> {
+  return req.json().catch(() => null);
 }
 
-// Returns a trimmed non-empty string field, or null when it is absent or blank.
-export function stringField(body: Record<string, unknown>, key: string): string | null {
-  const value = body[key];
-  return typeof value === "string" && value.trim() ? value.trim() : null;
+export function stringField(body: unknown, key: string): string | null {
+  const v = (body as Record<string, unknown> | null)?.[key];
+  return typeof v === "string" && v.trim() ? v.trim() : null;
 }
