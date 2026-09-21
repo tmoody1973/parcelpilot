@@ -50,7 +50,7 @@ test("two rules on one category combine: both pass → pass; one fail → fail w
   const fail = evaluate({ parcel, scenario: { ...ok, setback_front_ft: 75 }, rules: LB1_RULES, categories_in_scope: ["setback_front"], analysis_date: DATE });
   assert.equal(fail.findings[0]?.status, "fail");
   assert.equal(fail.findings[0]?.rule_id, "lb1-front-max-v1");
-  assert.deepEqual(fail.findings[0]?.calculation_ids, ["setback_front:lb1-front-min-v1", "setback_front:lb1-front-max-v1"]);
+  assert.deepEqual(fail.findings[0]?.calculation_ids, ["setback_front:lb1-front-max-v1", "setback_front:lb1-front-min-v1"]); // family order, not load order
 });
 
 test("calculation detail carries the arithmetic path", () => {

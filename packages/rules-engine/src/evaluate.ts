@@ -62,7 +62,8 @@ export function evaluate(raw: EvaluateInput): EvaluateOutput {
   const live = input.rules.filter((r) => inForce(r, input.analysis_date) && districts.includes(r.district_code));
 
   const results = input.categories_in_scope.map((category) => {
-    const rules = live.filter((r) => r.category === category);
+    // Sorted by family so the decisive rule (and the allowed value a pass shows) never depends on load order.
+    const rules = live.filter((r) => r.category === category).sort((a, b) => a.family_id.localeCompare(b.family_id) || a.version - b.version);
     if (districts.length > 1) {
       const finding: Finding = { category, status: "verify", criticality: criticalityFor(category, rules), calculation_ids: [], citations: [], reason: "multiple_districts", missing_inputs: [], confidence: "low" };
       return { finding, calculations: [] as CalculationRecord[] };

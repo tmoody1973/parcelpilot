@@ -38,51 +38,89 @@
       "use": {
         "status": "pass",
         "criticality": "critical",
-        "proposed": "multifamily over ground-floor retail",
-        "allowed": "Y (Table 295-603-1); retail L"
+        "proposed": {
+          "value": "multifamily"
+        },
+        "allowed": {
+          "value": "Y",
+          "operator": "in"
+        },
+        "note": "proposed: multifamily over ground-floor retail | allowed: Y (Table 295-603-1); retail L"
       },
       "height": {
         "status": "pass",
         "criticality": "critical",
-        "proposed": "58 ft",
-        "allowed": "<= 60 ft, >= 18 ft"
+        "proposed": {
+          "value": 58,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 60,
+          "unit": "ft",
+          "operator": "<="
+        },
+        "note": "proposed: 58 ft | allowed: <= 60 ft, >= 18 ft"
       },
       "density": {
         "status": "fail",
         "criticality": "high",
-        "proposed": "40 units x 800 = 32000 sq ft",
-        "allowed": "<= lot area 29934 sq ft"
+        "proposed": {
+          "value": 32000,
+          "unit": "sq ft"
+        },
+        "allowed": {
+          "value": 29934,
+          "unit": "sq ft",
+          "operator": "<="
+        },
+        "note": "proposed: 40 units x 800 = 32000 sq ft | allowed: <= lot area 29934 sq ft"
       },
       "setback_front": {
         "status": "verify",
         "criticality": "high",
-        "proposed": "5 ft",
-        "allowed": "max = average of adjacent (needs neighbor facts)",
-        "reason": "condition_unevaluable:average_front_setback"
+        "reason": "condition_unevaluable:average_front_setback",
+        "note": "proposed: 5 ft | allowed: max = average of adjacent (needs neighbor facts)"
       },
       "setback_side": {
         "status": "pass",
         "criticality": "high",
-        "proposed": "0 ft",
-        "allowed": "none required"
+        "proposed": {
+          "value": 0,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 0,
+          "unit": "ft",
+          "operator": ">="
+        },
+        "note": "proposed: 0 ft | allowed: none required"
       },
       "setback_rear": {
         "status": "pass",
         "criticality": "high",
-        "proposed": "10 ft",
-        "allowed": "none required"
+        "proposed": {
+          "value": 10,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 0,
+          "unit": "ft",
+          "operator": ">="
+        },
+        "note": "proposed: 10 ft | allowed: none required"
       }
     },
     "coverage": {
       "checked": [
         "use",
         "height",
-        "setback_front",
         "setback_side",
         "setback_rear",
         "density"
       ],
-      "manual_review": [],
+      "manual_review": [
+        "setback_front"
+      ],
       "unknown": [
         "parking",
         "lot_coverage"
@@ -111,7 +149,7 @@
       "document": "CH295-sub6.pdf",
       "sha256_prefix": "198a9062664e",
       "pdf_page": 16,
-      "printed_page": 823,
+      "printed_page": 824,
       "section": "295-605-2",
       "table": "Table 295-605-2",
       "note": "Principal building design standards: height max, lot area per dwelling unit, setbacks by district"
@@ -138,6 +176,6 @@
     "drafted_by": "claude-fable-5-1 (draft for reviewer correction)",
     "drafted_at": "2026-09-21",
     "reviewer": null,
-    "notes": "40 x 800 = 32,000 > 29,934."
+    "notes": "40 x 800 = 32,000 > 29,934. 2026-09-21 (MOO-817): proposed/allowed made structured for exact match, prose kept in note; coverage recomputed from finding statuses (checked = pass/fail, manual_review = verify/insufficient_evidence, unknown = no rule). Changed: coverage {'checked': ['use', 'height', 'setback_front', 'setback_side', 'setback_rear', 'density'], 'manual_review': [], 'unknown': ['parking', 'lot_coverage']} \u2192 {'checked': ['use', 'height', 'setback_side', 'setback_rear', 'density'], 'manual_review': ['setback_front'], 'unknown': ['parking', 'lot_coverage']} Correction (MOO-817): Table 295-605-2 printed page is 824 (page footer), not 823."
   }
 }
