@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { LngLatBounds, Map as MlMap, NavigationControl, type GeoJSONSource, type MapMouseEvent, type StyleSpecification } from "maplibre-gl";
+import { LngLatBounds, Map as MlMap, NavigationControl, setWorkerUrl, type GeoJSONSource, type MapMouseEvent, type StyleSpecification } from "maplibre-gl";
+
+// MapLibre spawns its worker from a module URL that Next's bundler mis-resolves (it loaded the page HTML and died,
+// so GeoJSON sources never rendered). Serve the worker (and the shared chunk it imports) from /public; `predev`/`prebuild` copy them.
+if (typeof window !== "undefined") setWorkerUrl("/maplibre-gl-worker.mjs");
 import type { GeoJsonPolygon, GisFeature } from "../lib/dto.ts";
 
 // OpenStreetMap raster basemap — no API key, fine for the M1 demo. Swap for a vector provider before launch.
@@ -46,6 +50,7 @@ export function ParcelMap({ geometry, features = [], onPick }: { geometry: GeoJs
     m.on("click", (e: MapMouseEvent) => pick.current({ lon: e.lngLat.lng, lat: e.lngLat.lat }));
     m.getCanvas().style.cursor = "crosshair";
     map.current = m;
+    (container.current as unknown as { __ppMap?: MlMap }).__ppMap = m; // QA hook: lets e2e ask the map what it rendered
     return () => {
       m.remove();
       map.current = null;

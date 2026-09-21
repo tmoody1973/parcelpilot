@@ -3,10 +3,13 @@ import { Badge, Empty } from "./ui.tsx";
 
 // ENG-04: compare view shows every scenario's inputs and status side by side.
 const ROWS: { label: string; get: (s: Scenario) => string }[] = [
-  { label: "Ground-floor use", get: (s) => s.inputs.use ?? "—" },
+  { label: "Primary use", get: (s) => s.inputs.use ?? "—" },
+  { label: "Ground-floor use", get: (s) => s.inputs.ground_floor_use ?? "—" },
   { label: "Units", get: (s) => (s.inputs.units ?? "—").toString() },
   { label: "Stories", get: (s) => (s.inputs.stories ?? "—").toString() },
   { label: "Height (ft)", get: (s) => (s.inputs.height_ft ?? "—").toString() },
+  { label: "Footprint (sq ft)", get: (s) => (s.inputs.footprint_sqft ?? "—").toString() },
+  { label: "Setbacks F / S / R (ft)", get: (s) => [s.inputs.setback_front_ft, s.inputs.setback_side_ft, s.inputs.setback_rear_ft].map((v) => v ?? "—").join(" / ") },
   { label: "Parking spaces", get: (s) => (s.inputs.parking_spaces ?? "—").toString() },
   { label: "Ground-floor commercial (sq ft)", get: (s) => (s.inputs.ground_floor_commercial_sqft ?? "—").toString() },
 ];
