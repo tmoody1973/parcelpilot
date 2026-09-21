@@ -132,5 +132,19 @@
 - [ ] Two reviewers disagree on at least zero cases; where they disagree, both labels are kept and the safer route is the expected one.
 **Out of scope.** Cases 16–50 (M6).
 
-## Held back until M0 exits
-M1: parcel search (address, TAXKEY, map click); stacked-condo picker; site profile with GIS intersections; scenario create, save, compare. M3: `packages/rules-engine` with rule kinds; hand-entered LB1 rules with citations; final status policy function; templated memo with disclaimer; demo gold-case test in CI.
+## M1 (created 2026-09-21, all Done except staging)
+MOO-804 GIS layer registry · MOO-805 parcel resolver · MOO-806 GIS intersections · MOO-807 auth + projects + scenarios · MOO-808 workspace UI · MOO-809 staging (open, needs accounts).
+
+## M3 (created 2026-09-21, in dependency order)
+Rules for LB1 **and** LB2 (the gold set G06–G08 is LB2). Memo is HTML with a print stylesheet; a PDF library waits for M5. Policy lives in `zoning-core` but is a pure function like the engine. Built in order by Claude; no `ready-for-agent` labels.
+
+| # | Issue | Depends on |
+|---|---|---|
+| MOO-810 | Rules engine core — rule kinds, `evaluate()`, coverage buckets | — |
+| MOO-811 | Schema group 4 — `zoning_rules`, `citations`, `rule_citations`, `feasibility_runs`, `calculations` | MOO-801 |
+| MOO-812 | Final status policy — hard overrides, rules-only table, citation gate, never-more-permissive test | MOO-810 |
+| MOO-813 | Hand-entered LB1 + LB2 rules with page citations into CH295-sub6 (reviewer signs) | MOO-811 |
+| MOO-814 | Run orchestration — `feasibility_runs` from a saved scenario, locked status | 810, 811, 812, 813 |
+| MOO-815 | Findings, coverage, and status panels in the workspace | MOO-814 |
+| MOO-816 | Templated memo with disclaimer, provenance, page citations | MOO-814 |
+| MOO-817 | Gold-case CI — all 15 exact-match, demo case live end to end | 810, 812, 813, 814 |
