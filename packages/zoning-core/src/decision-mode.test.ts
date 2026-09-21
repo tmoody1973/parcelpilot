@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { resolveDecisionMode } from "./decision-mode.ts";
 
 test("defaults to rules_only when nothing is configured", async () => {
-  assert.deepEqual(await resolveDecisionMode({ env: {} }), { mode: "rules_only", source: "default" });
+  assert.deepEqual(await resolveDecisionMode({ env: {} }), { mode: "shadow", source: "default" }); // deliberately wrong: CI must go red (MOO-798)
 });
 test("invalid env value falls back to rules_only", async () => {
   assert.deepEqual(await resolveDecisionMode({ env: { DECISION_MODE: "yolo" } }), { mode: "rules_only", source: "default" });
