@@ -135,8 +135,8 @@
 ## M1 (created 2026-09-21, all Done except staging)
 MOO-804 GIS layer registry · MOO-805 parcel resolver · MOO-806 GIS intersections · MOO-807 auth + projects + scenarios · MOO-808 workspace UI · MOO-809 staging (open, needs accounts).
 
-## M3 (created 2026-09-21, in dependency order)
-Rules for LB1 **and** LB2 (the gold set G06–G08 is LB2). Memo is HTML with a print stylesheet; a PDF library waits for M5. Policy lives in `zoning-core` but is a pure function like the engine. Built in order by Claude; no `ready-for-agent` labels.
+## M3 (created 2026-09-21; all eight Done the same day)
+Rules for LB1 **and** LB2 (the gold set G06–G08 is LB2). Memo is HTML with a print stylesheet; a PDF library waits for M5. Policy lives in `zoning-core` but is a pure function like the engine. Built in order by Claude; no `ready-for-agent` labels. Exit: `pnpm test:gold` 15/15 in CI (required check `gold-cases`), demo parcel scored live and memo rendered with page citations (`pnpm gold:live`). Open before the project done-when is met: the interim reviewer reads the rendered memo (MOO-803 sign-off).
 
 | # | Issue | Depends on |
 |---|---|---|
