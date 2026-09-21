@@ -151,3 +151,18 @@ export const gisLayerSnapshotFeatures = pgTable("gis_layer_snapshot_features", {
   geometry: geometry4326("geometry"), // NULL when the source feature has no shape (it happens in City layers)
   attributes: jsonb("attributes").notNull(),
 }, (t) => [index("gis_layer_snapshot_features_snapshot_idx").on(t.snapshotId, t.objectId)]);
+
+// ---- group 4c: parcel × layer intersections (immutable; recompute = new rows only if snapshots changed) ----
+export const gisIntersections = pgTable("gis_intersections", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  parcelSnapshotId: uuid("parcel_snapshot_id").notNull().references(() => parcelSnapshots.id),
+  gisLayerSnapshotId: uuid("gis_layer_snapshot_id").notNull().references(() => gisLayerSnapshots.id),
+  featureId: uuid("feature_id").notNull().references(() => gisLayerSnapshotFeatures.id),
+  layerKey: text("layer_key").notNull(),
+  kind: gisLayerKind("kind").notNull(),
+  code: text("code"),
+  attributes: jsonb("attributes").notNull(),
+  overlapAreaSqft: numeric("overlap_area_sqft").notNull(),
+  overlapRatio: numeric("overlap_ratio").notNull(),
+  computedAt: timestamp("computed_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [uniqueIndex("gis_intersections_parcel_feature_idx").on(t.parcelSnapshotId, t.featureId), index("gis_intersections_parcel_idx").on(t.parcelSnapshotId)]);

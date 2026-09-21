@@ -57,6 +57,20 @@
       "when": 1790010314181,
       "tag": "0007_curved_tiger_shark",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790010816147,
+      "tag": "0008_sad_inertia",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790010817140,
+      "tag": "0009_gis_intersections_append_only",
+      "breakpoints": true
     }
   ]
 }

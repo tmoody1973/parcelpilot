@@ -16,7 +16,8 @@
     "db:generate": "pnpm --filter @parcelpilot/db db:generate",
     "seed:sources": "cd services/worker-py && uv run python -m app.seed_sources ../../data",
     "smoke:parcel": "node packages/zoning-core/src/cli/smoke-parcel.ts",
-    "gis:snapshot": "node --conditions=development apps/worker/src/cli/gis-snapshot.ts"
+    "gis:snapshot": "node --conditions=development apps/worker/src/cli/gis-snapshot.ts",
+    "smoke:intersections": "node --conditions=development packages/db/src/cli/smoke-intersections.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
