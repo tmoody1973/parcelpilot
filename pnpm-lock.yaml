@@ -32,6 +32,9 @@ importers:
       '@parcelpilot/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@parcelpilot/rules-engine':
+        specifier: workspace:*
+        version: link:../../packages/rules-engine
       '@parcelpilot/zoning-core':
         specifier: workspace:*
         version: link:../../packages/zoning-core

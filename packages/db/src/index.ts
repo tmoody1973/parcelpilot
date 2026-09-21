@@ -4,3 +4,4 @@ export * from "./client.ts";
 export * from "./parcel-store.ts";
 export * from "./gis-store.ts";
 export * from "./gis-intersections.ts";
+export * from "./rules-store.ts";

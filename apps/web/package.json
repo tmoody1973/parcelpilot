@@ -14,16 +14,17 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.9.0",
+    "@parcelpilot/contracts": "workspace:*",
     "@parcelpilot/db": "workspace:*",
+    "@parcelpilot/rules-engine": "workspace:*",
+    "@parcelpilot/zoning-core": "workspace:*",
     "drizzle-orm": "^0.44.0",
+    "maplibre-gl": "^6.10.0",
     "next": "^15.1.0",
+    "postgres": "^3.4.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@parcelpilot/contracts": "workspace:*",
-    "zod": "^4.1.0",
-    "@parcelpilot/zoning-core": "workspace:*",
-    "maplibre-gl": "^6.10.0",
-    "postgres": "^3.4.0"
+    "zod": "^4.1.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

@@ -1,5 +1,9 @@
 {
   "$comment": "Hand-entered v1 rules for LB1 and LB2 (MOO-813). Every value was read from the cited PDF page on 2026-09-21. document_id is the PDF sha256: 198a9062… = data/zoning-code-pdfs/CH295-sub6.pdf (stamp 7/15/2025), fa92de2c… = CH295-sub5.pdf (stamp 4/22/2025). Use labels are the Table 295-603-1 legend letters (Y/L/S/N), never verdicts. Reviewed and signed by the interim reviewer (product owner) on 2026-09-21; see docs/rules/lb1-lb2-v1.md and Linear MOO-813.",
+  "documents": [
+    { "sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "title": "Chapter 295 Subchapter 6 — Commercial Districts", "source_type": "ordinance_subchapter", "published_marker": "7/15/2025", "page_count": 24, "local_path": "data/zoning-code-pdfs/CH295-sub6.pdf" },
+    { "sha256": "fa92de2c8d86f6e448aae129436b455d23dc11d8815a6123e58df11ceb77ae49", "title": "Chapter 295 Subchapter 5 — Residential Districts", "source_type": "ordinance_subchapter", "published_marker": "4/22/2025", "page_count": 35, "local_path": "data/zoning-code-pdfs/CH295-sub5.pdf" }
+  ],
   "rules": [
     {
       "id": "lb1-use-v1", "family_id": "lb1-use", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB1",
