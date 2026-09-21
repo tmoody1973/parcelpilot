@@ -1,1 +1,1 @@
-Memo and fallback-brief templates live here (M3). Every file in this folder is scanned by `pnpm lint:copy` for banned verdict words.
+The templated memo (memo.v1) lives in `packages/zoning-core/src/memo/` (`copy.ts` holds every fixed sentence, `render.ts` the HTML, `validate.ts` the banned-phrase, numeric-alignment and citation-membership checks). Both that folder and this one are scanned by `pnpm lint:copy` for banned verdict words. The LLM fallback brief template arrives in M5.

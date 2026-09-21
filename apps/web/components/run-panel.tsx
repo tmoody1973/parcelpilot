@@ -17,7 +17,7 @@ export function RunPanel({ run }: { run: FeasibilityRun }) {
 
   return (
     <Card>
-      <CardHeader title="Preliminary screen" subtitle={`Run ${fmtDate(run.created_at)} · analysis date ${run.provenance.analysis_date ?? "—"} · rules engine ${run.provenance.rules_engine_version ?? "—"}`} action={status ? <Badge tone={status.tone}>{status.label}</Badge> : null} />
+      <CardHeader title="Preliminary screen" subtitle={`Run ${fmtDate(run.created_at)} · analysis date ${run.provenance.analysis_date ?? "—"} · rules engine ${run.provenance.rules_engine_version ?? "—"}`} action={<span className="flex items-center gap-2">{status ? <Badge tone={status.tone}>{status.label}</Badge> : null}<a href={`/runs/${run.id}/memo`} target="_blank" rel="noopener" className="text-xs text-accent no-underline" data-testid="memo-link">Memo ↗</a></span>} />
       <div className="px-4 py-3 text-sm" data-testid="run-panel">
         {status ? (
           <div className="rounded-md border border-line bg-canvas px-3 py-2" data-testid="status-card">

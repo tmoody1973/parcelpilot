@@ -34,6 +34,7 @@ test("G01: revise scenario, two fail rows, coverage lists all eight categories, 
   await expect(panel.getByTestId("coverage-unknown")).toContainText("Parking");
   await expect(panel.getByTestId("next-actions")).toContainText("Revise the concept");
   await expect(page.getByTestId("scenario-compare")).toContainText("Revise scenario");
+  await expect(page.getByTestId("memo-link")).toHaveAttribute("href", "/runs/run-g01/memo");
   await page.screenshot({ path: "test-results/run-panel-g01.png", fullPage: true });
 });
 
