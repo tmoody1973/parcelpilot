@@ -1,5 +1,6 @@
-import { z } from "zod";
-
-// Placeholder until MOO-800 lands the canonical contracts. The engine stays pure: inputs in, findings out.
-export const RulesEngineVersion = z.literal("0.0.0");
-export const RULES_ENGINE_VERSION: z.infer<typeof RulesEngineVersion> = "0.0.0";
+// Pure rules engine (docs/planning/05_decisioning_design.md §1). Inputs in, findings out. No I/O by lint rule.
+export { evaluate } from "./evaluate.ts";
+export { checkRule } from "./kinds.ts";
+export { applyConditions } from "./conditions.ts";
+export { readFact, evaluatePredicate } from "./facts.ts";
+export const RULES_ENGINE_VERSION = "0.1.0" as const;

@@ -1,0 +1,88 @@
+{
+  "$id": "parcelpilot/ParcelFacts.v1",
+  "title": "ParcelFacts",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "lot_area_sqft": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "lot_area_suspect": {
+      "default": false,
+      "type": "boolean"
+    },
+    "base_zoning": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "planned_development": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "overlays": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "special_districts": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "floodplain": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "gis_ambiguity": {
+      "default": false,
+      "type": "boolean"
+    },
+    "attributes": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": [
+          "number",
+          "string",
+          "boolean",
+          "null"
+        ]
+      }
+    }
+  },
+  "required": [
+    "lot_area_sqft",
+    "lot_area_suspect",
+    "base_zoning",
+    "planned_development",
+    "overlays",
+    "special_districts",
+    "floodplain",
+    "gis_ambiguity",
+    "attributes"
+  ],
+  "additionalProperties": false
+}
