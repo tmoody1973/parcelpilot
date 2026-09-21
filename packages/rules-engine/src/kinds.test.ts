@@ -20,7 +20,7 @@ function run(category: RuleCategory, scenario: ScenarioInputs, opts: { rules?: Z
 const CASES: Record<(typeof V1_CATEGORIES)[number], Record<FindingStatus, (() => ReturnType<typeof run>) | null>> = {
   use: {
     pass: () => run("use", ok),
-    fail: () => run("use", { ...ok, use: "heavy_industrial" }),
+    fail: () => run("use", { ...ok, use: "adult_retail" }),
     unknown: () => run("use", { ...ok, use: "office" }),
     verify: () => run("use", { ...ok, ground_floor_use: "residential" }),
     insufficient_evidence: null, // `use` is a required scenario field; it cannot be missing
@@ -88,7 +88,7 @@ for (const category of V1_CATEGORIES) {
 
 test("use label L (limited) is verify, never pass; N is fail", () => {
   assert.equal(run("use", { ...ok, use: "retail" }).reason, "use_label:L");
-  assert.equal(run("use", { ...ok, use: "heavy_industrial" }).allowed?.value, "N");
+  assert.equal(run("use", { ...ok, use: "adult_retail" }).allowed?.value, "N");
 });
 
 test("an evaluable condition overrides a param and lowers confidence to medium", () => {

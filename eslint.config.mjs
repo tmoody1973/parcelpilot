@@ -9,7 +9,7 @@ export default tseslint.config(
   { files: ["**/*.ts", "**/*.tsx", "**/*.mjs"], languageOptions: { parser: tseslint.parser } },
   {
     files: ["packages/rules-engine/**/*.ts"],
-    ignores: ["**/*.test.ts"], // tests may use node:test; the engine itself may not
+    ignores: ["**/*.test.ts", "**/fixtures/**"], // tests and test fixtures may use node:*; the engine itself may not
     rules: {
       "no-restricted-imports": ["error", {
         paths: ioModules.map((name) => ({ name, message: "rules-engine is pure: no I/O imports (see 02_architecture.md §3)." })),
