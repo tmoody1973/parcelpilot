@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, date, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, customType, date, index, integer, jsonb, numeric, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { OrgRole, ReviewStatus, SourceStatus } from "@parcelpilot/contracts";
 
 // zod exposes `.options` as a plain array; drizzle wants a non-empty tuple. Values are identical.
@@ -88,3 +88,29 @@ export const auditEvents = pgTable("audit_events", {
   payload: jsonb("payload"),
   createdAt: timestamps.createdAt,
 }, (t) => [index("audit_events_org_created_idx").on(t.orgId, t.createdAt), index("audit_events_entity_idx").on(t.entityType, t.entityId)]);
+
+// ---- group 4a: parcels (jurisdiction-shared, no org_id) ----
+const multiPolygon4326 = customType<{ data: unknown; driverData: string }>({ dataType: () => "geometry(MultiPolygon,4326)" });
+
+export const parcels = pgTable("parcels", {
+  taxkey: text("taxkey").primaryKey(),
+  jurisdictionId: text("jurisdiction_id").notNull().references(() => jurisdictions.id),
+  ...timestamps,
+});
+
+// Immutable: one row per (taxkey, content_hash) observation. Enforced by the append_only trigger in migration 0003.
+export const parcelSnapshots = pgTable("parcel_snapshots", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  taxkey: text("taxkey").notNull().references(() => parcels.taxkey),
+  geometry: multiPolygon4326("geometry").notNull(),
+  attributes: jsonb("attributes").notNull(),
+  address: text("address").notNull(),
+  zoning: text("zoning"),
+  lotAreaSqft: numeric("lot_area_sqft"),
+  lotAreaSuspect: boolean("lot_area_suspect").notNull().default(false),
+  sourceLayer: text("source_layer").notNull(),
+  sourceGisDatetime: timestamp("source_gis_datetime", { withTimezone: true }),
+  retrievedAt: timestamp("retrieved_at", { withTimezone: true }).notNull(),
+  contentHash: text("content_hash").notNull(),
+  createdAt: timestamps.createdAt,
+}, (t) => [index("parcel_snapshots_taxkey_hash_idx").on(t.taxkey, t.contentHash, t.retrievedAt)]);

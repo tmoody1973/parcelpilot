@@ -15,6 +15,20 @@
       "when": 1790005893818,
       "tag": "0001_rls_roles_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790009626258,
+      "tag": "0002_futuristic_winter_soldier",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790009626925,
+      "tag": "0003_parcel_snapshots_append_only",
+      "breakpoints": true
     }
   ]
 }

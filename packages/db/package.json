@@ -23,7 +23,8 @@
   "dependencies": {
     "drizzle-orm": "^0.44.0",
     "postgres": "^3.4.0",
-    "@parcelpilot/contracts": "workspace:*"
+    "@parcelpilot/contracts": "workspace:*",
+    "@parcelpilot/zoning-core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
