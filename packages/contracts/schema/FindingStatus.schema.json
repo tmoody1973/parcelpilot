@@ -1,0 +1,13 @@
+{
+  "$id": "parcelpilot/FindingStatus.v1",
+  "title": "FindingStatus",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "pass",
+    "fail",
+    "unknown",
+    "verify",
+    "insufficient_evidence"
+  ]
+}

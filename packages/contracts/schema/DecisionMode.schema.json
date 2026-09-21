@@ -1,0 +1,12 @@
+{
+  "$id": "parcelpilot/DecisionMode.v1",
+  "title": "DecisionMode",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "rules_only",
+    "structured_output_baseline",
+    "jev",
+    "shadow"
+  ]
+}

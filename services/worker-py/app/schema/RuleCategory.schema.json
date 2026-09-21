@@ -1,0 +1,16 @@
+{
+  "$id": "parcelpilot/RuleCategory.v1",
+  "title": "RuleCategory",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "use",
+    "height",
+    "setback_front",
+    "setback_side",
+    "setback_rear",
+    "density",
+    "parking",
+    "lot_coverage"
+  ]
+}

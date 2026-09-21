@@ -1,0 +1,12 @@
+{
+  "$id": "parcelpilot/SourceStatus.v1",
+  "title": "SourceStatus",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "pending_review",
+    "active",
+    "superseded",
+    "withdrawn"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "$id": "parcelpilot/Criticality.v1",
+  "title": "Criticality",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "critical",
+    "high",
+    "medium",
+    "low"
+  ]
+}

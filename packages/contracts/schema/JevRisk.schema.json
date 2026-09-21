@@ -1,0 +1,11 @@
+{
+  "$id": "parcelpilot/JevRisk.v1",
+  "title": "JevRisk",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "low",
+    "medium",
+    "high"
+  ]
+}

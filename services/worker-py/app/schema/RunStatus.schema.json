@@ -1,0 +1,13 @@
+{
+  "$id": "parcelpilot/RunStatus.v1",
+  "title": "RunStatus",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "queued",
+    "running",
+    "succeeded",
+    "failed",
+    "cancelled"
+  ]
+}

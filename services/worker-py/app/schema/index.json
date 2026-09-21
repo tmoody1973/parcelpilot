@@ -1,0 +1,14 @@
+{
+  "FinalStatus": "FinalStatus.schema.json",
+  "FindingStatus": "FindingStatus.schema.json",
+  "Criticality": "Criticality.schema.json",
+  "RuleCategory": "RuleCategory.schema.json",
+  "CoverageBucket": "CoverageBucket.schema.json",
+  "JevRoute": "JevRoute.schema.json",
+  "JevRisk": "JevRisk.schema.json",
+  "SourceStatus": "SourceStatus.schema.json",
+  "ReviewStatus": "ReviewStatus.schema.json",
+  "RunStatus": "RunStatus.schema.json",
+  "DecisionMode": "DecisionMode.schema.json",
+  "OrgRole": "OrgRole.schema.json"
+}

@@ -1,0 +1,11 @@
+{
+  "$id": "parcelpilot/CoverageBucket.v1",
+  "title": "CoverageBucket",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "checked",
+    "manual_review",
+    "unknown"
+  ]
+}

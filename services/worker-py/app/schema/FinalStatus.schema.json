@@ -1,0 +1,12 @@
+{
+  "$id": "parcelpilot/FinalStatus.v1",
+  "title": "FinalStatus",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "proceed_to_concept_design",
+    "revise_scenario",
+    "verify_before_committing",
+    "insufficient_evidence"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "$id": "parcelpilot/OrgRole.v1",
+  "title": "OrgRole",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "owner",
+    "admin",
+    "member",
+    "reviewer"
+  ]
+}

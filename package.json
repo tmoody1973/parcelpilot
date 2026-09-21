@@ -2,11 +2,16 @@
   "name": "parcelpilot",
   "private": true,
   "packageManager": "pnpm@10.19.0",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "typecheck": "pnpm -r --if-present typecheck",
     "build": "pnpm -r --if-present build",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "pnpm -r --if-present test",
+    "lint:copy": "node packages/contracts/src/cli/banned-phrases.ts apps/web/app packages/zoning-core/templates",
+    "contracts:emit": "node packages/contracts/src/cli/emit-json-schema.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

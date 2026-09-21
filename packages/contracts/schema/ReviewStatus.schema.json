@@ -1,0 +1,12 @@
+{
+  "$id": "parcelpilot/ReviewStatus.v1",
+  "title": "ReviewStatus",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "unreviewed",
+    "in_review",
+    "approved",
+    "rejected"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "$id": "parcelpilot/JevRoute.v1",
+  "title": "JevRoute",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "proceed_to_concept_design",
+    "revise_scenario",
+    "contact_city",
+    "engage_zoning_professional",
+    "collect_missing_information",
+    "insufficient_evidence"
+  ]
+}
