@@ -16,10 +16,12 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "node --conditions=development --test \"src/**/*.test.ts\""
+    "test": "node --conditions=development --test \"src/**/*.test.ts\"",
+    "test:gold": "node --conditions=development --test src/gold.test.ts"
   },
   "dependencies": {
     "@parcelpilot/contracts": "workspace:*",
+    "@parcelpilot/rules-engine": "workspace:*",
     "zod": "^4.1.0"
   },
   "devDependencies": {

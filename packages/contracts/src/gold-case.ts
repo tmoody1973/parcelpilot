@@ -25,12 +25,16 @@ export const GoldParcel = z.object({
 
 export const GoldScenario = ScenarioInputs;
 
+// Structured expected values so the gold test can exact-match the engine (MOO-817). `note` keeps the
+// reviewer's prose ("24 units x 1200 = 28800 sq ft"); the engine compares numbers, not sentences.
+const GoldValue = z.union([z.number(), z.string()]);
 export const GoldFinding = z.object({
   status: FindingStatus,
   criticality: Criticality,
-  proposed: z.string().optional(),
-  allowed: z.string().optional(),
+  proposed: z.object({ value: GoldValue, unit: z.string().optional() }).optional(),
+  allowed: z.object({ value: GoldValue, unit: z.string().optional(), operator: z.enum(["<=", ">=", "in", "=="]) }).optional(),
   reason: z.string().optional(),
+  note: z.string().optional(),
 });
 
 export const GoldCitation = z.object({

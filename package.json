@@ -18,7 +18,9 @@
     "smoke:parcel": "node packages/zoning-core/src/cli/smoke-parcel.ts",
     "gis:snapshot": "node --conditions=development apps/worker/src/cli/gis-snapshot.ts",
     "smoke:intersections": "node --conditions=development packages/db/src/cli/smoke-intersections.ts",
-    "rules:seed": "node --conditions=development packages/db/src/cli/seed-rules.ts"
+    "rules:seed": "node --conditions=development packages/db/src/cli/seed-rules.ts",
+    "test:gold": "pnpm --filter @parcelpilot/zoning-core test:gold",
+    "gold:live": "node apps/web/scripts/gold-live.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

@@ -71,7 +71,7 @@
     { "id": "lb2-front-min-v1", "family_id": "lb2-front-min", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB2", "category": "setback_front", "kind": "min_setback_ft", "criticality": "high",
       "params": { "min_ft": 0 },
       "conditions": [
-        { "id": "front_setback_average", "description": "LB2 front setback maximum is 'average': within 20% of the average front setback of adjacent buildings (295-505-2-b). Needs neighbouring setbacks, which are not a parcel fact yet.",
+        { "id": "average_front_setback", "description": "LB2 front setback maximum is 'average': within 20% of the average front setback of adjacent buildings (295-505-2-b). Needs neighbouring setbacks, which are not a parcel fact yet.",
           "evaluable": false, "effect": { "status": "verify" },
           "citation": { "document_id": "fa92de2c8d86f6e448aae129436b455d23dc11d8815a6123e58df11ceb77ae49", "page": 13, "section": "295-505-2-b", "excerpt": "anywhere in the range of the average setback minus 20% to the average setback plus 20%" } }
       ],

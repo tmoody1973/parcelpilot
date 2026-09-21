@@ -36,6 +36,20 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
+  gold:
+    name: gold-cases
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # All 15 gold cases through the rules engine, the citation gate and the policy: exact match, no database.
+      - run: pnpm test:gold
+
   python:
     name: worker-py tests
     runs-on: ubuntu-latest
