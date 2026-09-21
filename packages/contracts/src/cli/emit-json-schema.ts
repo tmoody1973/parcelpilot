@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { ENUMS } from "../enums.ts";
 import { RULE_SCHEMAS } from "../rules.ts";
+import { POLICY_SCHEMAS } from "../policy.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, "..", "..", "..", "..");
@@ -13,7 +14,7 @@ const targets = [join(repoRoot, "packages", "contracts", "schema"), join(repoRoo
 
 for (const dir of targets) mkdirSync(dir, { recursive: true });
 const index: Record<string, string> = {};
-for (const [name, schema] of Object.entries({ ...ENUMS, ...RULE_SCHEMAS })) {
+for (const [name, schema] of Object.entries({ ...ENUMS, ...RULE_SCHEMAS, ...POLICY_SCHEMAS })) {
   const json = { $id: `parcelpilot/${name}.v1`, title: name, ...z.toJSONSchema(schema, { unrepresentable: "any" }) };
   const file = `${name}.schema.json`;
   index[name] = file;

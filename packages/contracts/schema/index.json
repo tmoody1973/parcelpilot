@@ -16,5 +16,9 @@
   "Finding": "Finding.schema.json",
   "CalculationRecord": "CalculationRecord.schema.json",
   "EvaluateInput": "EvaluateInput.schema.json",
-  "EvaluateOutput": "EvaluateOutput.schema.json"
+  "EvaluateOutput": "EvaluateOutput.schema.json",
+  "PolicyInput": "PolicyInput.schema.json",
+  "PolicyResult": "PolicyResult.schema.json",
+  "DecisionLayerOutput": "DecisionLayerOutput.schema.json",
+  "CitationGateInput": "CitationGateInput.schema.json"
 }

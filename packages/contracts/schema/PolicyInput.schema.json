@@ -1,0 +1,344 @@
+{
+  "$id": "parcelpilot/PolicyInput.v1",
+  "title": "PolicyInput",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "use",
+              "height",
+              "setback_front",
+              "setback_side",
+              "setback_rear",
+              "density",
+              "parking",
+              "lot_coverage"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "fail",
+              "unknown",
+              "verify",
+              "insufficient_evidence"
+            ]
+          },
+          "criticality": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "rule_id": {
+            "type": "string"
+          },
+          "rule_version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "proposed": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "unit": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "scenario",
+                  "parcel"
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "source"
+            ],
+            "additionalProperties": false
+          },
+          "allowed": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "unit": {
+                "type": "string"
+              },
+              "operator": {
+                "type": "string",
+                "enum": [
+                  "<=",
+                  ">=",
+                  "in",
+                  "=="
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "operator"
+            ],
+            "additionalProperties": false
+          },
+          "calculation_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "citation_id": {
+                  "type": "string"
+                },
+                "document_id": {
+                  "type": "string"
+                },
+                "page": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "section": {
+                  "type": "string"
+                },
+                "table": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "document_id",
+                "page",
+                "section"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "reason": {
+            "type": "string"
+          },
+          "missing_inputs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          }
+        },
+        "required": [
+          "category",
+          "status",
+          "criticality",
+          "calculation_ids",
+          "citations",
+          "missing_inputs",
+          "confidence"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "properties": {
+        "checked": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "use",
+              "height",
+              "setback_front",
+              "setback_side",
+              "setback_rear",
+              "density",
+              "parking",
+              "lot_coverage"
+            ]
+          }
+        },
+        "manual_review": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "use",
+              "height",
+              "setback_front",
+              "setback_side",
+              "setback_rear",
+              "density",
+              "parking",
+              "lot_coverage"
+            ]
+          }
+        },
+        "unknown": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "use",
+              "height",
+              "setback_front",
+              "setback_side",
+              "setback_rear",
+              "density",
+              "parking",
+              "lot_coverage"
+            ]
+          }
+        }
+      },
+      "required": [
+        "checked",
+        "manual_review",
+        "unknown"
+      ],
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "citation_validator_passed": {
+          "type": "boolean"
+        },
+        "active_code_version": {
+          "type": "boolean"
+        },
+        "conflicting_sources": {
+          "default": false,
+          "type": "boolean"
+        },
+        "stale_facts": {
+          "default": false,
+          "type": "boolean"
+        },
+        "problems": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "citation_validator_passed",
+        "active_code_version",
+        "conflicting_sources",
+        "stale_facts",
+        "problems"
+      ],
+      "additionalProperties": false
+    },
+    "parcel": {
+      "type": "object",
+      "properties": {
+        "overlays": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "special_districts": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "planned_development": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "floodplain": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "gis_ambiguity": {
+          "default": false,
+          "type": "boolean"
+        },
+        "stacked_condo_candidates": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "overlays",
+        "special_districts",
+        "planned_development",
+        "floodplain",
+        "gis_ambiguity",
+        "stacked_condo_candidates"
+      ],
+      "additionalProperties": false
+    },
+    "pre_run_block": {
+      "type": "string",
+      "enum": [
+        "stacked_condo_selection"
+      ]
+    },
+    "decision_mode": {
+      "default": "rules_only",
+      "type": "string",
+      "enum": [
+        "rules_only",
+        "structured_output_baseline",
+        "jev",
+        "shadow"
+      ]
+    }
+  },
+  "required": [
+    "findings",
+    "coverage",
+    "evidence",
+    "parcel",
+    "decision_mode"
+  ],
+  "additionalProperties": false
+}

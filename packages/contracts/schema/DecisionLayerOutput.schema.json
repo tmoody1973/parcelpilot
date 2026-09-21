@@ -1,0 +1,49 @@
+{
+  "$id": "parcelpilot/DecisionLayerOutput.v1",
+  "title": "DecisionLayerOutput",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "jev_decision.v1"
+    },
+    "route": {
+      "type": "string",
+      "enum": [
+        "proceed_to_concept_design",
+        "revise_scenario",
+        "contact_city",
+        "engage_zoning_professional",
+        "collect_missing_information",
+        "insufficient_evidence"
+      ]
+    },
+    "risk": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "manual_review_required": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "required": [
+    "version",
+    "route",
+    "risk",
+    "confidence",
+    "manual_review_required"
+  ],
+  "additionalProperties": false
+}

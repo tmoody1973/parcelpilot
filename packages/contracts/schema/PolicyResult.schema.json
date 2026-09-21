@@ -1,0 +1,88 @@
+{
+  "$id": "parcelpilot/PolicyResult.v1",
+  "title": "PolicyResult",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "final_status": {
+      "type": "string",
+      "enum": [
+        "proceed_to_concept_design",
+        "revise_scenario",
+        "verify_before_committing",
+        "insufficient_evidence"
+      ]
+    },
+    "route": {
+      "type": "string",
+      "enum": [
+        "proceed_to_concept_design",
+        "revise_scenario",
+        "contact_city",
+        "engage_zoning_professional",
+        "collect_missing_information",
+        "insufficient_evidence"
+      ]
+    },
+    "risk": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "triggers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "policy_flags": {
+      "type": "object",
+      "properties": {
+        "deterministic_critical_fail": {
+          "type": "boolean"
+        },
+        "special_district_detected": {
+          "type": "boolean"
+        },
+        "missing_required_input": {
+          "type": "boolean"
+        },
+        "gis_ambiguity": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "deterministic_critical_fail",
+        "special_district_detected",
+        "missing_required_input",
+        "gis_ambiguity"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "final_status",
+    "route",
+    "risk",
+    "reasons",
+    "triggers",
+    "policy_flags"
+  ],
+  "additionalProperties": false
+}
