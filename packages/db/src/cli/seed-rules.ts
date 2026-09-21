@@ -11,11 +11,18 @@ const URL = process.env["DATABASE_SERVICE_URL"] ?? process.env["DATABASE_URL"] ?
 const REVIEWER_EMAIL = process.env["REVIEWER_EMAIL"] ?? "tarik@radiomilwaukee.org"; // interim reviewer = product owner (MOO-795)
 const RULES_DIR = join(import.meta.dirname, "..", "..", "..", "contracts", "rules");
 const RuleList = ZoningRule.array(); // built on contracts' zod, not a second copy
+type Doc = { sha256: string; title: string; source_type: string; published_marker: string; page_count: number; local_path: string };
 
 const sql = postgres(URL, { max: 1 });
 try {
-  const files = readdirSync(RULES_DIR).filter((f) => f.endsWith(".json")).sort();
-  const rules: Rule[] = files.flatMap((f) => RuleList.parse((JSON.parse(readFileSync(join(RULES_DIR, f), "utf8")) as { rules: unknown[] }).rules));
+  const files = readdirSync(RULES_DIR).filter((f) => f.endsWith(".json")).sort().map((f) => JSON.parse(readFileSync(join(RULES_DIR, f), "utf8")) as { documents?: Doc[]; rules: unknown[] });
+  const rules: Rule[] = files.flatMap((f) => RuleList.parse(f.rules));
+  // The cited documents, registered if `pnpm seed:sources` has not run here (CI has no PDFs or MinIO).
+  // Keyed by sha256 like the Python seed, so whichever runs second is a no-op.
+  for (const d of files.flatMap((f) => f.documents ?? [])) {
+    await sql`insert into source_documents (jurisdiction_id, source_type, title, sha256, local_path, retrieved_at, retrieval_method, published_marker, page_count, status, review_status)
+      values ('milwaukee-wi', ${d.source_type}, ${d.title}, ${d.sha256}, ${d.local_path}, now(), 'manual_upload', ${d.published_marker}, ${d.page_count}, 'active', 'approved') on conflict (sha256) do nothing`;
+  }
 
   const [reviewer] = await sql`insert into users (email, full_name) values (${REVIEWER_EMAIL}, 'Interim reviewer')
     on conflict (email) do update set updated_at = now() returning id`;
@@ -53,8 +60,11 @@ try {
       links += res.count;
     }
   }
+  // The reviewer signed rules that cite these pages, so the cited documents are the reviewed, active
+  // versions the citation gate requires (05 §2). Only pending rows change; superseded ones never flip back.
+  const activated = await sql`update source_documents set status = 'active', review_status = 'approved' where id = any(${[...docIds.values()]}) and status = 'pending_review'`;
   const [counts] = await sql`select (select count(*) from zoning_rules)::int as rules, (select count(*) from citations)::int as citations, (select count(*) from rule_citations)::int as links`;
-  console.log(`rules: inserted=${inserted} existing=${existing}; new links=${links}; totals ${JSON.stringify(counts)}`);
+  console.log(`rules: inserted=${inserted} existing=${existing}; new links=${links}; sources activated=${activated.count}; totals ${JSON.stringify(counts)}`);
 } finally {
   await sql.end();
 }

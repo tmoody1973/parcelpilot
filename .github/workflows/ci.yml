@@ -29,6 +29,7 @@ jobs:
         run: |
           docker compose up -d --wait db
           pnpm db:migrate
+          pnpm rules:seed
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm lint:copy
