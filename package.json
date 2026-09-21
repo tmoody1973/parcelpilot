@@ -13,7 +13,8 @@
     "lint:copy": "node packages/contracts/src/cli/banned-phrases.ts apps/web/app packages/zoning-core/templates",
     "contracts:emit": "node packages/contracts/src/cli/emit-json-schema.ts",
     "db:migrate": "pnpm --filter @parcelpilot/db db:migrate",
-    "db:generate": "pnpm --filter @parcelpilot/db db:generate"
+    "db:generate": "pnpm --filter @parcelpilot/db db:generate",
+    "seed:sources": "cd services/worker-py && uv run python -m app.seed_sources ../../data"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
