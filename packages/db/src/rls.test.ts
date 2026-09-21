@@ -25,11 +25,16 @@ after(async () => {
   await Promise.all([owner.end(), app.end(), service.end()]);
 });
 
-const asOrg = (sql: postgres.Sql, orgId: string | null) =>
-  sql.begin(async (tx) => {
+// Scopes an app connection to `orgId` for one transaction, then runs `q` under RLS. `null` leaves
+// app.org_id unset, which the policies treat as "no org" and match zero rows.
+const scoped = <T>(orgId: string | null, q: (tx: postgres.TransactionSql) => Promise<T>): Promise<T> =>
+  app.begin(async (tx) => {
     await tx`select set_config('app.org_id', ${orgId ?? ""}, true)`;
-    return tx`select org_id from memberships where user_id = ${userId}`;
+    return q(tx);
   });
+
+const asOrg = (orgId: string | null) =>
+  scoped(orgId, (tx) => tx`select org_id from memberships where user_id = ${userId}`);
 
 test("trip-wire: every table with an org_id column has an RLS policy", async () => {
   const rows = await owner`
@@ -41,29 +46,22 @@ test("trip-wire: every table with an org_id column has an RLS policy", async () 
 });
 
 test("app role with org A sees only org A rows", async () => {
-  const rows = await asOrg(app, orgA);
+  const rows = await asOrg(orgA);
   assert.deepEqual(rows.map((r) => r["org_id"]), [orgA]);
 });
 
 test("app role with a wrong org id sees zero rows", async () => {
-  assert.equal((await asOrg(app, "00000000-0000-0000-0000-000000000000")).length, 0);
+  assert.equal((await asOrg("00000000-0000-0000-0000-000000000000")).length, 0);
 });
 
 test("app role with app.org_id unset sees zero rows", async () => {
-  assert.equal((await asOrg(app, null)).length, 0);
+  assert.equal((await asOrg(null)).length, 0);
 });
 
 test("service role bypasses RLS and sees both orgs", async () => {
   const rows = await service`select org_id from memberships where user_id = ${userId} order by org_id`;
   assert.deepEqual(rows.map((r) => r["org_id"]).sort(), [orgA, orgB].sort());
 });
-
-// Scopes an app connection to `orgId` for one transaction, then runs `q` under RLS.
-const scoped = <T>(orgId: string, q: (tx: postgres.TransactionSql) => Promise<T>): Promise<T> =>
-  app.begin(async (tx) => {
-    await tx`select set_config('app.org_id', ${orgId}, true)`;
-    return q(tx);
-  });
 
 test("app role with org A cannot read org B's projects or scenarios", async () => {
   const [{ id: projA }] = await owner`insert into projects (org_id, name) values (${orgA}, 'A project') returning id`;

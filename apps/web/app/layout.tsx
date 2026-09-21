@@ -6,6 +6,10 @@ export const metadata = {
   description: "Preliminary zoning screen for Milwaukee infill parcels. Not an official zoning determination.",
 };
 
+// The layout wraps every route in ClerkProvider, which needs a publishable key to render. Rendering
+// on demand (not at build) keeps `next build` from needing that key; this cascades to all pages below.
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <ClerkProvider>
