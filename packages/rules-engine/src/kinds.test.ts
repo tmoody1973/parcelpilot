@@ -21,7 +21,7 @@ const CASES: Record<(typeof V1_CATEGORIES)[number], Record<FindingStatus, (() =>
   use: {
     pass: () => run("use", ok),
     fail: () => run("use", { ...ok, use: "adult_retail" }),
-    unknown: () => run("use", { ...ok, use: "office" }),
+    unknown: () => run("use", { ...ok, use: "data_center" }),
     verify: () => run("use", { ...ok, ground_floor_use: "residential" }),
     insufficient_evidence: null, // `use` is a required scenario field; it cannot be missing
   },

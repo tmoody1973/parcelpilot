@@ -35,12 +35,13 @@ Legend letters, as printed: Y permitted use · L limited use (standards in 295-6
 | | | single_family | Y | Single-family dwelling | 2 |
 | | | two_family | Y | Two-family dwelling | 2 |
 | | | live_work | Y | Live-work unit | 2 |
+| | | office | Y | General office | 3 |
 | | | retail | L | Retail establishment, general | 3 |
 | | | commercial | L | (form's catch-all; mapped to the retail row, the most restrictive common commercial use) | 3 |
 | | | mixed_use | L | (dwellings Y over retail L; the L governs) | 2–3 |
 | | | adult_retail | N | Adult retail establishment | 3 |
 
-**Deliberately left out of v1:** `office` (General office = Y on pdf p. 3). Gold case G10 was drafted with office outside the rule set so the engine returns `unknown` for it. Reviewer decision: add `office: Y` (and correct G10) or keep it out. Both are safe; `unknown` routes to verify.
+**Reviewer decisions (2026-09-21):** `office: Y` added (General office = Y, pdf p. 3); gold G10 changed to an unlisted use (`data_center`). `mixed_use` and `commercial` stay L: a catch-all cannot be checked against one table row, so verify is the honest answer.
 
 **Condition on both use rules:** `street_classification` (295-603-2-a-2, pdf p. 6, printed 816): "No dwelling unit shall be permitted in the street-level area on a principal arterial, minor arterial or collector street … Street-level dwelling units are permitted on local streets." Fires when the scenario's ground-floor use is residential; the street classification map is not a parcel fact yet, so the use category returns `verify`.
 
@@ -51,10 +52,10 @@ From `05_decisioning_design.md` §1.4 defaults: use and height critical; setback
 ## Corrections to the gold drafts found while reading
 
 - Gold citations say Table 295-605-2 is on printed page 823; the footer reads 824.
-- Gold G10 assumes office is outside the rule set; the table lists General office = Y. Kept out of v1 pending the decision above.
+- Gold G10 assumed office was outside the rule set; the table lists General office = Y. G10 now uses `data_center`.
 
 ## Reviewer sign-off
 
-Interim reviewer (product owner, per MOO-795): _______________________ Date: ____________
+Interim reviewer (product owner, per MOO-795): **Tarik Moody** Date: **2026-09-21** (signed on Linear MOO-813 after reading the page list; office and catch-all decisions recorded above)
 
 Sign by commenting on Linear issue MOO-813 with "reviewed lb1-lb2-v1" and any rows to change. A changed value is a new version in the JSON (rows are append-only), never an edit.

@@ -1,10 +1,10 @@
 {
-  "$comment": "Hand-entered v1 rules for LB1 and LB2 (MOO-813). Every value was read from the cited PDF page on 2026-09-21. document_id is the PDF sha256: 198a9062… = data/zoning-code-pdfs/CH295-sub6.pdf (stamp 7/15/2025), fa92de2c… = CH295-sub5.pdf (stamp 4/22/2025). Use labels are the Table 295-603-1 legend letters (Y/L/S/N), never verdicts. Reviewed by the interim reviewer per docs/rules/lb1-lb2-v1.md.",
+  "$comment": "Hand-entered v1 rules for LB1 and LB2 (MOO-813). Every value was read from the cited PDF page on 2026-09-21. document_id is the PDF sha256: 198a9062… = data/zoning-code-pdfs/CH295-sub6.pdf (stamp 7/15/2025), fa92de2c… = CH295-sub5.pdf (stamp 4/22/2025). Use labels are the Table 295-603-1 legend letters (Y/L/S/N), never verdicts. Reviewed and signed by the interim reviewer (product owner) on 2026-09-21; see docs/rules/lb1-lb2-v1.md and Linear MOO-813.",
   "rules": [
     {
       "id": "lb1-use-v1", "family_id": "lb1-use", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB1",
       "category": "use", "kind": "allowed_use", "criticality": "critical",
-      "params": { "uses": { "multifamily": "Y", "single_family": "Y", "two_family": "Y", "live_work": "Y", "mixed_use": "L", "commercial": "L", "retail": "L", "adult_retail": "N" } },
+      "params": { "uses": { "multifamily": "Y", "single_family": "Y", "two_family": "Y", "live_work": "Y", "office": "Y", "mixed_use": "L", "commercial": "L", "retail": "L", "adult_retail": "N" } },
       "conditions": [
         { "id": "street_classification", "description": "No dwelling unit in the street-level area on a principal arterial, minor arterial or collector street; street-level dwelling units are allowed on local streets (295-603-2-a-2). Street classification is not a parcel fact yet.",
           "when": { "fact": "scenario.ground_floor_use", "op": "==", "value": "residential" }, "evaluable": false, "effect": { "status": "verify" },
@@ -44,7 +44,7 @@
     {
       "id": "lb2-use-v1", "family_id": "lb2-use", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB2",
       "category": "use", "kind": "allowed_use", "criticality": "critical",
-      "params": { "uses": { "multifamily": "Y", "single_family": "Y", "two_family": "Y", "live_work": "Y", "mixed_use": "L", "commercial": "L", "retail": "L", "adult_retail": "N" } },
+      "params": { "uses": { "multifamily": "Y", "single_family": "Y", "two_family": "Y", "live_work": "Y", "office": "Y", "mixed_use": "L", "commercial": "L", "retail": "L", "adult_retail": "N" } },
       "conditions": [
         { "id": "street_classification", "description": "No dwelling unit in the street-level area on a principal arterial, minor arterial or collector street; street-level dwelling units are allowed on local streets (295-603-2-a-2). Street classification is not a parcel fact yet.",
           "when": { "fact": "scenario.ground_floor_use", "op": "==", "value": "residential" }, "evaluable": false, "effect": { "status": "verify" },
