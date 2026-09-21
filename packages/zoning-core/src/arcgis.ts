@@ -40,3 +40,31 @@ export function createArcgisClient(fetchImpl: FetchLike = (u) => fetch(u)) {
   };
 }
 export type ArcgisClient = ReturnType<typeof createArcgisClient>;
+
+// ---- Layer metadata and full paginated pulls (used by the GIS snapshot job) ----
+export type LayerMetadata = { name: string; geometryType: string; fields: string[]; maxRecordCount: number };
+export type LayerFeature = { type: "Feature"; id?: number; geometry: unknown; properties: Record<string, unknown> };
+
+export async function layerMetadata(fetchImpl: FetchLike, serviceUrl: string, layerId: number): Promise<LayerMetadata> {
+  const m = await getJson<{ name: string; geometryType: string; fields?: { name: string }[]; maxRecordCount?: number }>(fetchImpl, `${serviceUrl}/${layerId}?f=pjson`);
+  return { name: m.name, geometryType: m.geometryType, fields: (m.fields ?? []).map((f) => f.name), maxRecordCount: m.maxRecordCount ?? 1000 };
+}
+
+export async function layerCount(fetchImpl: FetchLike, serviceUrl: string, layerId: number): Promise<number> {
+  const r = await getJson<{ count: number }>(fetchImpl, `${serviceUrl}/${layerId}/query?where=1%3D1&returnCountOnly=true&f=json`);
+  return r.count;
+}
+
+// Yields pages of GeoJSON features ordered by OBJECTID so hashes are stable across runs.
+export async function* layerPages(fetchImpl: FetchLike, serviceUrl: string, layerId: number, pageSize: number): AsyncGenerator<LayerFeature[]> {
+  let offset = 0;
+  for (;;) {
+    const q = new URLSearchParams({ where: "1=1", outFields: "*", orderByFields: "OBJECTID", resultOffset: String(offset), resultRecordCount: String(pageSize), returnGeometry: "true", outSR: "4326", f: "geojson" });
+    const page = await getJson<{ features?: LayerFeature[] }>(fetchImpl, `${serviceUrl}/${layerId}/query?${q}`);
+    const feats = page.features ?? [];
+    if (feats.length === 0) return;
+    yield feats;
+    if (feats.length < pageSize) return;
+    offset += feats.length;
+  }
+}

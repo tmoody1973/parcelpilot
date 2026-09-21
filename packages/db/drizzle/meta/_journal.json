@@ -36,6 +36,27 @@
       "when": 1790009780044,
       "tag": "0004_seed_jurisdictions",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790010197589,
+      "tag": "0005_stiff_white_queen",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790010198241,
+      "tag": "0006_gis_registry_seed_and_immutability",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790010314181,
+      "tag": "0007_curved_tiger_shark",
+      "breakpoints": true
     }
   ]
 }

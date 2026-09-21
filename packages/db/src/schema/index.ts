@@ -114,3 +114,40 @@ export const parcelSnapshots = pgTable("parcel_snapshots", {
   contentHash: text("content_hash").notNull(),
   createdAt: timestamps.createdAt,
 }, (t) => [index("parcel_snapshots_taxkey_hash_idx").on(t.taxkey, t.contentHash, t.retrievedAt)]);
+
+// ---- group 4b: GIS layer registry and snapshots (jurisdiction-shared) ----
+export const gisLayerKind = pgEnum("gis_layer_kind", ["base_zoning", "planned_development", "overlay", "special_district", "floodplain"]);
+const geometry4326 = customType<{ data: unknown; driverData: string }>({ dataType: () => "geometry(Geometry,4326)" });
+
+export const gisLayers = pgTable("gis_layers", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  key: text("key").notNull(), // e.g. zoning.11
+  jurisdictionId: text("jurisdiction_id").notNull().references(() => jurisdictions.id),
+  kind: gisLayerKind("kind").notNull(),
+  name: text("name").notNull(),
+  serviceUrl: text("service_url").notNull(), // .../planning/zoning/MapServer
+  layerId: integer("layer_id").notNull(),
+  expectedFields: text("expected_fields").array().notNull(),
+  codeField: text("code_field"), // attribute holding the district/overlay code, when one exists
+  enabled: boolean("enabled").notNull().default(true),
+  ...timestamps,
+}, (t) => [uniqueIndex("gis_layers_key_idx").on(t.key)]);
+
+// One row per changed pull of a layer. Immutable (append_only trigger, migration 0006).
+export const gisLayerSnapshots = pgTable("gis_layer_snapshots", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  gisLayerId: uuid("gis_layer_id").notNull().references(() => gisLayers.id),
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
+  featureCount: integer("feature_count").notNull(),
+  contentHash: text("content_hash").notNull(),
+  sourceFields: text("source_fields").array().notNull(),
+  createdAt: timestamps.createdAt,
+}, (t) => [index("gis_layer_snapshots_layer_fetched_idx").on(t.gisLayerId, t.fetchedAt)]);
+
+export const gisLayerSnapshotFeatures = pgTable("gis_layer_snapshot_features", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  snapshotId: uuid("snapshot_id").notNull().references(() => gisLayerSnapshots.id),
+  objectId: integer("object_id").notNull(),
+  geometry: geometry4326("geometry"), // NULL when the source feature has no shape (it happens in City layers)
+  attributes: jsonb("attributes").notNull(),
+}, (t) => [index("gis_layer_snapshot_features_snapshot_idx").on(t.snapshotId, t.objectId)]);

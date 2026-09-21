@@ -12,5 +12,10 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "@parcelpilot/db": "workspace:*",
+    "@parcelpilot/zoning-core": "workspace:*",
+    "postgres": "^3.4.0"
   }
 }

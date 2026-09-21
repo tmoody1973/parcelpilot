@@ -1,0 +1,1 @@
+ALTER TABLE "gis_layer_snapshot_features" ALTER COLUMN "geometry" DROP NOT NULL;

@@ -44,6 +44,16 @@ importers:
         version: 5.9.3
 
   apps/worker:
+    dependencies:
+      '@parcelpilot/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@parcelpilot/zoning-core':
+        specifier: workspace:*
+        version: link:../../packages/zoning-core
+      postgres:
+        specifier: ^3.4.0
+        version: 3.4.9
     devDependencies:
       '@types/node':
         specifier: ^22.10.0
