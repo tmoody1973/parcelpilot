@@ -24,7 +24,6 @@
     "use": "multifamily",
     "units": 24,
     "stories": 4,
-    "height_ft": null,
     "footprint_sqft": 5200,
     "setback_front_ft": 5,
     "setback_side_ft": 0,
