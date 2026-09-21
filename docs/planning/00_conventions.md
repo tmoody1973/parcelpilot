@@ -44,11 +44,11 @@ web (Next.js App Router, TypeScript), api (Next.js route handlers → service la
 - reranker: default Cohere rerank-v3.5 via API; local bge-reranker-v2-m3 as fallback/offline option.
 
 ## v1 scope
-Jurisdiction: milwaukee-wi only. Districts (Tarik, 2026-09-21, provisional pending reviewer): LB1, LB2, LB3, RB1, RB2 (Ch. 295 subchapter 6, Table 295-605-2 p. 823, 7/15/2025 stamp). Demo district: LB1 (45 ft max height makes the PRD demo concept at 46 ft a one-foot fail). All five share one use table (295-603-1) and one design-standards table, so the extra districts add rows, not new table families. Rule categories: use, height, setbacks (front/side/rear) + at most one more. Overlays/special districts: detect via GIS + registry, route to verify_before_committing unless reviewed.
+Jurisdiction: milwaukee-wi only. Districts (CONFIRMED by Tarik 2026-09-21, decision 007; expert reviewer to ratify): LB1, LB2, LB3, RB1, RB2 (Ch. 295 subchapter 6, Table 295-605-2 p. 823, 7/15/2025 stamp). Demo district: LB1 (45 ft max height makes the PRD demo concept at 46 ft a one-foot fail). All five share one use table (295-603-1) and one design-standards table, so the extra districts add rows, not new table families. Rule categories: use, height, setbacks (front/side/rear) + at most one more. Overlays/special districts: detect via GIS + registry, route to verify_before_committing unless reviewed.
 
 ## Milestones (06 owns detail)
 M0 Bootstrap & contracts; M1 Parcel & map workspace (unscored scenarios); M2 Source ingestion & reviewer queue; M3 Rules engine & findings; M4 Retrieval & evidence bundle; M5 Decision layer (rules_only + shadow JEV) & briefing LLM & validators & memo; M6 Gold set 50 + evaluation dashboard + pilot readiness.
 Smallest demoable slice = M0+M1+M3 (with hand-entered, reviewer-approved rules for ONE district) + templated memo on ONE real parcel; before RAG.
 
 ## Environments
-local: docker compose (postgres+postgis+pgvector, minio, worker-py) ; web hosting: Vercel (apps/web) in staging and prod, or the Hetzner VPS if Tarik picks the single-box option (08 Q on deployment) ; staging: Neon (postgres w/ pgvector+postgis) or Fly Postgres + Fly apps + R2; prod: same as staging, separate project/keys. CI on GitHub Actions from M0 (typecheck, unit, build; rules-engine tests are the gate).
+local: docker compose (postgres+postgis+pgvector, minio, worker-py) ; DECIDED 2026-09-21 (Tarik, decision 008): web = Vercel; workers = Fly.io; database = Neon (PostGIS + pgvector); files = Cloudflare R2; staging and prod are separate projects/keys. CI on GitHub Actions from M0 (typecheck, unit, build; rules-engine tests are the gate).

@@ -1,0 +1,133 @@
+{
+  "id": "G10",
+  "version": 1,
+  "title": "LB1 use outside v1 rule set: office",
+  "district": "LB1",
+  "parcel": {
+    "source": "real",
+    "taxkey": "2050114000",
+    "address": "4843 N Green Bay Av",
+    "lot_area_sqft": 7000,
+    "base_zoning": [
+      "LB1"
+    ],
+    "lot_area_suspect": false,
+    "overlays": [],
+    "special_districts": [],
+    "floodplain": [],
+    "gis_ambiguity": false,
+    "stacked_condo_candidates": [],
+    "source_layer": "parcels_mprop/MapServer/2",
+    "retrieved_at": "2026-09-21"
+  },
+  "scenario": {
+    "use": "office",
+    "units": 0,
+    "stories": 4,
+    "height_ft": 46,
+    "footprint_sqft": 5200,
+    "setback_front_ft": 5,
+    "setback_side_ft": 0,
+    "setback_rear_ft": 10,
+    "parking_spaces": 12,
+    "ground_floor_use": "none",
+    "ground_floor_commercial_sqft": 0
+  },
+  "expected": {
+    "findings": {
+      "use": {
+        "status": "unknown",
+        "criticality": "critical",
+        "reason": "no_rule:use_not_in_v1_rule_set"
+      },
+      "height": {
+        "status": "fail",
+        "criticality": "critical",
+        "proposed": "46 ft",
+        "allowed": "<= 45 ft"
+      },
+      "density": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": "0 units x 1200 = 0 sq ft",
+        "allowed": "<= lot area 7000 sq ft"
+      },
+      "setback_front": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": "5 ft",
+        "allowed": "min none, max 70 ft"
+      },
+      "setback_side": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": "0 ft",
+        "allowed": "none required"
+      },
+      "setback_rear": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": "10 ft",
+        "allowed": "none required"
+      }
+    },
+    "coverage": {
+      "checked": [
+        "use",
+        "height",
+        "setback_front",
+        "setback_side",
+        "setback_rear",
+        "density"
+      ],
+      "manual_review": [],
+      "unknown": [
+        "parking",
+        "lot_coverage"
+      ]
+    },
+    "evidence": {
+      "citation_validator_passed": true,
+      "active_code_version": true
+    },
+    "policy_flags": {
+      "deterministic_critical_fail": true,
+      "special_district_detected": false,
+      "missing_required_input": false,
+      "gis_ambiguity": false
+    },
+    "final_status": "verify_before_committing",
+    "route": "engage_zoning_professional",
+    "triggers": [],
+    "reasons": [
+      "O3:critical_or_high_fail",
+      "O5:unknown_critical_category"
+    ]
+  },
+  "citations": [
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 16,
+      "printed_page": 823,
+      "section": "295-605-2",
+      "table": "Table 295-605-2",
+      "note": "Principal building design standards: height max, lot area per dwelling unit, setbacks by district"
+    },
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 2,
+      "section": "295-603-1",
+      "table": "Table 295-603-1",
+      "note": "Use table row 'Multi-family dwelling' = Y in LB1/LB2/LB3/RB1/RB2"
+    }
+  ],
+  "review": {
+    "status": "unreviewed",
+    "drafted_by": "claude-fable-5-1 (draft for reviewer correction)",
+    "drafted_at": "2026-09-21",
+    "reviewer": null,
+    "notes": "Office is not a v1 use rule; use = unknown (critical) \u2192 O5 \u2192 verify_before_committing. Height/setbacks still evaluate. Density with 0 units passes trivially; reviewer may prefer 'not applicable'."
+  }
+}

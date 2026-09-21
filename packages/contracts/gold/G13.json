@@ -1,0 +1,84 @@
+{
+  "id": "G13",
+  "version": 1,
+  "title": "Stacked condo: point resolves to three TAXKEYs (synthetic)",
+  "district": "LB1",
+  "parcel": {
+    "source": "synthetic",
+    "taxkey": "2050114000",
+    "address": "4843 N Green Bay Av",
+    "lot_area_sqft": 7000,
+    "base_zoning": [
+      "LB1"
+    ],
+    "lot_area_suspect": false,
+    "overlays": [],
+    "special_districts": [],
+    "floodplain": [],
+    "gis_ambiguity": false,
+    "stacked_condo_candidates": [
+      "2050114001",
+      "2050114002",
+      "2050114003"
+    ],
+    "source_layer": "parcels_mprop/MapServer/2",
+    "retrieved_at": "2026-09-21"
+  },
+  "scenario": {
+    "use": "multifamily",
+    "units": 24,
+    "stories": 4,
+    "height_ft": 46,
+    "footprint_sqft": 5200,
+    "setback_front_ft": 5,
+    "setback_side_ft": 0,
+    "setback_rear_ft": 10,
+    "parking_spaces": 12,
+    "ground_floor_use": "retail",
+    "ground_floor_commercial_sqft": 3000
+  },
+  "expected": {
+    "findings": {},
+    "coverage": {
+      "checked": [],
+      "manual_review": [],
+      "unknown": [
+        "use",
+        "height",
+        "setback_front",
+        "setback_side",
+        "setback_rear",
+        "density",
+        "parking",
+        "lot_coverage"
+      ]
+    },
+    "evidence": {
+      "citation_validator_passed": true,
+      "active_code_version": true
+    },
+    "policy_flags": {
+      "deterministic_critical_fail": false,
+      "special_district_detected": false,
+      "missing_required_input": false,
+      "gis_ambiguity": true
+    },
+    "final_status": "insufficient_evidence",
+    "route": "collect_missing_information",
+    "triggers": [
+      "stacked_condo:3_candidates"
+    ],
+    "reasons": [
+      "pre_run_block:stacked_condo_selection"
+    ],
+    "pre_run_block": "stacked_condo_selection"
+  },
+  "citations": [],
+  "review": {
+    "status": "unreviewed",
+    "drafted_by": "claude-fable-5-1 (draft for reviewer correction)",
+    "drafted_at": "2026-09-21",
+    "reviewer": null,
+    "notes": "Synthetic: the parcel layer documents stacked condo polygons (one per TAXKEY). Analysis must not start until the user picks one. Reviewer: supply a real stacked-condo address in an LB district."
+  }
+}

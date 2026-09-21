@@ -10,7 +10,7 @@ This lists every decision engineering cannot safely guess: what we already know 
 
 ### Q-01 — Which 2–4 zoning districts does the first slice target? *(covers A1)*
 
-> **Provisional answer (Tarik, 2026-09-21):** LB1, LB2, LB3, RB1, RB2. Demo district LB1. Awaiting domain-reviewer confirmation. See `00_conventions.md` v1 scope.
+> **Answered (Tarik, 2026-09-21, decision 007):** LB1, LB2, LB3, RB1, RB2. Demo district LB1. Expert reviewer to ratify when recruited. See `00_conventions.md` v1 scope.
 **Why:** Building rules, tables, and test parcels for the wrong district wastes the most expensive resource — reviewer hours — twice.
 **What we know:** Candidates confirmed by reading the actual Ch.295 PDFs: residential `RM1–RM7` (subchapter 5), commercial `NS1, NS2, LB1, LB2, LB3, RB1, RB2` (subchapter 6). No data on which districts Milwaukee small-infill deals actually use.
 **Options:** 1) Pick 2 now — cheap, but wrong districts sink the pilot. 2) Pick 1 for the first demoable slice, expand after M3 proves out — slower, but proves the risky chain (rules engine, memo, safety policy) before spending reviewer time on district #2.
@@ -184,6 +184,8 @@ This lists every decision engineering cannot safely guess: what we already know 
 **Decider / Needed by / Blocks:** Tech lead, budget sign-off from Tarik / M0 / app scaffolding, tenancy wiring.
 
 ### Q-24 — Deployment: Vercel + Fly/Railway + Neon, or a single Hetzner VPS with docker compose?
+
+> **Answered (Tarik, 2026-09-21):** Vercel + Fly.io + Neon + R2. See `docs/decisions/008-deployment-shape.md`.
 **Why:** Determines ops complexity, monthly cost, and how many services need patching and monitoring. Tarik already runs a Hetzner box.
 **What we know:** `00_conventions.md`'s environments section already names the Vercel/Fly/Neon path as staging default. The Hetzner alternative isn't in any planning doc but is real infrastructure already in place.
 **Options:** 1) Vercel + Fly/Railway + Neon — managed, less ops burden, scales without manual work, multiple vendor bills to watch. 2) Single Hetzner VPS — one box, one bill, already known, but manual patching/backup/scaling and a single point of failure unless mitigated.
@@ -209,6 +211,8 @@ This lists every decision engineering cannot safely guess: what we already know 
 ## Legal & pilot
 
 ### Q-27 — Who is the domain reviewer, and what does the role look like?
+
+> **Status (Tarik, 2026-09-21):** no reviewer yet. Gold cases are being drafted by Claude as `unreviewed`; a reviewer corrects rather than authors.
 **Why:** No rule can be reviewer-approved, no gold case authored, without a named human with allocated hours; right now "the reviewer" is a role in documents, not a person.
 **What we know:** Nothing — a staffing fact only Tarik has.
 **Options:** 1) One reviewer — simplest, cheapest, single point of failure, makes Q-28 unmeasurable (needs a pair). 2) Two reviewers — enables measuring agreement directly, redundant, doubles the recruiting/budget problem.

@@ -1,0 +1,125 @@
+{
+  "id": "G15",
+  "version": 1,
+  "title": "Citation validator fails: cited source superseded",
+  "district": "LB1",
+  "parcel": {
+    "source": "real",
+    "taxkey": "2050114000",
+    "address": "4843 N Green Bay Av",
+    "lot_area_sqft": 7000,
+    "base_zoning": [
+      "LB1"
+    ],
+    "lot_area_suspect": false,
+    "overlays": [],
+    "special_districts": [],
+    "floodplain": [],
+    "gis_ambiguity": false,
+    "stacked_condo_candidates": [],
+    "source_layer": "parcels_mprop/MapServer/2",
+    "retrieved_at": "2026-09-21"
+  },
+  "scenario": {
+    "use": "multifamily",
+    "units": 5,
+    "stories": 3,
+    "height_ft": 44,
+    "footprint_sqft": 5200,
+    "setback_front_ft": 5,
+    "setback_side_ft": 0,
+    "setback_rear_ft": 10,
+    "parking_spaces": 12,
+    "ground_floor_use": "retail",
+    "ground_floor_commercial_sqft": 3000
+  },
+  "expected": {
+    "findings": {
+      "use": {
+        "status": "pass",
+        "criticality": "critical",
+        "proposed": "multifamily over ground-floor retail",
+        "allowed": "Y (Table 295-603-1); retail L"
+      },
+      "height": {
+        "status": "pass",
+        "criticality": "critical",
+        "proposed": "44 ft",
+        "allowed": "<= 45 ft"
+      },
+      "density": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": "5 units x 1200 = 6000 sq ft",
+        "allowed": "<= lot area 7000 sq ft"
+      },
+      "setback_front": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": "5 ft",
+        "allowed": "min none, max 70 ft"
+      },
+      "setback_side": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": "0 ft",
+        "allowed": "none required"
+      },
+      "setback_rear": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": "10 ft",
+        "allowed": "none required"
+      }
+    },
+    "coverage": {
+      "checked": [
+        "use",
+        "height",
+        "setback_front",
+        "setback_side",
+        "setback_rear",
+        "density"
+      ],
+      "manual_review": [],
+      "unknown": [
+        "parking",
+        "lot_coverage"
+      ]
+    },
+    "evidence": {
+      "citation_validator_passed": false,
+      "active_code_version": false
+    },
+    "policy_flags": {
+      "deterministic_critical_fail": false,
+      "special_district_detected": false,
+      "missing_required_input": false,
+      "gis_ambiguity": false
+    },
+    "final_status": "insufficient_evidence",
+    "route": "insufficient_evidence",
+    "triggers": [],
+    "reasons": [
+      "O1:citation_validator_failed"
+    ]
+  },
+  "citations": [
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 16,
+      "printed_page": 823,
+      "section": "295-605-2",
+      "table": "Table 295-605-2",
+      "note": "In this case the cited document row is status=superseded; validator must fail closed"
+    }
+  ],
+  "review": {
+    "status": "unreviewed",
+    "drafted_by": "claude-fable-5-1 (draft for reviewer correction)",
+    "drafted_at": "2026-09-21",
+    "reviewer": null,
+    "notes": "Same inputs as G02 but the source_documents row backing the height rule is superseded. O1 forces insufficient_evidence regardless of the clean findings."
+  }
+}
