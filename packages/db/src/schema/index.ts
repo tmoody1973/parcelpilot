@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { boolean, customType, date, index, integer, jsonb, numeric, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
-import { OrgRole, ReviewStatus, SourceStatus } from "@parcelpilot/contracts";
+import { Criticality, DecisionMode, FinalStatus, FindingStatus, JevRoute, OrgRole, ReviewStatus, RuleCategory, RuleKind, RunStatus, SourceStatus } from "@parcelpilot/contracts";
 
 // zod exposes `.options` as a plain array; drizzle wants a non-empty tuple. Values are identical.
 const tuple = <T extends string>(values: readonly T[]) => values as unknown as [T, ...T[]];
@@ -202,3 +202,99 @@ export const gisIntersections = pgTable("gis_intersections", {
   overlapRatio: numeric("overlap_ratio").notNull(),
   computedAt: timestamp("computed_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [uniqueIndex("gis_intersections_parcel_feature_idx").on(t.parcelSnapshotId, t.featureId), index("gis_intersections_parcel_idx").on(t.parcelSnapshotId)]);
+
+// ---- group 4d: reviewed rules and citations (jurisdiction-shared, immutable; 03 §4.5) ----
+export const ruleCategory = pgEnum("rule_category", tuple(RuleCategory.options));
+export const ruleKind = pgEnum("rule_kind", tuple(RuleKind.options));
+export const criticality = pgEnum("criticality", tuple(Criticality.options));
+export const findingStatus = pgEnum("finding_status", tuple(FindingStatus.options));
+export const finalStatus = pgEnum("final_status", tuple(FinalStatus.options));
+export const jevRoute = pgEnum("jev_route", tuple(JevRoute.options));
+export const decisionMode = pgEnum("decision_mode", tuple(DecisionMode.options));
+export const runStatus = pgEnum("run_status", tuple(RunStatus.options));
+
+// The only table a deterministic finding may cite as authority. A new version is a new row;
+// `family_id` is a stable slug (e.g. lb1-height-max), not a uuid, so seeds and fixtures can name it.
+// `status` is review_status (only `approved` rows are loaded by the engine); 03 wrote source_status,
+// which describes documents, not reviews.
+export const zoningRules = pgTable("zoning_rules", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  familyId: text("family_id").notNull(),
+  version: integer("version").notNull(),
+  jurisdictionId: text("jurisdiction_id").notNull().references(() => jurisdictions.id),
+  districtCode: text("district_code").notNull(),
+  category: ruleCategory("category").notNull(),
+  kind: ruleKind("kind").notNull(),
+  params: jsonb("params").notNull(),
+  conditions: jsonb("conditions").notNull().default(sql`'[]'::jsonb`),
+  criticality: criticality("criticality").notNull(),
+  status: reviewStatus("status").notNull().default("unreviewed"),
+  approvedBy: uuid("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
+  effectiveStart: date("effective_start").notNull(),
+  effectiveEnd: date("effective_end"),
+  supersedesId: uuid("supersedes_id"),
+  createdAt: timestamps.createdAt,
+}, (t) => [uniqueIndex("zoning_rules_family_version_idx").on(t.familyId, t.version), index("zoning_rules_district_category_idx").on(t.jurisdictionId, t.districtCode, t.category)]);
+
+// One evidence pointer: this document, this page, this excerpt. code_chunk_id gets its FK in M2.
+export const citations = pgTable("citations", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  codeChunkId: uuid("code_chunk_id"),
+  sourceDocumentId: uuid("source_document_id").notNull().references(() => sourceDocuments.id),
+  pageNumber: integer("page_number").notNull(),
+  printedPage: integer("printed_page"),
+  section: text("section"),
+  anchor: text("anchor"),
+  excerpt: text("excerpt").notNull(),
+  createdAt: timestamps.createdAt,
+}, (t) => [index("citations_document_page_idx").on(t.sourceDocumentId, t.pageNumber)]);
+
+export const ruleCitations = pgTable("rule_citations", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  zoningRuleId: uuid("zoning_rule_id").notNull().references(() => zoningRules.id),
+  citationId: uuid("citation_id").notNull().references(() => citations.id),
+  createdAt: timestamps.createdAt,
+}, (t) => [uniqueIndex("rule_citations_rule_citation_idx").on(t.zoningRuleId, t.citationId)]);
+
+// ---- group 5: feasibility runs and calculations (tenant-scoped, immutable once locked; 03 §4.6) ----
+// A run pins every id the result depends on. Rows may be updated only until `locked_at` is set
+// (status queued → running → succeeded, then final_status + locked_at); after that, frozen (migration 0012).
+export const feasibilityRuns = pgTable("feasibility_runs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").notNull().references(() => projects.id),
+  scenarioId: uuid("scenario_id").notNull().references(() => scenarios.id),
+  parcelSnapshotId: uuid("parcel_snapshot_id").notNull().references(() => parcelSnapshots.id),
+  gisLayerSnapshotIds: uuid("gis_layer_snapshot_ids").array().notNull(),
+  inputHash: text("input_hash").notNull(),
+  scenarioInputs: jsonb("scenario_inputs").notNull(),
+  ruleVersionSet: jsonb("rule_version_set").notNull(),
+  decisionMode: decisionMode("decision_mode").notNull().default("rules_only"),
+  status: runStatus("status").notNull().default("queued"),
+  finalStatus: finalStatus("final_status"),
+  route: jevRoute("route"),
+  policyReasons: jsonb("policy_reasons"),
+  lockedAt: timestamp("locked_at", { withTimezone: true }),
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: timestamps.createdAt,
+}, (t) => [index("feasibility_runs_org_project_idx").on(t.orgId, t.projectId), index("feasibility_runs_scenario_idx").on(t.scenarioId)]);
+
+// One finding per rule category within a run: the engine's Finding plus its calculation records.
+export const calculations = pgTable("calculations", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  feasibilityRunId: uuid("feasibility_run_id").notNull().references(() => feasibilityRuns.id),
+  ruleCategory: ruleCategory("rule_category").notNull(),
+  findingStatus: findingStatus("finding_status").notNull(),
+  criticality: criticality("criticality").notNull(),
+  proposedValue: jsonb("proposed_value"),
+  allowedValue: jsonb("allowed_value"),
+  assumptions: jsonb("assumptions").notNull().default(sql`'[]'::jsonb`),
+  calculationDetail: jsonb("calculation_detail").notNull(),
+  zoningRuleId: uuid("zoning_rule_id").references(() => zoningRules.id),
+  citationIds: uuid("citation_ids").array().notNull().default(sql`'{}'::uuid[]`),
+  confidence: text("confidence").notNull(),
+  reviewReason: text("review_reason"),
+  createdAt: timestamps.createdAt,
+}, (t) => [index("calculations_run_idx").on(t.feasibilityRunId)]);
