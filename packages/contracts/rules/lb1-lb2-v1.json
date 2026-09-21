@@ -1,0 +1,89 @@
+{
+  "$comment": "Hand-entered v1 rules for LB1 and LB2 (MOO-813). Every value was read from the cited PDF page on 2026-09-21. document_id is the PDF sha256: 198a9062… = data/zoning-code-pdfs/CH295-sub6.pdf (stamp 7/15/2025), fa92de2c… = CH295-sub5.pdf (stamp 4/22/2025). Use labels are the Table 295-603-1 legend letters (Y/L/S/N), never verdicts. Reviewed and signed by the interim reviewer (product owner) on 2026-09-21; see docs/rules/lb1-lb2-v1.md and Linear MOO-813.",
+  "rules": [
+    {
+      "id": "lb1-use-v1", "family_id": "lb1-use", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB1",
+      "category": "use", "kind": "allowed_use", "criticality": "critical",
+      "params": { "uses": { "multifamily": "Y", "single_family": "Y", "two_family": "Y", "live_work": "Y", "office": "Y", "mixed_use": "L", "commercial": "L", "retail": "L", "adult_retail": "N" } },
+      "conditions": [
+        { "id": "street_classification", "description": "No dwelling unit in the street-level area on a principal arterial, minor arterial or collector street; street-level dwelling units are allowed on local streets (295-603-2-a-2). Street classification is not a parcel fact yet.",
+          "when": { "fact": "scenario.ground_floor_use", "op": "==", "value": "residential" }, "evaluable": false, "effect": { "status": "verify" },
+          "citation": { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 6, "printed_page": 816, "section": "295-603-2-a-2", "excerpt": "No dwelling unit shall be permitted in the street-level area on a principal arterial, minor arterial or collector street, as classified on the functional classification of streets and highways map. Street-level dwelling units are permitted on local streets." } }
+      ],
+      "citations": [
+        { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 2, "printed_page": 812, "section": "295-603-1", "table": "Table 295-603-1", "excerpt": "Multi-family dwelling: NS1 Y, NS2 Y, LB1 Y, LB2 Y, LB3 L, RB1 Y, RB2 Y, CS Y" },
+        { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 3, "printed_page": 813, "section": "295-603-1", "table": "Table 295-603-1", "excerpt": "Retail establishment, general: L in every commercial district; Adult retail establishment: N in LB1 and LB2" }
+      ],
+      "effective_start": "2025-07-15", "effective_end": null, "status": "approved"
+    },
+    { "id": "lb1-height-max-v1", "family_id": "lb1-height-max", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB1", "category": "height", "kind": "max_height_ft", "criticality": "critical",
+      "params": { "max_ft": 45 }, "conditions": [],
+      "citations": [ { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 16, "printed_page": 824, "section": "295-605-2", "table": "Table 295-605-2", "excerpt": "Height, maximum (ft.): LB1 45" } ],
+      "effective_start": "2025-07-15", "effective_end": null, "status": "approved" },
+    { "id": "lb1-front-min-v1", "family_id": "lb1-front-min", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB1", "category": "setback_front", "kind": "min_setback_ft", "criticality": "high",
+      "params": { "min_ft": 0 }, "conditions": [],
+      "citations": [ { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 16, "printed_page": 824, "section": "295-605-2", "table": "Table 295-605-2", "excerpt": "Front setback, minimum (ft.) (see s. 295-505-2-b): LB1 none" } ],
+      "effective_start": "2025-07-15", "effective_end": null, "status": "approved" },
+    { "id": "lb1-front-max-v1", "family_id": "lb1-front-max", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB1", "category": "setback_front", "kind": "max_setback_ft", "criticality": "high",
+      "params": { "max_ft": 70 }, "conditions": [],
+      "citations": [ { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 16, "printed_page": 824, "section": "295-605-2", "table": "Table 295-605-2", "excerpt": "Front setback, maximum (ft.) (see s. 295-505-2-b): LB1 70" } ],
+      "effective_start": "2025-07-15", "effective_end": null, "status": "approved" },
+    { "id": "lb1-side-min-v1", "family_id": "lb1-side-min", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB1", "category": "setback_side", "kind": "min_setback_ft", "criticality": "high",
+      "params": { "min_ft": 0 }, "conditions": [],
+      "citations": [ { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 16, "printed_page": 824, "section": "295-605-2", "table": "Table 295-605-2", "excerpt": "Side setback, minimum (ft.): LB1 none" } ],
+      "effective_start": "2025-07-15", "effective_end": null, "status": "approved" },
+    { "id": "lb1-rear-min-v1", "family_id": "lb1-rear-min", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB1", "category": "setback_rear", "kind": "min_setback_ft", "criticality": "high",
+      "params": { "min_ft": 0 }, "conditions": [],
+      "citations": [ { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 16, "printed_page": 824, "section": "295-605-2", "table": "Table 295-605-2", "excerpt": "Rear setback, minimum (ft.): LB1 none" } ],
+      "effective_start": "2025-07-15", "effective_end": null, "status": "approved" },
+    { "id": "lb1-density-v1", "family_id": "lb1-density", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB1", "category": "density", "kind": "min_lot_area_per_unit", "criticality": "high",
+      "params": { "sqft_per_unit": 1200 }, "conditions": [],
+      "citations": [ { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 16, "printed_page": 824, "section": "295-605-2", "table": "Table 295-605-2", "excerpt": "Lot area per dwelling unit, minimum (sq. ft.): LB1 1,200" } ],
+      "effective_start": "2025-07-15", "effective_end": null, "status": "approved" },
+
+    {
+      "id": "lb2-use-v1", "family_id": "lb2-use", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB2",
+      "category": "use", "kind": "allowed_use", "criticality": "critical",
+      "params": { "uses": { "multifamily": "Y", "single_family": "Y", "two_family": "Y", "live_work": "Y", "office": "Y", "mixed_use": "L", "commercial": "L", "retail": "L", "adult_retail": "N" } },
+      "conditions": [
+        { "id": "street_classification", "description": "No dwelling unit in the street-level area on a principal arterial, minor arterial or collector street; street-level dwelling units are allowed on local streets (295-603-2-a-2). Street classification is not a parcel fact yet.",
+          "when": { "fact": "scenario.ground_floor_use", "op": "==", "value": "residential" }, "evaluable": false, "effect": { "status": "verify" },
+          "citation": { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 6, "printed_page": 816, "section": "295-603-2-a-2", "excerpt": "No dwelling unit shall be permitted in the street-level area on a principal arterial, minor arterial or collector street, as classified on the functional classification of streets and highways map. Street-level dwelling units are permitted on local streets." } }
+      ],
+      "citations": [
+        { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 2, "printed_page": 812, "section": "295-603-1", "table": "Table 295-603-1", "excerpt": "Multi-family dwelling: NS1 Y, NS2 Y, LB1 Y, LB2 Y, LB3 L, RB1 Y, RB2 Y, CS Y" },
+        { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 3, "printed_page": 813, "section": "295-603-1", "table": "Table 295-603-1", "excerpt": "Retail establishment, general: L in every commercial district; Adult retail establishment: N in LB1 and LB2" }
+      ],
+      "effective_start": "2025-07-15", "effective_end": null, "status": "approved"
+    },
+    { "id": "lb2-height-min-v1", "family_id": "lb2-height-min", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB2", "category": "height", "kind": "min_height_ft", "criticality": "critical",
+      "params": { "min_ft": 18 }, "conditions": [],
+      "citations": [ { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 16, "printed_page": 824, "section": "295-605-2", "table": "Table 295-605-2", "excerpt": "Height, minimum (ft.): LB2 18" } ],
+      "effective_start": "2025-07-15", "effective_end": null, "status": "approved" },
+    { "id": "lb2-height-max-v1", "family_id": "lb2-height-max", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB2", "category": "height", "kind": "max_height_ft", "criticality": "critical",
+      "params": { "max_ft": 60 }, "conditions": [],
+      "citations": [ { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 16, "printed_page": 824, "section": "295-605-2", "table": "Table 295-605-2", "excerpt": "Height, maximum (ft.): LB2 60" } ],
+      "effective_start": "2025-07-15", "effective_end": null, "status": "approved" },
+    { "id": "lb2-front-min-v1", "family_id": "lb2-front-min", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB2", "category": "setback_front", "kind": "min_setback_ft", "criticality": "high",
+      "params": { "min_ft": 0 },
+      "conditions": [
+        { "id": "front_setback_average", "description": "LB2 front setback maximum is 'average': within 20% of the average front setback of adjacent buildings (295-505-2-b). Needs neighbouring setbacks, which are not a parcel fact yet.",
+          "evaluable": false, "effect": { "status": "verify" },
+          "citation": { "document_id": "fa92de2c8d86f6e448aae129436b455d23dc11d8815a6123e58df11ceb77ae49", "page": 13, "section": "295-505-2-b", "excerpt": "anywhere in the range of the average setback minus 20% to the average setback plus 20%" } }
+      ],
+      "citations": [ { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 16, "printed_page": 824, "section": "295-605-2", "table": "Table 295-605-2", "excerpt": "Front setback, minimum (ft.): LB2 none; Front setback, maximum (ft.) (see s. 295-505-2-b): LB2 average" } ],
+      "effective_start": "2025-07-15", "effective_end": null, "status": "approved" },
+    { "id": "lb2-side-min-v1", "family_id": "lb2-side-min", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB2", "category": "setback_side", "kind": "min_setback_ft", "criticality": "high",
+      "params": { "min_ft": 0 }, "conditions": [],
+      "citations": [ { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 16, "printed_page": 824, "section": "295-605-2", "table": "Table 295-605-2", "excerpt": "Side setback, minimum (ft.): LB2 none" } ],
+      "effective_start": "2025-07-15", "effective_end": null, "status": "approved" },
+    { "id": "lb2-rear-min-v1", "family_id": "lb2-rear-min", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB2", "category": "setback_rear", "kind": "min_setback_ft", "criticality": "high",
+      "params": { "min_ft": 0 }, "conditions": [],
+      "citations": [ { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 16, "printed_page": 824, "section": "295-605-2", "table": "Table 295-605-2", "excerpt": "Rear setback, minimum (ft.): LB2 none" } ],
+      "effective_start": "2025-07-15", "effective_end": null, "status": "approved" },
+    { "id": "lb2-density-v1", "family_id": "lb2-density", "version": 1, "jurisdiction_id": "milwaukee-wi", "district_code": "LB2", "category": "density", "kind": "min_lot_area_per_unit", "criticality": "high",
+      "params": { "sqft_per_unit": 800 }, "conditions": [],
+      "citations": [ { "document_id": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24", "page": 16, "printed_page": 824, "section": "295-605-2", "table": "Table 295-605-2", "excerpt": "Lot area per dwelling unit, minimum (sq. ft.): LB2 800" } ],
+      "effective_start": "2025-07-15", "effective_end": null, "status": "approved" }
+  ]
+}

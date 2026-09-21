@@ -39,12 +39,15 @@ export const DEFAULT_CRITICALITY: Record<RuleCategory, Criticality> = {
   use: "critical", height: "critical", setback_front: "high", setback_side: "high", setback_rear: "high", density: "high", parking: "medium", lot_coverage: "medium",
 };
 
+// document_id is the source document's sha256 (stable across databases); the seed maps it to a row id.
 export const RuleCitation = z.object({
   citation_id: z.string().optional(),
   document_id: z.string(),
-  page: z.number().int().positive(),
+  page: z.number().int().positive(), // pdf page
+  printed_page: z.number().int().positive().optional(),
   section: z.string(),
   table: z.string().optional(),
+  excerpt: z.string().optional(), // verbatim cell or sentence
 });
 export type RuleCitation = z.infer<typeof RuleCitation>;
 

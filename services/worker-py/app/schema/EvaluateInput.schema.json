@@ -323,10 +323,18 @@
                       "exclusiveMinimum": 0,
                       "maximum": 9007199254740991
                     },
+                    "printed_page": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
                     "section": {
                       "type": "string"
                     },
                     "table": {
+                      "type": "string"
+                    },
+                    "excerpt": {
                       "type": "string"
                     }
                   },
@@ -374,10 +382,18 @@
                   "exclusiveMinimum": 0,
                   "maximum": 9007199254740991
                 },
+                "printed_page": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
                 "section": {
                   "type": "string"
                 },
                 "table": {
+                  "type": "string"
+                },
+                "excerpt": {
                   "type": "string"
                 }
               },
