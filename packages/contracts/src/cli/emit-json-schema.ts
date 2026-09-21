@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { ENUMS } from "../enums.ts";
+import { RULE_SCHEMAS } from "../rules.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, "..", "..", "..", "..");
@@ -12,8 +13,8 @@ const targets = [join(repoRoot, "packages", "contracts", "schema"), join(repoRoo
 
 for (const dir of targets) mkdirSync(dir, { recursive: true });
 const index: Record<string, string> = {};
-for (const [name, schema] of Object.entries(ENUMS)) {
-  const json = { $id: `parcelpilot/${name}.v1`, title: name, ...z.toJSONSchema(schema) };
+for (const [name, schema] of Object.entries({ ...ENUMS, ...RULE_SCHEMAS })) {
+  const json = { $id: `parcelpilot/${name}.v1`, title: name, ...z.toJSONSchema(schema, { unrepresentable: "any" }) };
   const file = `${name}.schema.json`;
   index[name] = file;
   for (const dir of targets) writeFileSync(join(dir, file), JSON.stringify(json, null, 2) + "\n");

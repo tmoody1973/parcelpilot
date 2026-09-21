@@ -10,5 +10,11 @@
   "ReviewStatus": "ReviewStatus.schema.json",
   "RunStatus": "RunStatus.schema.json",
   "DecisionMode": "DecisionMode.schema.json",
-  "OrgRole": "OrgRole.schema.json"
+  "OrgRole": "OrgRole.schema.json",
+  "ZoningRule": "ZoningRule.schema.json",
+  "ParcelFacts": "ParcelFacts.schema.json",
+  "Finding": "Finding.schema.json",
+  "CalculationRecord": "CalculationRecord.schema.json",
+  "EvaluateInput": "EvaluateInput.schema.json",
+  "EvaluateOutput": "EvaluateOutput.schema.json"
 }

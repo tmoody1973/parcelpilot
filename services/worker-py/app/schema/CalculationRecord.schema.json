@@ -1,0 +1,121 @@
+{
+  "$id": "parcelpilot/CalculationRecord.v1",
+  "title": "CalculationRecord",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "use",
+        "height",
+        "setback_front",
+        "setback_side",
+        "setback_rear",
+        "density",
+        "parking",
+        "lot_coverage"
+      ]
+    },
+    "rule_id": {
+      "type": "string"
+    },
+    "rule_version": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "allowed_use",
+        "max_height_ft",
+        "min_height_ft",
+        "min_setback_ft",
+        "max_setback_ft",
+        "min_lot_area_per_unit"
+      ]
+    },
+    "inputs": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": [
+          "number",
+          "string",
+          "boolean",
+          "null"
+        ]
+      }
+    },
+    "proposed": {
+      "type": [
+        "number",
+        "string",
+        "null"
+      ]
+    },
+    "allowed": {
+      "type": [
+        "number",
+        "string",
+        "null"
+      ]
+    },
+    "operator": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "<=",
+            ">=",
+            "in",
+            "=="
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail",
+        "unknown",
+        "verify",
+        "insufficient_evidence"
+      ]
+    },
+    "detail": {
+      "type": "string"
+    },
+    "conditions_applied": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "id",
+    "category",
+    "rule_id",
+    "rule_version",
+    "kind",
+    "inputs",
+    "proposed",
+    "allowed",
+    "operator",
+    "status",
+    "detail",
+    "conditions_applied"
+  ],
+  "additionalProperties": false
+}
