@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790005852466,
+      "tag": "0000_wooden_lord_hawal",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790005893818,
+      "tag": "0001_rls_roles_audit",
+      "breakpoints": true
+    }
+  ]
+}

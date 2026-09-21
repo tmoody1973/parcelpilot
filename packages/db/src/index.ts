@@ -1,1 +1,3 @@
 export const DB_PACKAGE_VERSION = "0.0.0";
+export * from "./schema/index.ts";
+export * from "./client.ts";

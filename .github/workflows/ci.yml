@@ -13,6 +13,10 @@ jobs:
   node:
     name: typecheck · lint · test · build
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgres://parcelpilot:parcelpilot@localhost:5432/parcelpilot
+      DATABASE_APP_URL: postgres://parcelpilot_app:parcelpilot-app@localhost:5432/parcelpilot
+      DATABASE_SERVICE_URL: postgres://parcelpilot_service:parcelpilot-service@localhost:5432/parcelpilot
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4 # version comes from package.json "packageManager"
@@ -21,6 +25,10 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Start Postgres (PostGIS + pgvector) and apply migrations
+        run: |
+          docker compose up -d --wait db
+          pnpm db:migrate
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm lint:copy
