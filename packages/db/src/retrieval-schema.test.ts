@@ -37,6 +37,7 @@ test("derived chunk fields and the trigram index exist on a new chunk", () => ro
 }));
 
 test("at most one active embedding version", () => rolledBack(owner, async (tx) => {
+  await tx`update embedding_versions set is_active = false where is_active`; // a real version may be active on this DB (rolled back)
   await tx`insert into embedding_versions (provider, model_name, dimension, is_active) values ('local-hash', 'a', 1536, true)`;
   await assert.rejects(tx.savepoint((sp) => sp`insert into embedding_versions (provider, model_name, dimension, is_active) values ('local-hash', 'b', 1536, true)`), /embedding_versions_one_active_idx/);
   await tx`insert into embedding_versions (provider, model_name, dimension, is_active) values ('local-hash', 'c', 1536, false)`;
