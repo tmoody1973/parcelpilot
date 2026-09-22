@@ -1,8 +1,8 @@
 # 012 — Reranker: none by default; Jev kept behind a flag as the one option worth re-testing
 
-**Date:** 2026-09-22 · **Status:** proposed, Tarik to choose on the numbers · **Decided by:** Tarik (pending); Claude measured and recommends · **Linear:** MOO-832
+**Date:** 2026-09-22 · **Status:** decided · **Decided by:** Tarik (on the measured table below); Claude measured and recommended · **Linear:** MOO-832
 
-**Decision (recommended).** Live retrieval runs with no reranker. The order comes from rule pinning plus reciprocal-rank fusion. Jev per-candidate reranking stays implemented behind the retriever's `rerank` hook and is re-run in this bake-off whenever the labelled set grows. bge-reranker-v2-m3 and Cohere rerank-v3.5 are not used.
+**Decision.** Live retrieval runs with no reranker. The order comes from rule pinning plus reciprocal-rank fusion. Jev per-candidate reranking stays implemented behind the retriever's `rerank` hook and is re-run in this bake-off whenever the labelled set grows. bge-reranker-v2-m3 and Cohere rerank-v3.5 are not used.
 
 **Why this came up.** The design (04 §6.x) left the reranker to be chosen in M4 by measurement. A reranker reorders the retriever's shortlist with a stronger model. It can lift the right passage higher, but it adds a call per query, cost, latency and, for the hosted options, a vendor. Whatever wins only orders evidence; it never decides pass or fail.
 
@@ -21,7 +21,7 @@
 3. **The shortlist boundary held.** Jev saw only shortlists (17 to 20 candidates per request, 26 requests in total, never the corpus), and every reranker left the candidate set unchanged, which the retriever enforces.
 
 **Options.**
-1. **None (recommended).** Cost: nothing today; we give up whatever a reranker might add on questions the labelled set doesn't cover yet.
+1. **None (chosen by Tarik, 2026-09-22).** Cost: nothing today; we give up whatever a reranker might add on questions the labelled set doesn't cover yet.
 2. **Jev behind the flag, on in production.** Cost: ~$0.20 per thousand queries, half a second per query, a vendor in the retrieval path, and no measured benefit with pins on.
 3. **bge self-hosted.** Cost: a 2.2 GB model and a GPU to make it fast; no measured benefit with pins on.
 4. **Cohere.** Cost: ~$2.00 per thousand queries, and it made raw ordering worse on this corpus.
@@ -29,6 +29,8 @@
 **What we give up.** A measured improvement we cannot see yet. The labelled set is small (13 distinct shortlists once repeated questions are cached) and saturated by pinning, so a reranker has little room to show value. Questions the rules don't pin, such as procedures, definitions and districts without approved rules, are where it would matter, and they are under-represented in the set.
 
 **How we'll know if this was right.** Re-run `pnpm retrieval:bakeoff` when the labelled set grows beyond the 15 gold cases (M6) or covers districts without approved rules. If Jev's pins-off lift holds above +0.05 MRR there, switch it on for unpinned categories only.
+
+**Boundary check after the decision.** One live Jev call for "front setback minimum and maximum in LB2" (pins off) sent 1 request with the 20 shortlisted candidates, 6,219 characters against the 166,996-character served corpus (3.7%), and a state of only the question and district. It ranked s. 295-605-2-f-4 (minimum height by street frontage) above the setback rows: the plausible-but-wrong ordering that rule pinning prevents.
 
 **Run note.** During the bge pass one Postgres server process exited with code 2; Postgres recovered in 5 seconds, no query in the run failed, and the corpus, embeddings and rules were intact afterwards. The cause was not identified from the log.
 
