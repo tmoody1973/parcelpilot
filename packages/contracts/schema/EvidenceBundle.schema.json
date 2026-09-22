@@ -1,0 +1,258 @@
+{
+  "$id": "parcelpilot/EvidenceBundle.v1",
+  "title": "EvidenceBundle",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "evidence_bundle.v1"
+    },
+    "feasibility_run_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "jurisdiction_id": {
+      "type": "string"
+    },
+    "analysis_date": {
+      "type": "string"
+    },
+    "embedding_version": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "model_name": {
+          "type": "string"
+        },
+        "dimension": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "id",
+        "provider",
+        "model_name",
+        "dimension"
+      ],
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source_id": {
+            "type": "string"
+          },
+          "official_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "document_title": {
+            "type": "string"
+          },
+          "section": {
+            "type": "string"
+          },
+          "page": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "verbatim_excerpt": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending_review",
+              "active",
+              "superseded",
+              "withdrawn"
+            ]
+          }
+        },
+        "required": [
+          "source_id",
+          "official_url",
+          "document_title",
+          "section",
+          "page",
+          "verbatim_excerpt",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "subquestions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "subquestion": {
+            "type": "string"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "use",
+                  "height",
+                  "setback_front",
+                  "setback_side",
+                  "setback_rear",
+                  "density",
+                  "parking",
+                  "lot_coverage"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "districts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "run_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source_id": {
+                  "type": "string"
+                },
+                "rank": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "context_type": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "parent_section",
+                        "adjacent",
+                        "cross_reference",
+                        "exception",
+                        "district_general_provision",
+                        "overlay",
+                        "definition",
+                        "superseding_amendment"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "source_id",
+                "rank",
+                "context_type"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required_context_found": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          },
+          "missing_context": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "parent_section",
+                "adjacent",
+                "cross_reference",
+                "exception",
+                "district_general_provision",
+                "overlay",
+                "definition",
+                "superseding_amendment"
+              ]
+            }
+          }
+        },
+        "required": [
+          "subquestion",
+          "category",
+          "districts",
+          "run_id",
+          "evidence",
+          "required_context_found",
+          "missing_context"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "jev_flags": {
+      "type": "object",
+      "properties": {
+        "active_version_confirmed": {
+          "type": "boolean"
+        },
+        "overlay_detected": {
+          "type": "boolean"
+        },
+        "required_context_complete": {
+          "type": "boolean"
+        },
+        "coverage_gap_list": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "active_version_confirmed",
+        "overlay_detected",
+        "required_context_complete",
+        "coverage_gap_list"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "feasibility_run_id",
+    "jurisdiction_id",
+    "analysis_date",
+    "embedding_version",
+    "evidence",
+    "subquestions",
+    "jev_flags"
+  ],
+  "additionalProperties": false
+}

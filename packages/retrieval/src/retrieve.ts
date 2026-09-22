@@ -35,7 +35,7 @@ export type Hit = {
   lexical_rank: number | null; semantic_rank: number | null; lexical_score: number | null; semantic_score: number | null; rerank_score: number | null; relevance: number;
   reason: string; context_type: string | null; footnotes: string[];
 };
-export type ContextSlot = "parent_section" | "adjacent" | "cross_reference" | "exception" | "district_general_provision" | "overlay";
+export type ContextSlot = "parent_section" | "adjacent" | "cross_reference" | "exception" | "definition" | "superseding_amendment" | "district_general_provision" | "overlay";
 export type RetrieveResult = { run_id: string | null; version: EmbeddingVersion; hits: Hit[]; context: Hit[]; context_found: Partial<Record<ContextSlot, boolean>>; filters: Record<string, unknown> };
 
 // District prefix → the subchapter that regulates it, plus the general subchapters every question may need.
@@ -149,9 +149,10 @@ async function rerankOrderOnly(r: Reranker, query: string, hits: Hit[]): Promise
   return out;
 }
 
-// Required-context expansion (04 §6.2 step 5) for the top hits: governing section, neighbours, cross-referenced
-// sections, exceptions in the same section, Subchapter 4 text naming the district, overlay text. Every slot records
-// whether it was found, so the bundle can say what is missing instead of looking complete.
+// Required-context expansion (04 §6.2 step 5, §6.3) for the top hits: governing section, neighbours, cross-referenced
+// sections, exceptions in the same section, the definition of any defined term the text uses, any amendment that
+// supersedes the passage, Subchapter 4 text naming the district, overlay text. Every slot records whether it was
+// found, so the bundle can say what is missing instead of looking complete.
 async function expandContext(sql: Q, where: ReturnType<typeof filtered>, top: Hit[], known: Map<string, Row>, input: RetrieveInput, k: number) {
   const seen = new Set(top.map((h) => h.chunk_id));
   const context: Hit[] = [];
@@ -186,6 +187,12 @@ async function expandContext(sql: Q, where: ReturnType<typeof filtered>, top: Hi
       join code_sections s on s.id = any(${r.cross_reference_ids}::uuid[]) and c.section = s.section and c.source_document_id = s.source_document_id where ${where} order by c.section, c.page_start limit 3`);
     take("exception", await sql<Row[]>`select ${COLS(sql)}, 0::float as score from code_chunks c join source_documents d on d.id = c.source_document_id
       where c.chunk_kind = 'exception' and c.parent_section_id = ${r.parent_section_id} and ${where} limit 2`);
+    // A defined term the passage uses: §4.3 puts that term's definition chunk id in the passage's cross_reference_ids.
+    if (r.cross_reference_ids.length) take("definition", await sql<Row[]>`select ${COLS(sql)}, 0::float as score from code_chunks c join source_documents d on d.id = c.source_document_id
+      where c.chunk_kind = 'definition' and c.id = any(${r.cross_reference_ids}::uuid[]) and ${where} limit 3`);
+    // An amendment that supersedes or modifies the passage's own section, so a live change is never assumed absent.
+    take("superseding_amendment", await sql<Row[]>`select ${COLS(sql)}, 0::float as score from code_chunks c join source_documents d on d.id = c.source_document_id
+      where c.source_type = 'amendment' and c.section = ${r.section} and ${where} limit 2`);
   }
   take("district_general_provision", await sql<Row[]>`select ${COLS(sql)}, 0::float as score from code_chunks c join source_documents d on d.id = c.source_document_id
     where c.subchapter = '4' and c.tsv @@ (select string_agg(quote_literal(lower(x)), ' | ')::tsquery from unnest(${input.districts}::text[]) x) and ${where} limit 2`);

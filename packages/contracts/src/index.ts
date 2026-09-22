@@ -5,3 +5,4 @@ export * from "./scenario.ts";
 export * from "./rules.ts";
 export * from "./policy.ts";
 export * from "./memo.ts";
+export * from "./evidence.ts";

@@ -19,6 +19,7 @@
     "test": "node --conditions=development --test \"src/**/*.test.ts\""
   },
   "dependencies": {
+    "@parcelpilot/contracts": "workspace:*",
     "@parcelpilot/db": "workspace:*",
     "postgres": "^3.4.0"
   },
