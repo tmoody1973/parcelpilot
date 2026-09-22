@@ -304,6 +304,7 @@ export const calculations = pgTable("calculations", {
 // A code revision produces new rows under a new source_documents row; nothing here is ever edited.
 const vector1536 = customType<{ data: number[] | null; driverData: string }>({ dataType: () => "vector(1536)" });
 const tsvector = customType<{ data: string; driverData: string }>({ dataType: () => "tsvector" });
+export const chunkKind = pgEnum("chunk_kind", ["operative_provision", "table_row", "table_header", "footnote", "definition", "exception", "purpose_statement", "procedure"]);
 export const codeSourceType = pgEnum("code_source_type", ["ordinance_text", "table_row", "footnote", "definition", "amendment", "map_legend"]);
 export const reviewTaskType = pgEnum("review_task_type", ["rule_candidate_review", "merge_review", "page_review", "footnote_review", "source_review", "gis_ambiguity"]);
 
@@ -377,7 +378,12 @@ export const codeChunks = pgTable("code_chunks", {
   supersedesId: uuid("supersedes_id"),
   embedding: vector1536("embedding"),
   embeddingVersionId: uuid("embedding_version_id").references(() => embeddingVersions.id),
-  tsv: tsvector("tsv").generatedAlwaysAs(sql`to_tsvector('english', coalesce(heading, '') || ' ' || text)`),
+  // Generated in migration 0017: prose through the zoning_code config plus section/table numbers as whole lexemes.
+  tsv: tsvector("tsv").generatedAlwaysAs(sql`to_tsvector('zoning_code'::regconfig, coalesce(heading, '') || ' ' || text) || zoning_code_tokens(coalesce(section, '') || ' ' || coalesce(heading, '') || ' ' || text)`),
+  chunkKind: chunkKind("chunk_kind").generatedAlwaysAs(sql`(see migration 0017)`),
+  tokenCount: integer("token_count").generatedAlwaysAs(sql`ceil(char_length(text) / 4.0)::integer`),
+  textHash: text("text_hash").generatedAlwaysAs(sql`md5(text)`),
+  sourceAnchors: jsonb("source_anchors").generatedAlwaysAs(sql`(see migration 0017)`),
   createdAt: timestamps.createdAt,
 }, (t) => [
   uniqueIndex("code_chunks_family_version_idx").on(t.familyId, t.version),
@@ -462,3 +468,37 @@ export const reviewTasks = pgTable("review_tasks", {
   resolvedAt: timestamp("resolved_at", { withTimezone: true }),
   ...timestamps,
 }, (t) => [uniqueIndex("review_tasks_entity_idx").on(t.taskType, t.entityType, t.entityId), index("review_tasks_status_idx").on(t.status, t.taskType)]);
+
+// ---- group 4c: retrieval (migration 0017; 03 §4.6). Tenant-scoped with RLS; org_id null only for offline evaluation runs. ----
+export const retrievalRuns = pgTable("retrieval_runs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  feasibilityRunId: uuid("feasibility_run_id").references(() => feasibilityRuns.id),
+  orgId: uuid("org_id").references(() => organizations.id),
+  subquestion: text("subquestion").notNull(),
+  category: ruleCategory("category"),
+  filters: jsonb("filters").notNull().default(sql`'{}'::jsonb`),
+  embeddingVersionId: uuid("embedding_version_id").references(() => embeddingVersions.id),
+  rerankerModel: text("reranker_model"),
+  plannerVersion: text("planner_version").notNull(),
+  status: runStatus("status").notNull().default("succeeded"),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  createdAt: timestamps.createdAt,
+}, (t) => [index("retrieval_runs_feasibility_idx").on(t.feasibilityRunId), index("retrieval_runs_org_idx").on(t.orgId, t.createdAt)]);
+
+export const retrievalEvidence = pgTable("retrieval_evidence", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  retrievalRunId: uuid("retrieval_run_id").notNull().references(() => retrievalRuns.id),
+  orgId: uuid("org_id").references(() => organizations.id),
+  codeChunkId: uuid("code_chunk_id").notNull().references(() => codeChunks.id),
+  rank: integer("rank").notNull(),
+  lexicalScore: numeric("lexical_score"),
+  semanticScore: numeric("semantic_score"),
+  rerankScore: numeric("rerank_score"),
+  relevanceScore: numeric("relevance_score"),
+  selectionReason: text("selection_reason").notNull(),
+  requiredContextType: text("required_context_type"),
+  requiredContextFound: boolean("required_context_found").notNull().default(true),
+  anchors: jsonb("anchors").notNull().default(sql`'[]'::jsonb`),
+  createdAt: timestamps.createdAt,
+}, (t) => [uniqueIndex("retrieval_evidence_run_rank_unique").on(t.retrievalRunId, t.rank), index("retrieval_evidence_run_idx").on(t.retrievalRunId)]);
