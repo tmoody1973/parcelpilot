@@ -24,7 +24,9 @@
     "ingest:pages": "cd services/worker-py && uv run python -m app.ingest_pages ../../data",
     "ingest:structure": "cd services/worker-py && uv run python -m app.ingest_structure",
     "ingest:tables": "cd services/worker-py && uv run python -m app.ingest_tables ../../data",
-    "review:sweep": "node --conditions=development packages/db/src/cli/review-sweep.ts"
+    "review:sweep": "node --conditions=development packages/db/src/cli/review-sweep.ts",
+    "candidates:extract": "cd services/worker-py && uv run python -m app.extract_candidates",
+    "rules:review-doc": "cd services/worker-py && uv run python -m app.rules_review_doc"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
