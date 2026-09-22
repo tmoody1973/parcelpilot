@@ -35,7 +35,7 @@ export async function askJev(state: PreparedState, opts: { apiKey: string | unde
       continue;
     }
     const text = await res.text().catch(() => "");
-    if (!res.ok) return failed(`HTTP ${res.status}: ${text.slice(0, 300)}`);
+    if (!res.ok) return failed(`HTTP ${res.status}: ${text.slice(0, 300)}`, { http_status: res.status, body: text.slice(0, 4000) }); // logged in raw_response
     let raw: unknown;
     try { raw = JSON.parse(text); } catch { return failed("response is not JSON", text.slice(0, 300)); }
     const parsed = JevResponse.safeParse(raw);

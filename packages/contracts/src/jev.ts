@@ -87,17 +87,20 @@ export const JEV_QUESTIONS_V1 = {
   },
 } as const;
 
-// Response shape (docs.typesafe.ai/api, read 2026-09-22). Anything else is a schema-invalid response → failed call.
+// Response shape (docs.typesafe.ai/api, read 2026-09-22). Every field we read is required and typed; a missing or wrong
+// one is a schema-invalid response → failed call. Objects are loose on purpose: a field the vendor adds later (a request
+// id, say) must not turn every shadow call into a failure, and the emitted JSON Schema says so. The raw response is
+// logged whole either way.
 const Prob = z.number().min(0).max(1);
-export const JevResponse = z.object({
+export const JevResponse = z.looseObject({
   model: z.string().min(1),
-  answers: z.object({
-    overall_risk: z.object({ type: z.literal("score"), score: z.number().min(0).max(2), legend: z.record(z.string(), z.string()), probabilities: z.record(z.string(), Prob), confidence: Prob }),
-    manual_review_required: z.object({ type: z.literal("noul"), noul: Prob }),
-    recommended_route: z.object({ type: z.literal("choice"), choice: JevRoute, probabilities: z.record(z.string(), Prob), confidence: Prob }),
-    summary_safe_to_display: z.object({ type: z.literal("noul"), noul: Prob }),
+  answers: z.looseObject({
+    overall_risk: z.looseObject({ type: z.literal("score"), score: z.number().min(0).max(2), legend: z.record(z.string(), z.string()), probabilities: z.record(z.string(), Prob), confidence: Prob }),
+    manual_review_required: z.looseObject({ type: z.literal("noul"), noul: Prob }),
+    recommended_route: z.looseObject({ type: z.literal("choice"), choice: JevRoute, probabilities: z.record(z.string(), Prob), confidence: Prob }),
+    summary_safe_to_display: z.looseObject({ type: z.literal("noul"), noul: Prob }),
   }),
-  usage: z.object({ input_tokens: z.number().int().nonnegative(), output_tokens: z.number().int().nonnegative() }),
+  usage: z.looseObject({ input_tokens: z.number().int().nonnegative(), output_tokens: z.number().int().nonnegative() }),
 });
 export type JevResponse = z.infer<typeof JevResponse>;
 

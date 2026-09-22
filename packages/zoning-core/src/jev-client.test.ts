@@ -66,7 +66,12 @@ test("429 and 529 are retried within the budget; other errors are not", async ()
   const invalid = stub(reply(422, { detail: "questions.overall_risk.criteria: too few levels" }));
   const v = await askJev(state, { apiKey: "k", timeoutMs: 2000, fetchImpl: invalid.fetchImpl });
   assert.deepEqual([v.status, invalid.calls.length], ["failed", 1]);
-  if (v.status === "failed") assert.match(v.error, /HTTP 422/);
+  if (v.status === "failed") { assert.match(v.error, /HTTP 422/); assert.deepEqual(v.raw, { http_status: 422, body: JSON.stringify({ detail: "questions.overall_risk.criteria: too few levels" }) }, "the error body is kept for the log"); }
+});
+
+test("a field the vendor adds later does not fail the call", async () => {
+  const r = await askJev(state, { apiKey: "k", timeoutMs: 2000, fetchImpl: stub(reply(200, { ...good, request_id: "req_1", answers: { ...good.answers, recommended_route: { ...good.answers.recommended_route, rationale_tokens: 3 } } })).fetchImpl });
+  assert.equal(r.status, "ok");
 });
 
 test("a schema-invalid answer, a non-JSON body or a missing key is a failed call, with the raw answer kept", async () => {
