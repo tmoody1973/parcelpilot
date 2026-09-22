@@ -17,6 +17,8 @@
 
 **Amendment, same day.** Tarik's research suggested Docling (IBM, MIT license) as a layout-aware structure parser. It is compatible with this decision (it does not depend on PyMuPDF) and will be evaluated in M2 on the multi-page Table 295-505-2; if it beats Camelot + pdfplumber on footnote attachment and continuation merging, it becomes the default structure parser with pdfplumber kept for coordinates and verification.
 
+**Outcome, 2026-09-22 (decision 009).** Measured on Tables 295-505-2 and 295-605-2 against a hand-written key: pdfplumber 136/136 cells and 18/20 footnote markers in 6.5 s; Docling 42/136 cells and 0/20 markers in 473 s. pdfplumber stays; Docling is not adopted.
+
 **How we'll know if this was right.** M2 exit: every dimensional table in subchapters 5 and 6 has a reviewed row set with footnotes attached, and no reviewer had to re-key a whole table by hand.
 
 **What actually happened.** _(Tarik fills in later.)_
