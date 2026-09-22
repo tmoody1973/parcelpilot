@@ -21,7 +21,8 @@
     "rules:seed": "node --conditions=development packages/db/src/cli/seed-rules.ts",
     "test:gold": "pnpm --filter @parcelpilot/zoning-core test:gold",
     "gold:live": "node apps/web/scripts/gold-live.mjs",
-    "ingest:pages": "cd services/worker-py && uv run python -m app.ingest_pages ../../data"
+    "ingest:pages": "cd services/worker-py && uv run python -m app.ingest_pages ../../data",
+    "ingest:structure": "cd services/worker-py && uv run python -m app.ingest_structure"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
