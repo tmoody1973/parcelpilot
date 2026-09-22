@@ -160,6 +160,45 @@ test("critical candidate: a reviewer's approval is a first sign-off; the owner's
   assert.equal((await tx`select approved_by from zoning_rules where id = ${second.rule!.id}`)[0]!["approved_by"], fx.owner.userId);
 }));
 
+test("critical candidate: a reviewer cannot lower criticality to dodge the owner sign-off; the task priority backs the gate", () => rolledBack(async (tx) => {
+  const fx = await fixtures(tx);
+  await approveMerge(tx, fx);
+  const candId = await candidate(tx, fx, { criticality: "critical" });
+  await generateReviewTasks(tx, "milwaukee-wi");
+  const taskId = await taskFor(tx, candId);
+  await rejectsWith(() => editTask(tx, fx.reviewer, taskId, "seems minor", { criticality: "high" }), "owner_required");
+  await editTask(tx, fx.reviewer, taskId, "raising is fine", { criticality: "critical" });
+  // Even if the proposal were lowered by other means, the task's priority (set at generation) still demands an owner.
+  await tx`update rule_candidates set proposed_rule = proposed_rule || '{"criticality":"high"}' where id = ${candId}`;
+  const res = await approveTask(tx, fx.reviewer, taskId);
+  assert.equal(res.pending_second_approval, true); assert.equal(res.rule, undefined);
+  await editTask(tx, fx.owner, taskId, "owner lowers after reading the page", { criticality: "high" });
+  const minted = await approveTask(tx, fx.owner, taskId);
+  assert.equal(minted.rule?.version, 1);
+}));
+
+test("rejecting a merge closes the family: status rejected, candidates stay blocked, no task regenerates", () => rolledBack(async (tx) => {
+  const fx = await fixtures(tx);
+  await generateReviewTasks(tx, "milwaukee-wi");
+  const t = await rejectTask(tx, fx.reviewer, await taskFor(tx, fx.tableId), "page 17 is a different table");
+  assert.equal(t.status, "rejected");
+  assert.equal((await tx`select merge_review_status from source_tables where id = ${fx.tableId}`)[0]!["merge_review_status"], "rejected");
+  await assert.rejects(tx.savepoint((sp) => candidate(sp, fx)), /merge_unreviewed/);
+  assert.equal((await generateReviewTasks(tx, "milwaukee-wi"))["merge_review"], 0);
+}));
+
+test("effective_start is the latest stamp among the cited documents", () => rolledBack(async (tx) => {
+  const fx = await fixtures(tx);
+  await approveMerge(tx, fx);
+  const [d2] = await tx`insert into source_documents (jurisdiction_id, source_type, title, sha256, retrieved_at, retrieval_method, status, effective_start) values ('milwaukee-wi', 'amendment', 'later amendment', 'review-' || gen_random_uuid(), now(), 'manual_upload', 'active', '2026-03-01') returning id`;
+  const [c2] = await tx`insert into citations (source_document_id, page_number, section, excerpt) values (${d2!["id"]}, 2, '295-605-2', 'amended') returning id`;
+  const candId = await candidate(tx, fx);
+  await tx`update rule_candidates set citation_ids = ${[fx.citationId, c2!["id"] as string]} where id = ${candId}`;
+  await generateReviewTasks(tx, "milwaukee-wi");
+  const res = await approveTask(tx, fx.reviewer, await taskFor(tx, candId));
+  assert.equal((await tx`select effective_start::text as s from zoning_rules where id = ${res.rule!.id}`)[0]!["s"], "2026-03-01");
+}));
+
 test("merge gate: no candidate for an unreviewed family (trigger); approving the merge task opens it", () => rolledBack(async (tx) => {
   const fx = await fixtures(tx);
   await assert.rejects(tx.savepoint((sp) => candidate(sp, { ...fx }, {})), /merge_unreviewed/);

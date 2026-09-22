@@ -28,6 +28,8 @@ export type ReviewTask = {
 
 const PENDING: ReviewStatus[] = ["unreviewed", "in_review"];
 const AUDIT_ENTITY: Record<TaskType, string> = { rule_candidate_review: "rule", merge_review: "merge", page_review: "page", footnote_review: "footnote", source_review: "source", gis_ambiguity: "gis" };
+const SEVERITY = ["critical", "high", "medium", "low"] as const; // contracts Criticality order, most severe first
+const rank = (c: unknown): number => { const i = (SEVERITY as readonly unknown[]).indexOf(c); return i === -1 ? SEVERITY.length : i; };
 const OCR_DENSITY_THRESHOLD = 0.5; // services/worker-py/app/pages.py: native characters per square inch below which a page was OCR'd
 
 // ---- generation: code decides what needs a human look; idempotent per (task_type, entity_type, entity_id) ----
@@ -120,6 +122,9 @@ export async function rejectTask(sql: Q, actor: Actor, taskId: string, reason: s
   mustBePending(t);
   if (t.task_type === "rule_candidate_review") {
     await sql`update rule_candidates set reviewer_status = 'rejected', reviewer_id = ${actor.userId}, reviewer_notes = ${reason}, updated_at = now() where id = ${t.entity_id}`;
+  } else if (t.task_type === "merge_review") {
+    // A rejected merge closes the family: the trigger keeps candidates out, and a corrected extraction is a new source_tables row.
+    await sql`update source_tables set merge_review_status = 'rejected' where id = ${t.entity_id}`;
   }
   const saved = await saveTask(sql, taskId, { status: "rejected", resolved_by: actor.userId, reason });
   await audit(sql, actor, `${AUDIT_ENTITY[t.task_type]}.rejected`, t.entity_type, t.entity_id, { task_id: taskId, reason });
@@ -135,9 +140,12 @@ export async function editTask(sql: Q, actor: Actor, taskId: string, reason: str
   mustBePending(t);
   if (t.task_type !== "rule_candidate_review") throw new ReviewError("not_editable", `a ${t.task_type} task has nothing to edit`, 409);
   if (!patch || typeof patch !== "object" || Array.isArray(patch)) throw new ReviewError("patch_required", "edit needs a patch object", 400);
-  const unknown = Object.keys(patch).filter((k) => !(EDITABLE_KEYS as readonly string[]).includes(k));
-  if (unknown.length) throw new ReviewError("patch_invalid", `cannot edit ${unknown.join(", ")}; editable: ${EDITABLE_KEYS.join(", ")}`, 400);
-  const [before] = await sql<{ proposed_rule: unknown }[]>`select proposed_rule from rule_candidates where id = ${t.entity_id}`;
+  const rejectedKeys = Object.keys(patch).filter((k) => !(EDITABLE_KEYS as readonly string[]).includes(k));
+  if (rejectedKeys.length) throw new ReviewError("patch_invalid", `cannot edit ${rejectedKeys.join(", ")}; editable: ${EDITABLE_KEYS.join(", ")}`, 400);
+  const [before] = await sql<{ proposed_rule: Record<string, unknown> }[]>`select proposed_rule from rule_candidates where id = ${t.entity_id} for update`;
+  // Lowering criticality would let a reviewer sidestep the owner sign-off (decision 011): only an owner may lower it.
+  const next = (patch as Record<string, unknown>)["criticality"];
+  if (next !== undefined && rank(next) > rank(before?.proposed_rule["criticality"]) && actor.role !== "owner") throw new ReviewError("owner_required", "only an owner may lower a candidate's criticality", 403);
   const [after] = await sql<{ proposed_rule: unknown }[]>`
     update rule_candidates set proposed_rule = proposed_rule || ${sql.json(patch as never)}, reviewer_id = ${actor.userId}, reviewer_notes = ${reason}, reviewer_status = 'in_review', updated_at = now()
     where id = ${t.entity_id} returning proposed_rule`;
@@ -171,7 +179,10 @@ async function approveCandidate(sql: Q, actor: Actor, t: ReviewTask): Promise<Ap
   if (!cand) throw new ReviewError("not_found", "rule candidate not found", 404);
   if (cand.reviewer_status === "approved" || cand.reviewer_status === "rejected") throw new ReviewError("not_pending", `candidate is already ${cand.reviewer_status}`, 409);
   const proposal = cand.proposed_rule;
-  if (proposal["criticality"] === "critical" && actor.role !== "owner") {
+  // The task's priority was set from the proposal when the task was generated and is never edited, so an edit to the
+  // proposal cannot lower the bar below what the extraction said: the gate uses whichever is more severe.
+  const critical = proposal["criticality"] === "critical" || t.priority === "critical";
+  if (critical && actor.role !== "owner") {
     await sql`update rule_candidates set reviewer_status = 'in_review', reviewer_id = ${actor.userId}, updated_at = now() where id = ${cand.id}`;
     const task = await saveTask(sql, t.id, { status: "in_review", assigned_to: actor.userId });
     await audit(sql, actor, "rule.first_approved", t.entity_type, t.entity_id, { task_id: t.id, awaiting: "owner" });
@@ -182,10 +193,11 @@ async function approveCandidate(sql: Q, actor: Actor, t: ReviewTask): Promise<Ap
     select c.id, d.sha256, c.page_number, c.printed_page, c.section, c.anchor, c.excerpt, d.effective_start::text as effective_start
     from citations c join source_documents d on d.id = c.source_document_id where c.id = any(${cand.citation_ids}) order by c.page_number, c.section`;
   if (cites.length !== cand.citation_ids.length) throw new ReviewError("citation_missing", "a cited row does not exist", 409);
-  const stamps = cites.map((c) => c.effective_start).filter((s): s is string => !!s).sort();
-  const effectiveStart = stamps[0];
-  if (!effectiveStart) throw new ReviewError("source_unstamped", "the cited source has no effective_start; stamp the document first", 409);
+  const stamps = cites.map((c) => c.effective_start);
+  if (stamps.length === 0 || stamps.some((st) => !st)) throw new ReviewError("source_unstamped", "a cited source has no effective_start; stamp the document first", 409);
+  const effectiveStart = [...(stamps as string[])].sort().at(-1)!; // in force only once every cited document is
   const citations: RuleCitation[] = cites.map((c) => ({ citation_id: c.id, document_id: c.sha256, page: c.page_number, section: c.section ?? "", excerpt: c.excerpt, ...(c.printed_page ? { printed_page: c.printed_page } : {}), ...(c.anchor ? { table: c.anchor } : {}) }));
+  await sql`select pg_advisory_xact_lock(hashtext(${cand.family_id}))`; // serializes two first approvals of a new family; later versions also lock the row below
   const [prev] = await sql<{ id: string; version: number }[]>`select id, version from zoning_rules where family_id = ${cand.family_id} order by version desc limit 1 for update`;
   const version = (prev?.version ?? 0) + 1;
   // The contract validates kind/category/params together; approval never stores a rule the engine could not load.
