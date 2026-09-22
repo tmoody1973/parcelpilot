@@ -12,7 +12,10 @@ const rolledBack = async (fn: (tx: postgres.TransactionSql) => Promise<void>) =>
 };
 
 // A second deterministic model, so two vector spaces can coexist in one test.
-const otherModel: Provider = { ...localHashProvider(), model: "fnv-bag-of-words-v2" };
+// Unique model names per run, so the tests never depend on which versions this database already registered.
+const runTag = crypto.randomUUID().slice(0, 8);
+const modelA: Provider = { ...localHashProvider(), model: `embeddings-test-a-${runTag}` };
+const otherModel: Provider = { ...localHashProvider(), model: `embeddings-test-b-${runTag}` };
 
 async function corpus(tx: postgres.TransactionSql) {
   await tx`update embedding_versions set is_active = false where is_active`; // isolate from any real version on this DB (rolled back)
@@ -30,7 +33,7 @@ async function corpus(tx: postgres.TransactionSql) {
 
 test("the first version becomes active; embedding is idempotent; the nearest chunk shares the query's words", () => rolledBack(async (tx) => {
   const c = await corpus(tx);
-  const p = localHashProvider();
+  const p = modelA;
   const v = await ensureVersion(tx, p);
   assert.equal(v.is_active, true, "first version on an empty registry is active");
   const first = await embedChunks(tx, p, v, { documentIds: [c.doc] });
@@ -44,15 +47,15 @@ test("the first version becomes active; embedding is idempotent; the nearest chu
 
 test("two vector spaces never mix: a search under version A cannot return a chunk embedded by version B", () => rolledBack(async (tx) => {
   const c = await corpus(tx);
-  const a = await ensureVersion(tx, localHashProvider());
-  await embedChunks(tx, localHashProvider(), a, { documentIds: [c.doc] });
+  const a = await ensureVersion(tx, modelA);
+  await embedChunks(tx, modelA, a, { documentIds: [c.doc] });
   const b = await ensureVersion(tx, otherModel);
   assert.equal(b.is_active, false, "a second version is not activated implicitly");
   await tx.savepoint(async (sp) => {
     await activateVersion(sp, b.id);
     // Re-embed only one chunk under B: the corpus is now mixed, which is exactly the state the rule must survive.
     await embedChunks(sp, otherModel, { ...b, is_active: true }, { documentIds: [c.doc], limit: 1 });
-    const q = (await localHashProvider().embed(["maximum building height"])).vectors[0]!;
+    const q = (await modelA.embed(["maximum building height"])).vectors[0]!;
     const underA = await nearestChunks(sp, a.id, q, 10, { documentIds: [c.doc] });
     const underB = await nearestChunks(sp, b.id, q, 10, { documentIds: [c.doc] });
     const versionOf = async (id: string) => (await sp`select embedding_version_id from code_chunks where id = ${id}`)[0]!["embedding_version_id"];
@@ -66,9 +69,9 @@ test("two vector spaces never mix: a search under version A cannot return a chun
 
 test("the registry is append-only except is_active; chunk text stays frozen while embeddings are written", () => rolledBack(async (tx) => {
   const c = await corpus(tx);
-  const v = await ensureVersion(tx, localHashProvider());
+  const v = await ensureVersion(tx, modelA);
   await assert.rejects(tx.savepoint((sp) => sp`update embedding_versions set model_name = 'x' where id = ${v.id}`), /append-only/);
-  await embedChunks(tx, localHashProvider(), v, { documentIds: [c.doc] });
+  await embedChunks(tx, modelA, v, { documentIds: [c.doc] });
   await assert.rejects(tx.savepoint((sp) => sp`update code_chunks set text = 'edited' where id = ${c.parking}`), /append-only/);
 }));
 

@@ -1,0 +1,2513 @@
+{
+ "version": "retrieval-gold.v1",
+ "written": "2026-09-22",
+ "written_by": "Claude, from the pages already verified in MOO-813 (signed LB1/LB2 rules), MOO-824 (table families) and MOO-825 (queue-born rules); reviewer signs on MOO-831",
+ "how_to_read": "One query per gold case and rule category. 'primary' passages count toward Recall@k (they must be in the ranked hits); 'context' passages count toward bundle completeness (they may arrive as required context). Keys are chunk family_ids, stable across re-ingests of the same PDF.",
+ "queries": [
+  {
+   "id": "G01-use",
+   "case": "G01",
+   "districts": [
+    "LB1"
+   ],
+   "category": "use",
+   "subquestion": "Is a multifamily dwelling allowed in LB1, with retail on the ground floor?",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-603-1:multi_family_dwelling",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 2,
+     "printed_page": 812,
+     "note": "Table 295-603-1 Multi-family dwelling row"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:retail_establishment_general",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 3,
+     "printed_page": 813,
+     "note": "Table 295-603-1 Retail establishment, general row (ground floor)"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 1,
+     "note": "s. 295-603-1 governs the use table"
+    }
+   ]
+  },
+  {
+   "id": "G01-height",
+   "case": "G01",
+   "districts": [
+    "LB1"
+   ],
+   "category": "height",
+   "subquestion": "maximum and minimum building height in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:height_maximum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, maximum (ft.)"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G01-density",
+   "case": "G01",
+   "districts": [
+    "LB1"
+   ],
+   "category": "density",
+   "subquestion": "lot area per dwelling unit in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:lot_area_per_dwelling_unit_minimum_sq_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Lot area per dwelling unit, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G01-setback_front",
+   "case": "G01",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_front",
+   "subquestion": "front setback minimum and maximum in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_minimum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_maximum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, maximum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G01-setback_side",
+   "case": "G01",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_side",
+   "subquestion": "side setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:side_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Side setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G01-setback_rear",
+   "case": "G01",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_rear",
+   "subquestion": "rear setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:rear_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Rear setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G02-use",
+   "case": "G02",
+   "districts": [
+    "LB1"
+   ],
+   "category": "use",
+   "subquestion": "Is a multifamily dwelling allowed in LB1, with retail on the ground floor?",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-603-1:multi_family_dwelling",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 2,
+     "printed_page": 812,
+     "note": "Table 295-603-1 Multi-family dwelling row"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:retail_establishment_general",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 3,
+     "printed_page": 813,
+     "note": "Table 295-603-1 Retail establishment, general row (ground floor)"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 1,
+     "note": "s. 295-603-1 governs the use table"
+    }
+   ]
+  },
+  {
+   "id": "G02-height",
+   "case": "G02",
+   "districts": [
+    "LB1"
+   ],
+   "category": "height",
+   "subquestion": "maximum and minimum building height in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:height_maximum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, maximum (ft.)"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G02-density",
+   "case": "G02",
+   "districts": [
+    "LB1"
+   ],
+   "category": "density",
+   "subquestion": "lot area per dwelling unit in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:lot_area_per_dwelling_unit_minimum_sq_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Lot area per dwelling unit, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G02-setback_front",
+   "case": "G02",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_front",
+   "subquestion": "front setback minimum and maximum in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_minimum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_maximum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, maximum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G02-setback_side",
+   "case": "G02",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_side",
+   "subquestion": "side setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:side_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Side setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G02-setback_rear",
+   "case": "G02",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_rear",
+   "subquestion": "rear setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:rear_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Rear setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G03-use",
+   "case": "G03",
+   "districts": [
+    "LB1"
+   ],
+   "category": "use",
+   "subquestion": "Is a multifamily dwelling allowed in LB1, with retail on the ground floor?",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-603-1:multi_family_dwelling",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 2,
+     "printed_page": 812,
+     "note": "Table 295-603-1 Multi-family dwelling row"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:retail_establishment_general",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 3,
+     "printed_page": 813,
+     "note": "Table 295-603-1 Retail establishment, general row (ground floor)"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 1,
+     "note": "s. 295-603-1 governs the use table"
+    }
+   ]
+  },
+  {
+   "id": "G03-height",
+   "case": "G03",
+   "districts": [
+    "LB1"
+   ],
+   "category": "height",
+   "subquestion": "maximum and minimum building height in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:height_maximum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, maximum (ft.)"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G03-density",
+   "case": "G03",
+   "districts": [
+    "LB1"
+   ],
+   "category": "density",
+   "subquestion": "lot area per dwelling unit in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:lot_area_per_dwelling_unit_minimum_sq_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Lot area per dwelling unit, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G03-setback_front",
+   "case": "G03",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_front",
+   "subquestion": "front setback minimum and maximum in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_minimum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_maximum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, maximum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G03-setback_side",
+   "case": "G03",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_side",
+   "subquestion": "side setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:side_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Side setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G03-setback_rear",
+   "case": "G03",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_rear",
+   "subquestion": "rear setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:rear_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Rear setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G04-use",
+   "case": "G04",
+   "districts": [
+    "LB1"
+   ],
+   "category": "use",
+   "subquestion": "Is a multifamily dwelling allowed in LB1, with retail on the ground floor?",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-603-1:multi_family_dwelling",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 2,
+     "printed_page": 812,
+     "note": "Table 295-603-1 Multi-family dwelling row"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:retail_establishment_general",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 3,
+     "printed_page": 813,
+     "note": "Table 295-603-1 Retail establishment, general row (ground floor)"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 1,
+     "note": "s. 295-603-1 governs the use table"
+    }
+   ]
+  },
+  {
+   "id": "G04-height",
+   "case": "G04",
+   "districts": [
+    "LB1"
+   ],
+   "category": "height",
+   "subquestion": "maximum and minimum building height in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:height_maximum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, maximum (ft.)"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G04-density",
+   "case": "G04",
+   "districts": [
+    "LB1"
+   ],
+   "category": "density",
+   "subquestion": "lot area per dwelling unit in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:lot_area_per_dwelling_unit_minimum_sq_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Lot area per dwelling unit, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G04-setback_front",
+   "case": "G04",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_front",
+   "subquestion": "front setback minimum and maximum in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_minimum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_maximum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, maximum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G04-setback_side",
+   "case": "G04",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_side",
+   "subquestion": "side setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:side_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Side setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G04-setback_rear",
+   "case": "G04",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_rear",
+   "subquestion": "rear setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:rear_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Rear setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G05-use",
+   "case": "G05",
+   "districts": [
+    "LB1"
+   ],
+   "category": "use",
+   "subquestion": "Is a multifamily dwelling allowed in LB1, with residential on the ground floor?",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-603-1:multi_family_dwelling",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 2,
+     "printed_page": 812,
+     "note": "Table 295-603-1 Multi-family dwelling row"
+    },
+    {
+     "family_id": "198a9062664e:295-603-2-a-2:1",
+     "tier": "primary",
+     "kind": "operative_provision",
+     "page": 6,
+     "printed_page": 816,
+     "note": "295-603-2-a-2 street-level dwelling limit (condition street_classification)"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 1,
+     "note": "s. 295-603-1 governs the use table"
+    }
+   ]
+  },
+  {
+   "id": "G05-height",
+   "case": "G05",
+   "districts": [
+    "LB1"
+   ],
+   "category": "height",
+   "subquestion": "maximum and minimum building height in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:height_maximum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, maximum (ft.)"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G05-density",
+   "case": "G05",
+   "districts": [
+    "LB1"
+   ],
+   "category": "density",
+   "subquestion": "lot area per dwelling unit in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:lot_area_per_dwelling_unit_minimum_sq_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Lot area per dwelling unit, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G05-setback_front",
+   "case": "G05",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_front",
+   "subquestion": "front setback minimum and maximum in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_minimum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_maximum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, maximum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G05-setback_side",
+   "case": "G05",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_side",
+   "subquestion": "side setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:side_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Side setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G05-setback_rear",
+   "case": "G05",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_rear",
+   "subquestion": "rear setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:rear_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Rear setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G06-use",
+   "case": "G06",
+   "districts": [
+    "LB2"
+   ],
+   "category": "use",
+   "subquestion": "Is a multifamily dwelling allowed in LB2, with retail on the ground floor?",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-603-1:multi_family_dwelling",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 2,
+     "printed_page": 812,
+     "note": "Table 295-603-1 Multi-family dwelling row"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:retail_establishment_general",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 3,
+     "printed_page": 813,
+     "note": "Table 295-603-1 Retail establishment, general row (ground floor)"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 1,
+     "note": "s. 295-603-1 governs the use table"
+    }
+   ]
+  },
+  {
+   "id": "G06-height",
+   "case": "G06",
+   "districts": [
+    "LB2"
+   ],
+   "category": "height",
+   "subquestion": "maximum and minimum building height in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:height_maximum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, maximum (ft.)"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:height_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, minimum (ft.): LB2 18"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G06-density",
+   "case": "G06",
+   "districts": [
+    "LB2"
+   ],
+   "category": "density",
+   "subquestion": "lot area per dwelling unit in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:lot_area_per_dwelling_unit_minimum_sq_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Lot area per dwelling unit, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G06-setback_front",
+   "case": "G06",
+   "districts": [
+    "LB2"
+   ],
+   "category": "setback_front",
+   "subquestion": "front setback minimum and maximum in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_minimum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_maximum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, maximum"
+    },
+    {
+     "family_id": "fa92de2c8d86:295-505-2-b:1",
+     "tier": "context",
+     "kind": "cross_reference",
+     "page": 13,
+     "printed_page": null,
+     "note": "295-505-2-b Front setback standards: defines 'average'; cited by the row's '(see s. 295-505-2-b)'. Required context per 04 §6.3 (a cross-referenced definition), not the primary passage"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G06-setback_side",
+   "case": "G06",
+   "districts": [
+    "LB2"
+   ],
+   "category": "setback_side",
+   "subquestion": "side setback in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:side_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Side setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G06-setback_rear",
+   "case": "G06",
+   "districts": [
+    "LB2"
+   ],
+   "category": "setback_rear",
+   "subquestion": "rear setback in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:rear_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Rear setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G07-use",
+   "case": "G07",
+   "districts": [
+    "LB2"
+   ],
+   "category": "use",
+   "subquestion": "Is a multifamily dwelling allowed in LB2, with retail on the ground floor?",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-603-1:multi_family_dwelling",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 2,
+     "printed_page": 812,
+     "note": "Table 295-603-1 Multi-family dwelling row"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:retail_establishment_general",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 3,
+     "printed_page": 813,
+     "note": "Table 295-603-1 Retail establishment, general row (ground floor)"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 1,
+     "note": "s. 295-603-1 governs the use table"
+    }
+   ]
+  },
+  {
+   "id": "G07-height",
+   "case": "G07",
+   "districts": [
+    "LB2"
+   ],
+   "category": "height",
+   "subquestion": "maximum and minimum building height in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:height_maximum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, maximum (ft.)"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:height_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, minimum (ft.): LB2 18"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G07-density",
+   "case": "G07",
+   "districts": [
+    "LB2"
+   ],
+   "category": "density",
+   "subquestion": "lot area per dwelling unit in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:lot_area_per_dwelling_unit_minimum_sq_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Lot area per dwelling unit, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G07-setback_front",
+   "case": "G07",
+   "districts": [
+    "LB2"
+   ],
+   "category": "setback_front",
+   "subquestion": "front setback minimum and maximum in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_minimum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_maximum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, maximum"
+    },
+    {
+     "family_id": "fa92de2c8d86:295-505-2-b:1",
+     "tier": "context",
+     "kind": "cross_reference",
+     "page": 13,
+     "printed_page": null,
+     "note": "295-505-2-b Front setback standards: defines 'average'; cited by the row's '(see s. 295-505-2-b)'. Required context per 04 §6.3 (a cross-referenced definition), not the primary passage"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G07-setback_side",
+   "case": "G07",
+   "districts": [
+    "LB2"
+   ],
+   "category": "setback_side",
+   "subquestion": "side setback in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:side_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Side setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G07-setback_rear",
+   "case": "G07",
+   "districts": [
+    "LB2"
+   ],
+   "category": "setback_rear",
+   "subquestion": "rear setback in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:rear_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Rear setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G08-use",
+   "case": "G08",
+   "districts": [
+    "LB2"
+   ],
+   "category": "use",
+   "subquestion": "Is a multifamily dwelling allowed in LB2, with retail on the ground floor?",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-603-1:multi_family_dwelling",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 2,
+     "printed_page": 812,
+     "note": "Table 295-603-1 Multi-family dwelling row"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:retail_establishment_general",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 3,
+     "printed_page": 813,
+     "note": "Table 295-603-1 Retail establishment, general row (ground floor)"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 1,
+     "note": "s. 295-603-1 governs the use table"
+    }
+   ]
+  },
+  {
+   "id": "G08-height",
+   "case": "G08",
+   "districts": [
+    "LB2"
+   ],
+   "category": "height",
+   "subquestion": "maximum and minimum building height in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:height_maximum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, maximum (ft.)"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:height_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, minimum (ft.): LB2 18"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G08-density",
+   "case": "G08",
+   "districts": [
+    "LB2"
+   ],
+   "category": "density",
+   "subquestion": "lot area per dwelling unit in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:lot_area_per_dwelling_unit_minimum_sq_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Lot area per dwelling unit, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G08-setback_front",
+   "case": "G08",
+   "districts": [
+    "LB2"
+   ],
+   "category": "setback_front",
+   "subquestion": "front setback minimum and maximum in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_minimum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_maximum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, maximum"
+    },
+    {
+     "family_id": "fa92de2c8d86:295-505-2-b:1",
+     "tier": "context",
+     "kind": "cross_reference",
+     "page": 13,
+     "printed_page": null,
+     "note": "295-505-2-b Front setback standards: defines 'average'; cited by the row's '(see s. 295-505-2-b)'. Required context per 04 §6.3 (a cross-referenced definition), not the primary passage"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G08-setback_side",
+   "case": "G08",
+   "districts": [
+    "LB2"
+   ],
+   "category": "setback_side",
+   "subquestion": "side setback in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:side_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Side setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G08-setback_rear",
+   "case": "G08",
+   "districts": [
+    "LB2"
+   ],
+   "category": "setback_rear",
+   "subquestion": "rear setback in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:rear_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Rear setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G09-use",
+   "case": "G09",
+   "districts": [
+    "LB1"
+   ],
+   "category": "use",
+   "subquestion": "Is a multifamily dwelling allowed in LB1, with retail on the ground floor?",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-603-1:multi_family_dwelling",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 2,
+     "printed_page": 812,
+     "note": "Table 295-603-1 Multi-family dwelling row"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:retail_establishment_general",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 3,
+     "printed_page": 813,
+     "note": "Table 295-603-1 Retail establishment, general row (ground floor)"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 1,
+     "note": "s. 295-603-1 governs the use table"
+    }
+   ]
+  },
+  {
+   "id": "G09-height",
+   "case": "G09",
+   "districts": [
+    "LB1"
+   ],
+   "category": "height",
+   "subquestion": "maximum and minimum building height in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:height_maximum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, maximum (ft.)"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G09-density",
+   "case": "G09",
+   "districts": [
+    "LB1"
+   ],
+   "category": "density",
+   "subquestion": "lot area per dwelling unit in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:lot_area_per_dwelling_unit_minimum_sq_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Lot area per dwelling unit, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G09-setback_front",
+   "case": "G09",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_front",
+   "subquestion": "front setback minimum and maximum in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_minimum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_maximum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, maximum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G09-setback_side",
+   "case": "G09",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_side",
+   "subquestion": "side setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:side_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Side setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G09-setback_rear",
+   "case": "G09",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_rear",
+   "subquestion": "rear setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:rear_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Rear setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G10-height",
+   "case": "G10",
+   "districts": [
+    "LB1"
+   ],
+   "category": "height",
+   "subquestion": "maximum and minimum building height in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:height_maximum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, maximum (ft.)"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G10-density",
+   "case": "G10",
+   "districts": [
+    "LB1"
+   ],
+   "category": "density",
+   "subquestion": "lot area per dwelling unit in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:lot_area_per_dwelling_unit_minimum_sq_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Lot area per dwelling unit, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G10-setback_front",
+   "case": "G10",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_front",
+   "subquestion": "front setback minimum and maximum in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_minimum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_maximum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, maximum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G10-setback_side",
+   "case": "G10",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_side",
+   "subquestion": "side setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:side_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Side setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G10-setback_rear",
+   "case": "G10",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_rear",
+   "subquestion": "rear setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:rear_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Rear setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G11-use",
+   "case": "G11",
+   "districts": [
+    "LB2"
+   ],
+   "category": "use",
+   "subquestion": "Is a multifamily dwelling allowed in LB2, with retail on the ground floor?",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-603-1:multi_family_dwelling",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 2,
+     "printed_page": 812,
+     "note": "Table 295-603-1 Multi-family dwelling row"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:retail_establishment_general",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 3,
+     "printed_page": 813,
+     "note": "Table 295-603-1 Retail establishment, general row (ground floor)"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 1,
+     "note": "s. 295-603-1 governs the use table"
+    }
+   ]
+  },
+  {
+   "id": "G11-height",
+   "case": "G11",
+   "districts": [
+    "LB2"
+   ],
+   "category": "height",
+   "subquestion": "maximum and minimum building height in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:height_maximum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, maximum (ft.)"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:height_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, minimum (ft.): LB2 18"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G11-density",
+   "case": "G11",
+   "districts": [
+    "LB2"
+   ],
+   "category": "density",
+   "subquestion": "lot area per dwelling unit in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:lot_area_per_dwelling_unit_minimum_sq_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Lot area per dwelling unit, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G11-setback_front",
+   "case": "G11",
+   "districts": [
+    "LB2"
+   ],
+   "category": "setback_front",
+   "subquestion": "front setback minimum and maximum in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_minimum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_maximum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, maximum"
+    },
+    {
+     "family_id": "fa92de2c8d86:295-505-2-b:1",
+     "tier": "context",
+     "kind": "cross_reference",
+     "page": 13,
+     "printed_page": null,
+     "note": "295-505-2-b Front setback standards: defines 'average'; cited by the row's '(see s. 295-505-2-b)'. Required context per 04 §6.3 (a cross-referenced definition), not the primary passage"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G11-setback_side",
+   "case": "G11",
+   "districts": [
+    "LB2"
+   ],
+   "category": "setback_side",
+   "subquestion": "side setback in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:side_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Side setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G11-setback_rear",
+   "case": "G11",
+   "districts": [
+    "LB2"
+   ],
+   "category": "setback_rear",
+   "subquestion": "rear setback in LB2",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:rear_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Rear setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G12-use",
+   "case": "G12",
+   "districts": [
+    "LB1"
+   ],
+   "category": "use",
+   "subquestion": "Is a multifamily dwelling allowed in LB1, with retail on the ground floor?",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-603-1:multi_family_dwelling",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 2,
+     "printed_page": 812,
+     "note": "Table 295-603-1 Multi-family dwelling row"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:retail_establishment_general",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 3,
+     "printed_page": 813,
+     "note": "Table 295-603-1 Retail establishment, general row (ground floor)"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 1,
+     "note": "s. 295-603-1 governs the use table"
+    }
+   ]
+  },
+  {
+   "id": "G12-height",
+   "case": "G12",
+   "districts": [
+    "LB1"
+   ],
+   "category": "height",
+   "subquestion": "maximum and minimum building height in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:height_maximum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, maximum (ft.)"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G12-density",
+   "case": "G12",
+   "districts": [
+    "LB1"
+   ],
+   "category": "density",
+   "subquestion": "lot area per dwelling unit in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:lot_area_per_dwelling_unit_minimum_sq_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Lot area per dwelling unit, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G12-setback_front",
+   "case": "G12",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_front",
+   "subquestion": "front setback minimum and maximum in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_minimum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_maximum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, maximum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G12-setback_side",
+   "case": "G12",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_side",
+   "subquestion": "side setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:side_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Side setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G12-setback_rear",
+   "case": "G12",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_rear",
+   "subquestion": "rear setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:rear_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Rear setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G14-use",
+   "case": "G14",
+   "districts": [
+    "LB1"
+   ],
+   "category": "use",
+   "subquestion": "Is a multifamily dwelling allowed in LB1, with retail on the ground floor?",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-603-1:multi_family_dwelling",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 2,
+     "printed_page": 812,
+     "note": "Table 295-603-1 Multi-family dwelling row"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:retail_establishment_general",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 3,
+     "printed_page": 813,
+     "note": "Table 295-603-1 Retail establishment, general row (ground floor)"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 1,
+     "note": "s. 295-603-1 governs the use table"
+    }
+   ]
+  },
+  {
+   "id": "G14-height",
+   "case": "G14",
+   "districts": [
+    "LB1"
+   ],
+   "category": "height",
+   "subquestion": "maximum and minimum building height in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:height_maximum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, maximum (ft.)"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G14-density",
+   "case": "G14",
+   "districts": [
+    "LB1"
+   ],
+   "category": "density",
+   "subquestion": "lot area per dwelling unit in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:lot_area_per_dwelling_unit_minimum_sq_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Lot area per dwelling unit, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G14-setback_front",
+   "case": "G14",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_front",
+   "subquestion": "front setback minimum and maximum in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_minimum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_maximum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, maximum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G14-setback_side",
+   "case": "G14",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_side",
+   "subquestion": "side setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:side_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Side setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G14-setback_rear",
+   "case": "G14",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_rear",
+   "subquestion": "rear setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:rear_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Rear setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G15-use",
+   "case": "G15",
+   "districts": [
+    "LB1"
+   ],
+   "category": "use",
+   "subquestion": "Is a multifamily dwelling allowed in LB1, with retail on the ground floor?",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-603-1:multi_family_dwelling",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 2,
+     "printed_page": 812,
+     "note": "Table 295-603-1 Multi-family dwelling row"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:retail_establishment_general",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 3,
+     "printed_page": 813,
+     "note": "Table 295-603-1 Retail establishment, general row (ground floor)"
+    },
+    {
+     "family_id": "198a9062664e:295-603-1:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 1,
+     "note": "s. 295-603-1 governs the use table"
+    }
+   ]
+  },
+  {
+   "id": "G15-height",
+   "case": "G15",
+   "districts": [
+    "LB1"
+   ],
+   "category": "height",
+   "subquestion": "maximum and minimum building height in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:height_maximum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Height, maximum (ft.)"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G15-density",
+   "case": "G15",
+   "districts": [
+    "LB1"
+   ],
+   "category": "density",
+   "subquestion": "lot area per dwelling unit in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:lot_area_per_dwelling_unit_minimum_sq_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Lot area per dwelling unit, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G15-setback_front",
+   "case": "G15",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_front",
+   "subquestion": "front setback minimum and maximum in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_minimum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:front_setback_maximum_ft_see_s_295_505_2_b",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Front setback, maximum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G15-setback_side",
+   "case": "G15",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_side",
+   "subquestion": "side setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:side_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Side setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "G15-setback_rear",
+   "case": "G15",
+   "districts": [
+    "LB1"
+   ],
+   "category": "setback_rear",
+   "subquestion": "rear setback in LB1",
+   "required": [
+    {
+     "family_id": "198a9062664e:295-605-2:rear_setback_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 16,
+     "printed_page": 824,
+     "note": "Rear setback, minimum"
+    },
+    {
+     "family_id": "198a9062664e:295-605-2:1",
+     "tier": "context",
+     "kind": "governing_section",
+     "page": 12,
+     "note": "s. 295-605-2 Principal building standards: governs Table 295-605-2"
+    }
+   ]
+  },
+  {
+   "id": "FN1-height-min-RS6",
+   "case": null,
+   "districts": [
+    "RS6"
+   ],
+   "category": "height",
+   "subquestion": "minimum building height in RS6",
+   "required": [
+    {
+     "family_id": "fa92de2c8d86:295-505-2:height_minimum_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 14,
+     "printed_page": 784,
+     "footnotes": [
+      "*",
+      "**"
+     ],
+     "note": "Table 295-505-2 Height, minimum: RS6 carries ** (and RT3-RT5 *)"
+    }
+   ],
+   "blocked_until": "merge of tbl_295_505_2 approved in the review queue"
+  },
+  {
+   "id": "FN2-lot-area-RT4",
+   "case": null,
+   "districts": [
+    "RT4"
+   ],
+   "category": "density",
+   "subquestion": "lot area per dwelling unit in RT4",
+   "required": [
+    {
+     "family_id": "fa92de2c8d86:295-505-2:lot_area_per_dwelling_unit_minimum_sq_ft",
+     "tier": "primary",
+     "kind": "table_row",
+     "page": 14,
+     "printed_page": 784,
+     "footnotes": [
+      "***"
+     ],
+     "note": "Table 295-505-2 Lot area per dwelling unit, minimum: row-level *** (ADUs excluded)"
+    }
+   ],
+   "blocked_until": "merge of tbl_295_505_2 approved in the review queue"
+  }
+ ],
+ "excluded": [
+  {
+   "case": "G10",
+   "category": "use",
+   "reason": "use 'data_center' has no row in Table 295-603-1; the correct result is no row"
+  },
+  {
+   "case": "G13",
+   "reason": "no findings expected (the run is blocked before analysis), so nothing to retrieve"
+  }
+ ],
+ "relabelled": [
+  {
+   "family_id": "fa92de2c8d86:295-505-2-b:1",
+   "from": "primary",
+   "to": "context",
+   "date": "2026-09-22",
+   "why": "after the first run: it is the cross-referenced definition of the cell value 'average', which 04 §6.3 lists as required context; the operative passage for the question is the table row. Scored in bundle completeness."
+  }
+ ]
+}
