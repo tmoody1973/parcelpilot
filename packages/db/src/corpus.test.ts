@@ -69,7 +69,7 @@ test("pages, sections, tables, fragments, footnotes, embedding_versions are appe
   const [n] = await tx`insert into table_footnotes (source_table_id, fragment_id, marker, text) values (${t!["id"]}, ${f!["id"]}, '*', 'applies in lieu of') returning id`;
   await rejects(tx, (sp) => sp`update table_footnotes set text = 'x' where id = ${n!["id"]}`, /append-only/, "55000");
   const [e] = await tx`insert into embedding_versions (provider, model_name, dimension) values ('openai', 'text-embedding-3-large', 1536) returning id`;
-  await rejects(tx, (sp) => sp`update embedding_versions set is_active = true where id = ${e!["id"]}`, /append-only/, "55000");
+  await rejects(tx, (sp) => sp`update embedding_versions set model_name = 'x' where id = ${e!["id"]}`, /append-only/, "55000");
   const [c] = await tx`insert into citations (source_document_id, document_page_id, page_number, printed_page, section, excerpt) values (${d}, ${p}, 16, 824, '295-605-2', 'Height, maximum (ft.): LB1 45') returning id`;
   assert.ok(c!["id"]);
 }));
