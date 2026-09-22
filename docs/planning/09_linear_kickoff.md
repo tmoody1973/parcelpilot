@@ -162,3 +162,16 @@ Sources: 06 M2, PRD §10.4 B/C, 03 §4.4, 04 §3.6 and §10, decisions 002/003, 
 | MOO-819 | Review queue backend — tasks, role gate, approval mints a versioned rule, source lifecycle | MOO-818 |
 | MOO-821 | Reviewer UI — queue, page-level viewer, candidate editor, approve / edit / reject with reason | MOO-819 |
 | MOO-825 | First queue-born rules — LB3, RB1, RB2 candidates, LB1/LB2 reconciled, footnote policy (decision 010) | 824, 819, 821 |
+
+## M4 (created 2026-09-22, in dependency order)
+Sources: 06 M4, 04 §4–§9, 03 §4.6, 05 §5 (briefing contract), decision 008. Tarik's calls: all seven; OpenAI `text-embedding-3-large` at 1536; the reranker bake-off runs all three candidates (local bge, Cohere, JEV per-candidate); chunks on clean pages activate automatically, flagged pages wait for the queue. Starting state: 3,509 chunks all `pending_review`, `active_code_chunks` empty; the retrieval tables from 03 §4.6 do not exist yet.
+
+| # | Issue | Depends on |
+|---|---|---|
+| MOO-827 | Activate the corpus — guard on chunk status, activation job, page-review and merge approval activate chunks | — |
+| MOO-828 | Retrieval schema (group 4c) — retrieval_runs/evidence, `zoning_code` text-search config, trigram index, chunk_kind/token_count/text_hash/source_anchors | MOO-827 |
+| MOO-829 | Embedding pipeline — OpenAI 3-large at 1536, local provider for CI, re-embed on version change, versions never mix | 827, 828 |
+| MOO-830 | Hybrid retriever package — filters, lexical + semantic, RRF, required-context expansion, never an inactive source | 828, 829 |
+| MOO-831 | Labelled passage set + evaluation harness — Recall@k, table-row + footnote recall, CI gate at 04 §9.3 targets | MOO-830 |
+| MOO-832 | Reranker bake-off (decision 012) — none / bge / Cohere / JEV on the harness | MOO-831 |
+| MOO-833 | Evidence bundle contract + assembler — EvidenceBundle in contracts, required-context slots, JEV flags; demo + RB1 parcels | 830, 831 |
