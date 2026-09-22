@@ -21,5 +21,6 @@
   "PolicyResult": "PolicyResult.schema.json",
   "DecisionLayerOutput": "DecisionLayerOutput.schema.json",
   "CitationGateInput": "CitationGateInput.schema.json",
-  "MemoInput": "MemoInput.schema.json"
+  "MemoInput": "MemoInput.schema.json",
+  "EvidenceBundle": "EvidenceBundle.schema.json"
 }

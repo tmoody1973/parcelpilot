@@ -20,7 +20,8 @@
   },
   "dependencies": {
     "@parcelpilot/db": "workspace:*",
-    "postgres": "^3.4.0"
+    "postgres": "^3.4.0",
+    "@parcelpilot/contracts": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
