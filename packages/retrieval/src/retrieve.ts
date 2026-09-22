@@ -30,7 +30,7 @@ export type RetrieveInput = {
 export type Reranker = { name: string; rerank(query: string, candidates: Hit[]): Promise<Hit[]> };
 
 export type Hit = {
-  chunk_id: string; rank: number; section: string; heading: string | null; page_start: number; page_end: number | null; source_type: string;
+  chunk_id: string; family_id: string; rank: number; section: string; heading: string | null; page_start: number; page_end: number | null; source_type: string;
   document_sha: string; text: string; district_codes: string[]; anchors: unknown;
   lexical_rank: number | null; semantic_rank: number | null; lexical_score: number | null; semantic_score: number | null; rerank_score: number | null; relevance: number;
   reason: string; context_type: string | null; footnotes: string[];
@@ -55,16 +55,16 @@ export function providerFor(version: EmbeddingVersion): Provider {
 export type Row = Omit<Hit, "rank" | "lexical_rank" | "semantic_rank" | "rerank_score" | "relevance" | "reason" | "context_type" | "footnotes"> & { score: number; parent_section_id: string | null; preceding_chunk_id: string | null; following_chunk_id: string | null; cross_reference_ids: string[]; table_json: { footnote_refs?: Array<{ marker: string; text: string }> } | null };
 
 // The hard filters as one SQL fragment over code_chunks c joined to source_documents d. Every query below uses it.
-function filtered(sql: Q, i: Required<Pick<RetrieveInput, "jurisdictionId" | "districts" | "analysisDate">> & { category: string | null; subchapters: string[] }) {
+function filtered(sql: Q, i: Required<Pick<RetrieveInput, "jurisdictionId" | "districts" | "analysisDate">> & { category: string | null; subchapters: string[] }, opts: { chapterFamily?: boolean } = {}) {
   return sql`
     c.jurisdiction_id = ${i.jurisdictionId} and c.status = 'active' and d.status = 'active'
     and (c.effective_start is null or c.effective_start <= ${i.analysisDate}::date) and (c.effective_end is null or c.effective_end > ${i.analysisDate}::date)
     and (d.effective_start is null or d.effective_start <= ${i.analysisDate}::date) and (d.effective_end is null or d.effective_end > ${i.analysisDate}::date)
     and (cardinality(c.district_codes) = 0 or c.district_codes && ${i.districts}::text[])
     and (${i.category}::text is null or cardinality(c.rule_categories) = 0 or ${i.category}::rule_category = any(c.rule_categories))
-    and c.subchapter = any(${i.subchapters}::text[])`;
+    ${opts.chapterFamily === false ? sql`` : sql`and c.subchapter = any(${i.subchapters}::text[])`}`;
 }
-const COLS = (sql: Q) => sql`c.id as chunk_id, c.section, c.heading, c.page_start, c.page_end, c.source_type::text as source_type, d.sha256 as document_sha, c.text,
+const COLS = (sql: Q) => sql`c.id as chunk_id, c.family_id, c.section, c.heading, c.page_start, c.page_end, c.source_type::text as source_type, d.sha256 as document_sha, c.text,
   c.district_codes, c.source_anchors as anchors, c.parent_section_id, c.preceding_chunk_id, c.following_chunk_id, c.cross_reference_ids, c.table_json`;
 
 export async function retrieve(sql: Q, input: RetrieveInput): Promise<RetrieveResult> {
@@ -96,8 +96,10 @@ export async function retrieve(sql: Q, input: RetrieveInput): Promise<RetrieveRe
   const ruleRows = input.category ? await sql<Row[]>`
     select distinct on (c.id) ${COLS(sql)}, 1::float as score
     from zoning_rules z join rule_citations rc on rc.zoning_rule_id = z.id join citations ci on ci.id = rc.citation_id
-    join code_chunks c on c.source_type = 'table_row' and c.source_document_id = ci.source_document_id and c.section = ci.section
-      and c.text like 'Table ' || ci.section || '. ' || split_part(ci.excerpt, ':', 1) || '%'
+    join code_chunks c on c.source_document_id = ci.source_document_id and c.section = ci.section
+      and ((c.source_type = 'table_row' and c.text like 'Table ' || ci.section || '. ' || split_part(ci.excerpt, ':', 1) || '%')
+        -- a condition's citation is prose (e.g. s. 295-603-2-a-2, the street-level dwelling limit): pin that section's chunk
+        or (c.source_type <> 'table_row' and ci.anchor is distinct from ('Table ' || ci.section) and c.page_start <= ci.page_number and coalesce(c.page_end, c.page_start) >= ci.page_number))
     join source_documents d on d.id = c.source_document_id
     where z.jurisdiction_id = ${input.jurisdictionId} and z.status = 'approved' and z.category = ${input.category}::rule_category and z.district_code = any(${input.districts}::text[])
       and ${where}` : [];
@@ -134,7 +136,7 @@ export function fuse(lexical: Row[], semantic: Row[], ruleRows: Row[]): Hit[] {
   add(semantic, "semantic");
   const pinned = new Set(ruleRows.map((r) => r.chunk_id));
   for (const r of ruleRows) if (!acc.has(r.chunk_id)) acc.set(r.chunk_id, toHit(r, {}));
-  const reasonOf = (h: Hit) => [pinned.has(h.chunk_id) ? "table row cited by an approved rule" : null, h.lexical_rank ? `keyword rank ${h.lexical_rank}` : null, h.semantic_rank ? `meaning rank ${h.semantic_rank}` : null].filter(Boolean).join("; ");
+  const reasonOf = (h: Hit) => [pinned.has(h.chunk_id) ? (h.source_type === "table_row" ? "table row cited by an approved rule" : "passage cited by an approved rule's condition") : null, h.lexical_rank ? `keyword rank ${h.lexical_rank}` : null, h.semantic_rank ? `meaning rank ${h.semantic_rank}` : null].filter(Boolean).join("; ");
   return [...acc.values()]
     .map((h) => ({ ...h, reason: reasonOf(h) }))
     .sort((a, b) => Number(pinned.has(b.chunk_id)) - Number(pinned.has(a.chunk_id)) || b.relevance - a.relevance || a.chunk_id.localeCompare(b.chunk_id));
@@ -158,9 +160,16 @@ async function expandContext(sql: Q, where: ReturnType<typeof filtered>, top: Hi
     found[slot] = (found[slot] ?? false) || rows.length > 0;
     for (const r of rows) if (!seen.has(r.chunk_id)) { seen.add(r.chunk_id); context.push(toHit(r, { context_type: slot, reason: `required context: ${slot.replace(/_/g, " ")}` })); }
   };
+  const anyChapter = filtered(sql, { ...input, category: input.category ?? null, subchapters: [] }, { chapterFamily: false });
   for (const h of top) {
     const r = known.get(h.chunk_id);
     if (!r) continue;
+    // "see s. 295-505-2-b": a section cited in the text is a cross reference even when it sits in another subchapter.
+    // Same served / in-force / district rules; only the chapter family is lifted.
+    take("cross_reference", await sql<Row[]>`
+      with cited as (select l from unnest(tsvector_to_array(zoning_code_tokens(${r.text}))) l where l <> lower(${r.section}))
+      select distinct on (c.section) ${COLS(sql)}, 0::float as score from code_chunks c join source_documents d on d.id = c.source_document_id
+      where lower(c.section) in (select l from cited) and c.source_type <> 'table_row' and ${anyChapter} order by c.section, c.page_start, c.id limit 3`);
     // A table row is governed by the prose of the section that carries the table's own number (Table 295-605-2 →
     // s. 295-605-2); a prose chunk by its section's parent. The linked code_sections row is the fallback.
     take("parent_section", await sql<Row[]>`
