@@ -11,7 +11,7 @@ export const GATES = { recall_at_10: 0.9, footnote_recall: 0.95, inactive_citati
 
 export type QueryScore = {
   id: string; status: "scored" | "blocked"; blocked_reason?: string; primary: number;
-  found_at_5: number; found_at_10: number; found_at_20: number; ranks: Record<string, number | null>;
+  found_at_5: number; found_at_10: number; found_at_20: number; rr_sum: number; ranks: Record<string, number | null>;
   footnote_rows: number; footnote_rows_ok: number; bundle_complete: boolean; filter_violations: number; inactive_evidence: number; missing: string[];
 };
 
@@ -28,12 +28,12 @@ async function unservedKeys(sql: Q, families: string[], analysisDate: string): P
   return families.filter((f) => !ok.has(f));
 }
 
-export async function scoreQuery(sql: Q, q: LabelledQuery, opts: { analysisDate: string; versionId?: string; rerank?: Reranker }): Promise<QueryScore> {
+export async function scoreQuery(sql: Q, q: LabelledQuery, opts: { analysisDate: string; versionId?: string; rerank?: Reranker; pinRuleRows?: boolean }): Promise<QueryScore> {
   const primary = q.required.filter((r) => r.tier === "primary");
-  const base = { id: q.id, primary: primary.length, found_at_5: 0, found_at_10: 0, found_at_20: 0, ranks: {}, footnote_rows: 0, footnote_rows_ok: 0, bundle_complete: false, filter_violations: 0, inactive_evidence: 0, missing: [] as string[] };
+  const base = { id: q.id, primary: primary.length, found_at_5: 0, found_at_10: 0, found_at_20: 0, rr_sum: 0, ranks: {}, footnote_rows: 0, footnote_rows_ok: 0, bundle_complete: false, filter_violations: 0, inactive_evidence: 0, missing: [] as string[] };
   const unserved = await unservedKeys(sql, q.required.map((r) => r.family_id), opts.analysisDate);
   if (unserved.length) return { ...base, status: "blocked", blocked_reason: `not served: ${unserved.join(", ")}${q.blocked_until ? ` (${q.blocked_until})` : ""}` };
-  const r = await retrieve(sql, { jurisdictionId: "milwaukee-wi", subquestion: q.subquestion, category: q.category, districts: q.districts, analysisDate: opts.analysisDate, k: 20, ...(opts.versionId ? { versionId: opts.versionId } : {}), ...(opts.rerank ? { rerank: opts.rerank } : {}) });
+  const r = await retrieve(sql, { jurisdictionId: "milwaukee-wi", subquestion: q.subquestion, category: q.category, districts: q.districts, analysisDate: opts.analysisDate, k: 20, ...(opts.versionId ? { versionId: opts.versionId } : {}), ...(opts.rerank ? { rerank: opts.rerank } : {}), ...(opts.pinRuleRows === false ? { pinRuleRows: false } : {}) });
   const ranks = Object.fromEntries(primary.map((p) => [p.family_id, rankOf(r.hits, p.family_id)]));
   const within = (k: number) => primary.filter((p) => { const rk = ranks[p.family_id]; return rk !== null && rk !== undefined && rk <= k; }).length;
   // Footnote recall: a required row that carries footnotes counts only if it came back with every one attached.
@@ -45,10 +45,12 @@ export async function scoreQuery(sql: Q, q: LabelledQuery, opts: { analysisDate:
   const [bad] = await sql<{ n: number }[]>`select count(*)::int as n from retrieval_evidence e where e.retrieval_run_id = ${r.run_id}
     and not exists (select 1 from code_chunks c join source_documents d on d.id = c.source_document_id where c.id = e.code_chunk_id and c.status = 'active' and d.status = 'active')`;
   const missing = primary.filter((p) => { const rk = ranks[p.family_id]; return rk === null || rk === undefined || rk > 10; }).map((p) => `${p.family_id} (rank ${ranks[p.family_id] ?? "none"})`);
-  return { ...base, status: "scored", found_at_5: within(5), found_at_10: within(10), found_at_20: within(20), ranks, footnote_rows: fnRows.length, footnote_rows_ok: fnOk, bundle_complete, filter_violations, inactive_evidence: bad!.n, missing };
+  // Mean reciprocal rank of the primary passages: ordering quality, which still moves when recall is already 1.0.
+  const rr_sum = primary.reduce((a, p) => { const rk = ranks[p.family_id]; return a + (rk ? 1 / rk : 0); }, 0);
+  return { ...base, status: "scored", rr_sum, found_at_5: within(5), found_at_10: within(10), found_at_20: within(20), ranks, footnote_rows: fnRows.length, footnote_rows_ok: fnOk, bundle_complete, filter_violations, inactive_evidence: bad!.n, missing };
 }
 
-export type Summary = { scored: number; blocked: number; recall_at_5: number; recall_at_10: number; recall_at_20: number; footnote_rows: number; footnote_recall: number | null; bundle_completeness: number; inactive_citations: number; filter_violations: number; gates: Record<string, { value: number | null; target: string; pass: boolean }> };
+export type Summary = { scored: number; blocked: number; mrr: number; recall_at_1: number; recall_at_5: number; recall_at_10: number; recall_at_20: number; footnote_rows: number; footnote_recall: number | null; bundle_completeness: number; inactive_citations: number; filter_violations: number; gates: Record<string, { value: number | null; target: string; pass: boolean }> };
 
 export function summarise(scores: QueryScore[]): Summary {
   const s = scores.filter((x) => x.status === "scored");
@@ -59,7 +61,8 @@ export function summarise(scores: QueryScore[]): Summary {
   const footnote = fnRows ? sum((q) => q.footnote_rows_ok) / fnRows : null;
   const inactive = sum((q) => q.inactive_evidence);
   return {
-    scored: s.length, blocked: scores.length - s.length,
+    scored: s.length, blocked: scores.length - s.length, mrr: sum((q) => q.rr_sum) / primary,
+    recall_at_1: s.reduce((a, q) => a + Object.values(q.ranks).filter((r) => r === 1).length, 0) / primary,
     recall_at_5: sum((q) => q.found_at_5) / primary, recall_at_10: recall10, recall_at_20: sum((q) => q.found_at_20) / primary,
     footnote_rows: fnRows, footnote_recall: footnote, bundle_completeness: s.length ? s.filter((q) => q.bundle_complete).length / s.length : 0,
     inactive_citations: inactive, filter_violations: sum((q) => q.filter_violations),
@@ -79,6 +82,7 @@ export function report(set: GoldSet, scores: QueryScore[], sum: Summary, meta: {
     `Labelled set \`${set.version}\` · embedding version \`${meta.version}\` · reranker ${meta.reranker ?? "none"} · corpus: ${meta.corpus}.`,
     `Generated by \`pnpm retrieval:eval\` (packages/retrieval/src/eval.ts). Every number below is measured, not estimated.`, "",
     "| Metric | Value | Gate |", "|---|---|---|",
+    `| MRR, mean reciprocal rank (primary passages) | ${pct(sum.mrr)} | |`,
     `| Recall@5 (primary passages) | ${pct(sum.recall_at_5)} | |`,
     `| **Recall@10** (primary passages) | **${pct(sum.recall_at_10)}** | ${sum.gates["recall_at_10"]!.target} ${sum.gates["recall_at_10"]!.pass ? "pass" : "**FAIL**"} |`,
     `| Recall@20 (primary passages) | ${pct(sum.recall_at_20)} | |`,

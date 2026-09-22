@@ -81,3 +81,21 @@ test("never unfiltered; reranking may only reorder; a recorded run's evidence al
   const [bad] = await tx`select count(*)::int as n from retrieval_evidence e where e.retrieval_run_id = ${r.run_id} and not exists (select 1 from code_chunks c join source_documents d on d.id = c.source_document_id where c.id = e.code_chunk_id and c.status = 'active' and d.status = 'active')`;
   assert.equal(bad!["n"], 0);
 }));
+
+test("with pins on, a reranker cannot move approved-rule rows out of first place; with pins off it can", () => rolledBack(async (tx) => {
+  const w = await world(tx);
+  // An approved LB1 height rule citing the LB1 row, so that row is pinned.
+  const [u] = await tx`insert into users (email) values ('rt-' || gen_random_uuid() || '@dev.local') returning id`;
+  const [z] = await tx`insert into zoning_rules (family_id, version, jurisdiction_id, district_code, category, kind, params, criticality, status, approved_by, approved_at, effective_start)
+    values ('rt-' || gen_random_uuid(), 1, ${w.J}, 'LB1', 'height', 'max_height_ft', '{"max_ft":45}', 'critical', 'approved', ${u!["id"]}, now(), '2025-07-15') returning id`;
+  const doc = (await tx`select source_document_id from code_chunks where id = ${w.c.lb1Height}`)[0]!["source_document_id"];
+  const [ci] = await tx`insert into citations (source_document_id, page_number, section, anchor, excerpt) values (${doc}, 16, '295-605-2', 'Table 295-605-2', 'Height, maximum (ft.): LB1 45') returning id`;
+  await tx`insert into rule_citations (zoning_rule_id, citation_id) values (${z!["id"]}, ${ci!["id"]})`;
+  const reverse = { name: "reverse", rerank: async (_q: string, c: Hit[]) => [...c].reverse() };
+  const base = { jurisdictionId: w.J, subquestion: "maximum height", category: "height", districts: ["LB1"], analysisDate: "2026-09-22", versionId: w.v.id, record: false, rerank: reverse };
+  const pinned = await retrieve(tx, base);
+  assert.equal(pinned.hits[0]!.chunk_id, w.c.lb1Height, "the rule-cited row stays first");
+  const raw = await retrieve(tx, { ...base, pinRuleRows: false });
+  assert.notEqual(raw.hits[0]!.chunk_id, w.c.lb1Height, "without pins the reranker decides");
+}));
+

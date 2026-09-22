@@ -25,6 +25,8 @@ export type RetrieveInput = {
   feasibilityRunId?: string | null;
   versionId?: string; // embedding version; defaults to the active one
   rerank?: Reranker;
+  shortlist?: number; // how many fused candidates the reranker sees (default 20)
+  pinRuleRows?: boolean; // keep approved-rule rows first (default true); false lets the reranker order them too
   record?: boolean; // write retrieval_runs / retrieval_evidence (default true)
 };
 export type Reranker = { name: string; rerank(query: string, candidates: Hit[]): Promise<Hit[]> };
@@ -104,8 +106,8 @@ export async function retrieve(sql: Q, input: RetrieveInput): Promise<RetrieveRe
     where z.jurisdiction_id = ${input.jurisdictionId} and z.status = 'approved' and z.category = ${input.category}::rule_category and z.district_code = any(${input.districts}::text[])
       and ${where}` : [];
 
-  const fused = fuse(lexical, semantic, ruleRows);
-  const ordered = input.rerank ? await rerankOrderOnly(input.rerank, input.subquestion, fused) : fused;
+  const fused = input.pinRuleRows === false ? fuse(lexical, semantic, []) : fuse(lexical, semantic, ruleRows);
+  const ordered = input.rerank ? await rerankShortlist(input.rerank, input.subquestion, fused, input.shortlist ?? 20, input.pinRuleRows === false ? 0 : pinnedCount(fused, ruleRows)) : fused;
   const hits = ordered.slice(0, k).map((h, i) => ({ ...h, rank: i + 1 }));
   const { context, found } = await expandContext(sql, where, hits.slice(0, 3), rowsById([...lexical, ...semantic, ...ruleRows]), input, k);
   const filters = { ...f, overlays: input.overlays ?? [], k };
@@ -142,11 +144,19 @@ export function fuse(lexical: Row[], semantic: Row[], ruleRows: Row[]): Hit[] {
     .sort((a, b) => Number(pinned.has(b.chunk_id)) - Number(pinned.has(a.chunk_id)) || b.relevance - a.relevance || a.chunk_id.localeCompare(b.chunk_id));
 }
 
-async function rerankOrderOnly(r: Reranker, query: string, hits: Hit[]): Promise<Hit[]> {
-  const out = await r.rerank(query, hits);
-  const before = new Set(hits.map((h) => h.chunk_id));
-  if (out.length !== hits.length || out.some((h) => !before.has(h.chunk_id))) throw new Error(`reranker ${r.name} changed the candidate set; it may only reorder`);
-  return out;
+const pinnedCount = (fused: Hit[], ruleRows: Row[]) => { const p = new Set(ruleRows.map((r) => r.chunk_id)); return fused.filter((h) => p.has(h.chunk_id)).length; };
+
+// The reranker sees the shortlist only (never the corpus) and may only reorder it. Rule-pinned rows stay first unless
+// pinning is switched off; everything past the shortlist keeps its fused order.
+async function rerankShortlist(r: Reranker, query: string, hits: Hit[], size: number, pinned: number): Promise<Hit[]> {
+  const head = hits.slice(0, pinned);
+  const shortlist = hits.slice(pinned, Math.max(pinned, size));
+  const tail = hits.slice(Math.max(pinned, size));
+  if (!shortlist.length) return hits;
+  const out = await r.rerank(query, shortlist.map((h, i) => ({ ...h, rank: pinned + i + 1 })));
+  const before = new Set(shortlist.map((h) => h.chunk_id));
+  if (out.length !== shortlist.length || out.some((h) => !before.has(h.chunk_id))) throw new Error(`reranker ${r.name} changed the candidate set; it may only reorder`);
+  return [...head, ...out, ...tail];
 }
 
 // Required-context expansion (04 §6.2 step 5) for the top hits: governing section, neighbours, cross-referenced
