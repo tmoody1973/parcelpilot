@@ -241,6 +241,7 @@ export const zoningRules = pgTable("zoning_rules", {
 export const citations = pgTable("citations", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   codeChunkId: uuid("code_chunk_id"),
+  documentPageId: uuid("document_page_id"), // FK added in migration 0013 (document_pages is declared later in this file)
   sourceDocumentId: uuid("source_document_id").notNull().references(() => sourceDocuments.id),
   pageNumber: integer("page_number").notNull(),
   printedPage: integer("printed_page"),
@@ -298,3 +299,166 @@ export const calculations = pgTable("calculations", {
   reviewReason: text("review_reason"),
   createdAt: timestamps.createdAt,
 }, (t) => [index("calculations_run_idx").on(t.feasibilityRunId)]);
+
+// ---- group 4e: the zoning-code corpus (jurisdiction-shared, immutable; 03 §4.4, 04 §3.6) ----
+// A code revision produces new rows under a new source_documents row; nothing here is ever edited.
+const vector1536 = customType<{ data: number[] | null; driverData: string }>({ dataType: () => "vector(1536)" });
+const tsvector = customType<{ data: string; driverData: string }>({ dataType: () => "tsvector" });
+export const codeSourceType = pgEnum("code_source_type", ["ordinance_text", "table_row", "footnote", "definition", "amendment", "map_legend"]);
+export const reviewTaskType = pgEnum("review_task_type", ["rule_candidate_review", "merge_review", "page_review", "footnote_review", "source_review", "gis_ambiguity"]);
+
+export const documentPages = pgTable("document_pages", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  sourceDocumentId: uuid("source_document_id").notNull().references(() => sourceDocuments.id),
+  pageNumber: integer("page_number").notNull(),
+  printedPage: integer("printed_page"),
+  rawText: text("raw_text").notNull(),
+  charDensity: numeric("char_density"), // native characters per page area; below threshold → OCR
+  ocrConfidence: numeric("ocr_confidence"), // null when native text was used
+  imageRef: text("image_ref"), // object storage key of the rendered page
+  contentHash: text("content_hash").notNull(),
+  createdAt: timestamps.createdAt,
+}, (t) => [uniqueIndex("document_pages_doc_page_idx").on(t.sourceDocumentId, t.pageNumber)]);
+
+export const codeSections = pgTable("code_sections", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  sourceDocumentId: uuid("source_document_id").notNull().references(() => sourceDocuments.id),
+  chapter: text("chapter").notNull(),
+  subchapter: text("subchapter"),
+  section: text("section").notNull(), // e.g. 295-603-2-a-2
+  subsection: text("subsection"),
+  heading: text("heading").notNull(),
+  parentSectionId: uuid("parent_section_id"),
+  pageStart: integer("page_start"),
+  sortOrder: integer("sort_order").notNull(),
+  confidence: text("confidence").notNull().default("high"), // low → page_review task
+  createdAt: timestamps.createdAt,
+}, (t) => [index("code_sections_doc_sort_idx").on(t.sourceDocumentId, t.sortOrder), index("code_sections_section_idx").on(t.sourceDocumentId, t.section)]);
+
+export const embeddingVersions = pgTable("embedding_versions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  provider: text("provider").notNull(),
+  modelName: text("model_name").notNull(),
+  dimension: integer("dimension").notNull(),
+  truncatedFrom: integer("truncated_from"),
+  isActive: boolean("is_active").notNull().default(false),
+  createdAt: timestamps.createdAt,
+});
+
+// The retrievable unit (PRD §10.4 C). family_id is deterministic from (document sha, section, ordinal).
+export const codeChunks = pgTable("code_chunks", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  familyId: text("family_id").notNull(),
+  version: integer("version").notNull(),
+  jurisdictionId: text("jurisdiction_id").notNull().references(() => jurisdictions.id),
+  codeFamily: text("code_family").notNull().default("zoning"),
+  chapter: text("chapter").notNull(),
+  subchapter: text("subchapter"),
+  section: text("section").notNull(),
+  subsection: text("subsection"),
+  heading: text("heading"),
+  sourceType: codeSourceType("source_type").notNull(),
+  districtCodes: text("district_codes").array().notNull().default(sql`'{}'::text[]`),
+  overlayCodes: text("overlay_codes").array().notNull().default(sql`'{}'::text[]`),
+  ruleCategories: ruleCategory("rule_categories").array().notNull().default(sql`'{}'::rule_category[]`),
+  sourceDocumentId: uuid("source_document_id").notNull().references(() => sourceDocuments.id),
+  pageStart: integer("page_start").notNull(),
+  pageEnd: integer("page_end"),
+  text: text("text").notNull(),
+  tableJson: jsonb("table_json"),
+  parentSectionId: uuid("parent_section_id").references(() => codeSections.id),
+  precedingChunkId: uuid("preceding_chunk_id"),
+  followingChunkId: uuid("following_chunk_id"),
+  crossReferenceIds: uuid("cross_reference_ids").array().notNull().default(sql`'{}'::uuid[]`),
+  status: sourceStatus("status").notNull().default("pending_review"),
+  reviewerStatus: reviewStatus("reviewer_status").notNull().default("unreviewed"),
+  effectiveStart: date("effective_start"),
+  effectiveEnd: date("effective_end"),
+  supersedesId: uuid("supersedes_id"),
+  embedding: vector1536("embedding"),
+  embeddingVersionId: uuid("embedding_version_id").references(() => embeddingVersions.id),
+  tsv: tsvector("tsv").generatedAlwaysAs(sql`to_tsvector('english', coalesce(heading, '') || ' ' || text)`),
+  createdAt: timestamps.createdAt,
+}, (t) => [
+  uniqueIndex("code_chunks_family_version_idx").on(t.familyId, t.version),
+  index("code_chunks_doc_page_idx").on(t.sourceDocumentId, t.pageStart),
+  index("code_chunks_tsv_idx").using("gin", t.tsv),
+  index("code_chunks_district_idx").using("gin", t.districtCodes),
+  index("code_chunks_categories_idx").using("gin", t.ruleCategories),
+]);
+
+// One logical table (possibly spanning pages) with canonical rows carrying row-level provenance (04 §3.6).
+export const sourceTables = pgTable("source_tables", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  sourceDocumentId: uuid("source_document_id").notNull().references(() => sourceDocuments.id),
+  familyKey: text("family_key").notNull(), // e.g. tbl_295_605_2
+  caption: text("caption"),
+  pageStart: integer("page_start").notNull(),
+  pageEnd: integer("page_end").notNull(),
+  canonicalRows: jsonb("canonical_rows").notNull().default(sql`'[]'::jsonb`),
+  columnSchema: jsonb("column_schema").notNull().default(sql`'[]'::jsonb`), // normalized district columns
+  mergeReviewStatus: reviewStatus("merge_review_status").notNull().default("unreviewed"),
+  extractor: text("extractor").notNull(), // docling | camelot_lattice | camelot_stream | pdfplumber | manual
+  metrics: jsonb("metrics").notNull().default(sql`'{}'::jsonb`),
+  createdAt: timestamps.createdAt,
+}, (t) => [uniqueIndex("source_tables_doc_family_idx").on(t.sourceDocumentId, t.familyKey)]);
+
+export const tableFragments = pgTable("table_fragments", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  sourceTableId: uuid("source_table_id").notNull().references(() => sourceTables.id),
+  documentPageId: uuid("document_page_id").notNull().references(() => documentPages.id),
+  pageNumber: integer("page_number").notNull(),
+  bbox: jsonb("bbox").notNull(), // { x0, y0, x1, y1 } in page points
+  headers: jsonb("headers").notNull(),
+  rows: jsonb("rows").notNull(),
+  extractor: text("extractor").notNull(),
+  continuationSignals: jsonb("continuation_signals").notNull().default(sql`'[]'::jsonb`), // which 04 §3.6 signals fired
+  createdAt: timestamps.createdAt,
+}, (t) => [index("table_fragments_table_idx").on(t.sourceTableId, t.pageNumber)]);
+
+export const tableFootnotes = pgTable("table_footnotes", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  sourceTableId: uuid("source_table_id").notNull().references(() => sourceTables.id),
+  fragmentId: uuid("fragment_id").references(() => tableFragments.id),
+  marker: text("marker").notNull(), // *, **, 1, a
+  text: text("text").notNull(),
+  appliesToRowKeys: text("applies_to_row_keys").array().notNull().default(sql`'{}'::text[]`),
+  createdAt: timestamps.createdAt,
+}, (t) => [index("table_footnotes_table_idx").on(t.sourceTableId)]);
+
+// ---- group 4f: the reviewer queue (jurisdiction-shared, mutable until resolved; 03 §4.5, §4.7) ----
+// A candidate is extracted by code from a canonical row. It can never drive a finding; approval inserts a zoning_rules row.
+export const ruleCandidates = pgTable("rule_candidates", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  jurisdictionId: text("jurisdiction_id").notNull().references(() => jurisdictions.id),
+  familyId: text("family_id").notNull(), // becomes zoning_rules.family_id on approval
+  districtCode: text("district_code").notNull(),
+  category: ruleCategory("category").notNull(),
+  proposedRule: jsonb("proposed_rule").notNull(), // contracts ZoningRule shape minus id/status
+  extractedValue: jsonb("extracted_value").notNull(), // the raw cell(s) as pulled
+  sourceTableId: uuid("source_table_id").references(() => sourceTables.id),
+  rowKey: text("row_key"),
+  sourceChunkIds: uuid("source_chunk_ids").array().notNull().default(sql`'{}'::uuid[]`),
+  citationIds: uuid("citation_ids").array().notNull().default(sql`'{}'::uuid[]`),
+  extractionMethod: text("extraction_method").notNull(), // table_row | manual
+  reviewerStatus: reviewStatus("reviewer_status").notNull().default("unreviewed"),
+  reviewerId: uuid("reviewer_id").references(() => users.id),
+  reviewerNotes: text("reviewer_notes"),
+  approvedRuleId: uuid("approved_rule_id").references(() => zoningRules.id),
+  ...timestamps,
+}, (t) => [index("rule_candidates_district_category_idx").on(t.jurisdictionId, t.districtCode, t.category), index("rule_candidates_status_idx").on(t.reviewerStatus)]);
+
+export const reviewTasks = pgTable("review_tasks", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  jurisdictionId: text("jurisdiction_id").notNull().references(() => jurisdictions.id),
+  taskType: reviewTaskType("task_type").notNull(),
+  entityType: text("entity_type").notNull(), // rule_candidate | source_table | document_page | table_footnote | source_document
+  entityId: uuid("entity_id").notNull(),
+  assignedTo: uuid("assigned_to").references(() => users.id),
+  status: reviewStatus("status").notNull().default("unreviewed"),
+  priority: criticality("priority"),
+  reason: text("reason"), // required on reject / edit
+  resolvedBy: uuid("resolved_by").references(() => users.id),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  ...timestamps,
+}, (t) => [uniqueIndex("review_tasks_entity_idx").on(t.taskType, t.entityType, t.entityId), index("review_tasks_status_idx").on(t.status, t.taskType)]);
