@@ -104,7 +104,7 @@ export async function retrieve(sql: Q, input: RetrieveInput): Promise<RetrieveRe
     where z.jurisdiction_id = ${input.jurisdictionId} and z.status = 'approved' and z.category = ${input.category}::rule_category and z.district_code = any(${input.districts}::text[])
       and ${where}` : [];
 
-  const fused = fuse(lexical, semantic, ruleRows);
+  const fused = fuse([], semantic.slice(40), []); // DELIBERATE REGRESSION (MOO-831 gate proof): drop lexical, rule pins and the best semantic hits
   const ordered = input.rerank ? await rerankOrderOnly(input.rerank, input.subquestion, fused) : fused;
   const hits = ordered.slice(0, k).map((h, i) => ({ ...h, rank: i + 1 }));
   const { context, found } = await expandContext(sql, where, hits.slice(0, 3), rowsById([...lexical, ...semantic, ...ruleRows]), input, k);
