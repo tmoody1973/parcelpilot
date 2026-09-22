@@ -1,0 +1,47 @@
+{
+  "_note": "Hand-written answer key for the Docling bake-off (MOO-822), read from pdftotext -layout on 2026-09-22 before any extractor ran. Cells are the printed strings; a footnote marker printed in a cell is recorded under `markers`. Only rows that carry a v1 rule or a footnote are keyed; the goal is footnote attachment and continuation merge, not full-table transcription.",
+  "tables": [
+    {
+      "id": "295-605-2",
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pages": [16],
+      "columns": ["NS1", "NS2", "LB1", "LB2", "LB3", "RB1", "RB2", "CS"],
+      "rows": [
+        { "page": 16, "label": "Front setback, minimum (ft.)", "cells": { "NS1": "average", "NS2": "none", "LB1": "none", "LB2": "none", "LB3": "none", "RB1": "average", "RB2": "none", "CS": "none" }, "markers": {} },
+        { "page": 16, "label": "Front setback, maximum (ft.)", "cells": { "NS1": "50", "NS2": "average", "LB1": "70", "LB2": "average", "LB3": "average", "RB1": "none", "RB2": "70", "CS": "average" }, "markers": {} },
+        { "page": 16, "label": "Side setback, minimum (ft.)", "cells": { "NS1": "none", "NS2": "none", "LB1": "none", "LB2": "none", "LB3": "none", "RB1": "none", "RB2": "none", "CS": "none" }, "markers": {} },
+        { "page": 16, "label": "Rear setback, minimum (ft.)", "cells": { "NS1": "none", "NS2": "none", "LB1": "none", "LB2": "none", "LB3": "none", "RB1": "none", "RB2": "none", "CS": "none" }, "markers": {} },
+        { "page": 16, "label": "Lot area per dwelling unit, minimum (sq. ft.)", "cells": { "NS1": "2,400", "NS2": "1,200", "LB1": "1,200", "LB2": "800", "LB3": "300", "RB1": "1,200", "RB2": "800", "CS": "1,200" }, "markers": {} },
+        { "page": 16, "label": "Height, minimum (ft.)", "cells": { "NS1": "none", "NS2": "18", "LB1": "none", "LB2": "18", "LB3": "30", "RB1": "none", "RB2": "24", "CS": "none" }, "markers": {} },
+        { "page": 16, "label": "Height, maximum (ft.)", "cells": { "NS1": "45", "NS2": "60", "LB1": "45", "LB2": "60", "LB3": "75", "RB1": "85", "RB2": "85", "CS": "60" }, "markers": {} }
+      ],
+      "footnotes": {}
+    },
+    {
+      "id": "295-505-2",
+      "document": "CH295-sub5.pdf",
+      "sha256_prefix": "fa92de2c8d86",
+      "pages": [14, 15, 16, 17],
+      "column_blocks": { "14": ["RS1", "RS2", "RS3", "RS4", "RS5", "RS6", "RT1", "RT2", "RT3", "RT4", "RT5"], "15": ["RS1", "RS2", "RS3", "RS4", "RS5", "RS6", "RT1", "RT2", "RT3", "RT4", "RT5"], "16": ["RM1", "RM2", "RM3", "RM4", "RM5", "RM6", "RM7", "RO1", "RO2"], "17": ["RM1", "RM2", "RM3", "RM4", "RM5", "RM6", "RM7", "RO1", "RO2"] },
+      "continuations": [[14, 15], [16, 17]],
+      "rows": [
+        { "page": 14, "label": "Lot area per dwelling unit, minimum (sq. ft.)", "cells": { "RS1": "none", "RS2": "none", "RS3": "none", "RS4": "none", "RS5": "none", "RS6": "3,600", "RT1": "3,600", "RT2": "2,400", "RT3": "1,800", "RT4": "1,200", "RT5": "800" }, "markers": { "_label": "***" } },
+        { "page": 14, "label": "Lot coverage, minimum interior lot", "cells": { "RS1": "none", "RS2": "none", "RS3": "none", "RS4": "none", "RS5": "none", "RS6": "*", "RT1": "none", "RT2": "none", "RT3": "*", "RT4": "*", "RT5": "*" }, "markers": { "RS6": "*", "RT3": "*", "RT4": "*", "RT5": "*" } },
+        { "page": 14, "label": "Height, minimum (ft.)", "cells": { "RS1": "none", "RS2": "none", "RS3": "none", "RS4": "none", "RS5": "none", "RS6": "**", "RT1": "none", "RT2": "none", "RT3": "*", "RT4": "*", "RT5": "*" }, "markers": { "RS6": "**", "RT3": "*", "RT4": "*", "RT5": "*" } },
+        { "page": 14, "label": "Height, maximum (ft.)", "cells": { "RS1": "45", "RS2": "45", "RS3": "45", "RS4": "45", "RS5": "45", "RS6": "45", "RT1": "45", "RT2": "45", "RT3": "45", "RT4": "48", "RT5": "48" }, "markers": {} },
+        { "page": 16, "label": "Lot area per dwelling unit, minimum (sq. ft.)", "cells": { "RM1": "2,400", "RM2": "1,200", "RM3": "2,400 ea. (3 or more);", "RM4": "1,200", "RM5": "800", "RM6": "400", "RM7": "150", "RO1": "2,400", "RO2": "400" }, "markers": { "_label": "***" } },
+        { "page": 16, "label": "Lot coverage, minimum interior lot", "cells": { "RM1": "15%", "RM2": "15%", "RM3": "*", "RM4": "*", "RM5": "*", "RM6": "*", "RM7": "20%", "RO1": "15%", "RO2": "*" }, "markers": { "RM3": "*", "RM4": "*", "RM5": "*", "RM6": "*", "RO2": "*" } },
+        { "page": 17, "label": "Height, minimum (ft.)", "cells": { "RM1": "none", "RM2": "none", "RM3": "*", "RM4": "*", "RM5": "*", "RM6": "*", "RM7": "20", "RO1": "none", "RO2": "*" }, "markers": { "RM3": "*", "RM4": "*", "RM5": "*", "RM6": "*", "RO2": "*" } },
+        { "page": 17, "label": "Height, maximum (ft.)", "cells": { "RM1": "45", "RM2": "45", "RM3": "45", "RM4": "60", "RM5": "60", "RM6": "85", "RM7": "85; no limit if floor area ratio is less than 4:1", "RO1": "45", "RO2": "85" }, "markers": {} }
+      ],
+      "footnotes": {
+        "*": "The requirements of table 295-505-2-i apply in lieu of the minimum lot coverage and minimum height requirements of this table.",
+        "**": "A structure shall meet the minimum height requirements of table 295-505-2-i unless it is adjacent to a lot containing a one-story house, in which case there shall be no minimum height requirement.",
+        "***": "Accessory dwelling units shall not be included in lot area per dwelling unit calculations.",
+        "****": "In addition to the principal residential building, one detached accessory dwelling unit is permitted on a parcel in an RM1, RM2 or RM3 district."
+      },
+      "footnote_pages": { "*": [14, 16], "**": [14, 16], "***": [14, 15, 16], "****": [17] }
+    }
+  ]
+}

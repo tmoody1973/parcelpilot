@@ -1,0 +1,37 @@
+camelot_lattice: unavailable (no Ghostscript binary)
+
+| extractor | tables detected | header rows found | cells correct | footnote markers kept | continuations mergeable | seconds |
+|---|---|---|---|---|---|---|
+| pdfplumber | 5/5 | 5/5 | 136/136 (1.00) | 18/20 (0.90) | 2/2 | 6.5 |
+| docling | 5/5 | 1/5 | 42/136 (0.31) | 0/20 (0.00) | 0/2 | 472.6 |
+
+pdfplumber misses (2):
+  - p14 Lot area per dwelling unit,  marker '***' on _label: got ' y sit n e D  Lot area per dwelling unit,'
+  - p16 Lot area per dwelling unit,  marker '***' on _label: got 'y sit n e D Lot area per dwelling unit, minimum (sq. ft.)'
+
+docling misses (120):
+  - p16 Front setback, minimum (ft.) [LB3]: got '' want 'none'
+  - p16 Front setback, minimum (ft.) [RB1]: got '' want 'average'
+  - p16 Front setback, maximum (ft.) [LB3]: got '' want 'average'
+  - p16 Front setback, maximum (ft.) [RB1]: got '' want 'none'
+  - p16 Side setback, minimum (ft.) [LB3]: got '' want 'none'
+  - p16 Side setback, minimum (ft.) [RB1]: got '' want 'none'
+  - p16 Rear setback, minimum (ft.) [LB3]: got '' want 'none'
+  - p16 Rear setback, minimum (ft.) [RB1]: got '' want 'none'
+  - p16 Lot area per dwelling unit,  [LB3]: got '' want '300'
+  - p16 Lot area per dwelling unit,  [RB1]: got '' want '1,200'
+  - p16 Height, minimum (ft.) [LB3]: got '' want '30'
+  - p16 Height, minimum (ft.) [RB1]: got '' want 'none'
+  - p16 Height, maximum (ft.) [LB3]: got '' want '75'
+  - p16 Height, maximum (ft.) [RB1]: got '' want '85'
+  - page 14: no header row naming the district columns
+  - page 15: no header row naming the district columns
+  - page 16: no header row naming the district columns
+  - page 17: no header row naming the district columns
+  - pages 14->15: headers differ or missing, cannot merge by header
+  - pages 16->17: headers differ or missing, cannot merge by header
+  - p14 Lot area per dwelling unit,  [RS1]: got '' want 'none'
+  - p14 Lot area per dwelling unit,  [RS2]: got '' want 'none'
+  - p14 Lot area per dwelling unit,  [RS3]: got '' want 'none'
+  - p14 Lot area per dwelling unit,  [RS4]: got '' want 'none'
+  - p14 Lot area per dwelling unit,  [RS5]: got '' want 'none'

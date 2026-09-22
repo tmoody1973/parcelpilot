@@ -18,6 +18,9 @@ dependencies = [
 
 [dependency-groups]
 dev = ["ruff>=0.6", "pytest>=8"]
+eval = [
+    "docling>=2.129.0",
+]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

@@ -262,7 +262,7 @@ Every canonical row keeps: `source_fragment_id`, `row_index_on_page`, `bbox`, `a
 }
 ```
 
-**Extractor cascade.** No single extractor is trusted. Order: Docling (MIT, layout-aware document model with reading order and table structure; evaluated in M2 on this exact table) → Camelot lattice → Camelot stream → pdfplumber line/word geometry for verification and visual debugging → manual entry in the review UI. Each fragment records which extractor produced it and its metrics. Adopt Docling as the default structure parser only if it beats Camelot+pdfplumber on the M2 footnote-attachment and continuation-merge tests; PyMuPDF stays out for licensing reasons (decision 003).
+**Extractor cascade.** No single extractor is trusted. Order (decided 2026-09-22 by measurement, decision 009): pdfplumber's built-in table finder → Camelot stream (Camelot lattice only where Ghostscript is installed) → manual entry in the review UI. Each fragment records which extractor produced it and its metrics. Docling was evaluated on this exact table and on Table 295-605-2 against a hand-written answer key (`services/worker-py/app/eval_tables.py`): it kept 0 of 20 footnote markers, named the district columns on 1 of 5 pages, and took ~470 s against ~6 s, so it is not in the cascade; it remains installed in the `eval` dependency group for re-runs. PyMuPDF stays out for licensing reasons (decision 003).
 
 ## 4. Chunk schema
 
