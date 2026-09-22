@@ -10,6 +10,7 @@ import { POLICY_SCHEMAS } from "../policy.ts";
 import { MEMO_SCHEMAS } from "../memo.ts";
 import { EVIDENCE_SCHEMAS } from "../evidence.ts";
 import { DECISIONING_SCHEMAS } from "../decisioning.ts";
+import { JEV_SCHEMAS } from "../jev.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, "..", "..", "..", "..");
@@ -17,7 +18,7 @@ const targets = [join(repoRoot, "packages", "contracts", "schema"), join(repoRoo
 
 for (const dir of targets) mkdirSync(dir, { recursive: true });
 const index: Record<string, string> = {};
-for (const [name, schema] of Object.entries({ ...ENUMS, ...RULE_SCHEMAS, ...POLICY_SCHEMAS, ...MEMO_SCHEMAS, ...EVIDENCE_SCHEMAS, ...DECISIONING_SCHEMAS })) {
+for (const [name, schema] of Object.entries({ ...ENUMS, ...RULE_SCHEMAS, ...POLICY_SCHEMAS, ...MEMO_SCHEMAS, ...EVIDENCE_SCHEMAS, ...DECISIONING_SCHEMAS, ...JEV_SCHEMAS })) {
   const json = { $id: `parcelpilot/${name}.v1`, title: name, ...z.toJSONSchema(schema, { unrepresentable: "any" }) };
   const file = `${name}.schema.json`;
   index[name] = file;

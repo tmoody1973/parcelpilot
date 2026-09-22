@@ -30,5 +30,7 @@
   "BriefingOutcome": "BriefingOutcome.schema.json",
   "ValidationResult": "ValidationResult.schema.json",
   "ValidationEffect": "ValidationEffect.schema.json",
-  "ValidatorName": "ValidatorName.schema.json"
+  "ValidatorName": "ValidatorName.schema.json",
+  "PreparedState": "PreparedState.schema.json",
+  "JevResponse": "JevResponse.schema.json"
 }

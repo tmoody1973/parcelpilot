@@ -7,3 +7,5 @@ export * from "./policy.ts";
 export * from "./memo.ts";
 export * from "./evidence.ts";
 export * from "./decisioning.ts";
+export * from "./canonical-json.ts";
+export * from "./jev.ts";

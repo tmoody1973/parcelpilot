@@ -8,3 +8,5 @@ export * from "./citation-gate.ts";
 export * from "./memo/render.ts";
 export * from "./memo/validate.ts";
 export { MEMO_VERSION, DISCLAIMER as MEMO_DISCLAIMER } from "./memo/copy.ts";
+export * from "./prepared-state.ts";
+export * from "./jev-client.ts";

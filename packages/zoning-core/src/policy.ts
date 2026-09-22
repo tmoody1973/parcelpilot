@@ -75,7 +75,9 @@ export function finalStatus(raw: PolicyInput, decision: DecisionLayerOutput | nu
   // not block it but is surfaced in coverage. Anything else with no override → verify.
   const allPass = input.findings.length > 0 && input.findings.every((f) => f.status === "pass" || (f.status === "unknown" && !HIGH.has(f.criticality)));
   const base: FinalStatus = fired.length > 0 ? floor : allPass ? "proceed_to_concept_design" : "verify_before_committing";
-  const status = applyDecisionLayer(base, decision);
+  // Only `jev` mode lets a decision reach the status. In rules_only and shadow (MOO-836) JEV is logged, never consulted,
+  // whatever the caller passes: the boundary lives here, not in each caller.
+  const status = applyDecisionLayer(base, input.decision_mode === "jev" ? decision : null);
   const { risk, route } = rulesOnlyRoute(status, fired, input.parcel);
   // With insufficient evidence the product abstains (05 §7 `abstention`): only the evidence reasons are
   // reported; fail/verify findings are provisional until the evidence is there (gold G09, G15).

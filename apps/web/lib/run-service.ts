@@ -1,10 +1,10 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { auditEvents, calculations, decisionPolicyVersionId, feasibilityRuns, layerSnapshotIdsFor, loadApprovedRules, projects, scenarios, sourceStates, withOrg, computeIntersections } from "@parcelpilot/db";
-import { DECISION_POLICY_V1, ScenarioInputs, type Coverage, type EvidenceFlags, type Finding, type ParcelFacts as EngineFacts, type PolicyResult } from "@parcelpilot/contracts";
+import { auditEvents, calculations, decisionPolicyVersionId, feasibilityRuns, recordJevRun, layerSnapshotIdsFor, loadApprovedRules, projects, scenarios, sourceStates, withOrg, computeIntersections } from "@parcelpilot/db";
+import { DECISION_POLICY_V1, ScenarioInputs, type EvidenceBundle, type PolicyFlags, type Coverage, type EvidenceFlags, type Finding, type ParcelFacts as EngineFacts, type PolicyResult } from "@parcelpilot/contracts";
 import { evaluate, RULES_ENGINE_VERSION } from "@parcelpilot/rules-engine";
-import { checkCitations, finalStatus } from "@parcelpilot/zoning-core";
+import { askJev, buildPreparedState, checkCitations, finalStatus, resolveDecisionMode, servableDecisionMode, type PreparedStateInput } from "@parcelpilot/zoning-core";
 import { attachEvidence, evidenceTokenBudget } from "@parcelpilot/retrieval";
 import { appDb, appSql, serviceSql } from "./db.ts";
 import type { FeasibilityRun } from "./dto.ts";
@@ -29,6 +29,7 @@ export type RunOutcome = { kind: "run"; run: FeasibilityRun } | { kind: "not_fou
 export async function runScenario(ctx: OrgContext, scenarioId: string): Promise<RunOutcome> {
   const db = appDb();
   const sql = serviceSql();
+  const mode = servableDecisionMode(await resolveDecisionMode()); // rules_only or shadow; a jev/baseline config fails the request
 
   const found = await withOrg(db, ctx.orgId, async (tx) => {
     const [row] = await tx.select({ scenario: scenarios, project: projects }).from(scenarios).innerJoin(projects, eq(projects.id, scenarios.projectId)).where(eq(scenarios.id, scenarioId));
@@ -63,7 +64,7 @@ export async function runScenario(ctx: OrgContext, scenarioId: string): Promise<
   const policy = finalStatus({
     findings: engine.findings, coverage: engine.coverage, evidence,
     parcel: { overlays: summary.overlays, special_districts: summary.special_districts, planned_development: summary.planned_development, floodplain: summary.floodplain, gis_ambiguity: summary.gis_ambiguity, stacked_condo_candidates: [] },
-    decision_mode: "rules_only",
+    decision_mode: mode, // in shadow, JEV is asked after the run is locked and the policy never consults it
   });
 
   const policyVersionId = await decisionPolicyVersionId(sql, DECISION_POLICY_V1); // the table finalStatus used above
@@ -75,7 +76,7 @@ export async function runScenario(ctx: OrgContext, scenarioId: string): Promise<
     const now = new Date();
     const [run] = await tx.insert(feasibilityRuns).values({
       orgId: ctx.orgId, projectId: project.id, scenarioId: scenario.id, parcelSnapshotId: snap.id, gisLayerSnapshotIds: layerSnapshotIds,
-      inputHash, scenarioInputs: inputs, ruleVersionSet, decisionMode: "rules_only", status: "succeeded",
+      inputHash, scenarioInputs: inputs, ruleVersionSet, decisionMode: mode, status: "succeeded",
       finalStatus: policy.final_status, route: policy.route, policyReasons: stored, lockedAt: now, createdBy: ctx.userId, decisionPolicyVersionId: policyVersionId,
     }).returning();
     const calcs = await tx.insert(calculations).values(engine.findings.map((f) => ({
@@ -89,21 +90,46 @@ export async function runScenario(ctx: OrgContext, scenarioId: string): Promise<
     await tx.insert(auditEvents).values({ orgId: ctx.orgId, actorUserId: ctx.userId, action: "feasibility_run.locked", entityType: "feasibility_run", entityId: run!.id, afterHash: inputHash, payload: { final_status: policy.final_status, route: policy.route, reasons: policy.reasons } });
     return { run: run!, calcs };
   });
-  await freezeEvidence(ctx, { runId: run.id, districts: summary.base_zoning, overlays: summary.overlays, analysisDate, scenario: inputs });
+  const bundle = await freezeEvidence(ctx, { runId: run.id, districts: summary.base_zoning, overlays: summary.overlays, analysisDate, scenario: inputs });
+  if (mode === "shadow") {
+    const knownUses = rules.filter((r) => r.kind === "allowed_use").flatMap((r) => Object.keys((r.params as { uses?: Record<string, string> }).uses ?? {}));
+    await shadowDecision(ctx, run.id, {
+      jurisdiction: JURISDICTION, parcel: { ...summary, stacked_condo_candidates: [] }, scenario: inputs, knownUses,
+      findings: engine.findings, coverage: engine.coverage, evidence, policyFlags: policy.policy_flags as PolicyFlags, bundle,
+    });
+  }
   return { kind: "run", run: runDto(run, calcs) };
 }
 
 // After the run is locked: retrieve for every category in scope and freeze the bundle (MOO-835). Evidence never changes
 // the status above, and a failure here never fails the run: attachEvidence records `unavailable`, and if even that write
 // fails the run simply has no bundle row, which the memo treats the same way.
-async function freezeEvidence(ctx: OrgContext, i: { runId: string; districts: string[]; overlays: string[]; analysisDate: string; scenario: ScenarioInputs }): Promise<void> {
+async function freezeEvidence(ctx: OrgContext, i: { runId: string; districts: string[]; overlays: string[]; analysisDate: string; scenario: ScenarioInputs }): Promise<EvidenceBundle | null> {
   try {
-    await appSql().begin(async (tx) => {
+    const r = await appSql().begin(async (tx) => {
       await tx`select set_config('app.org_id', ${ctx.orgId}, true)`;
-      await attachEvidence(tx, { ...i, orgId: ctx.orgId, jurisdictionId: JURISDICTION, categories: IN_SCOPE, tokenBudget: evidenceTokenBudget() });
+      return attachEvidence(tx, { ...i, orgId: ctx.orgId, jurisdictionId: JURISDICTION, categories: IN_SCOPE, tokenBudget: evidenceTokenBudget() });
     });
+    return r.status === "assembled" ? r.bundle : null;
   } catch (e) {
     console.error("evidence bundle could not be recorded", { runId: i.runId, error: e instanceof Error ? e.message : String(e) });
+    return null;
+  }
+}
+
+// Shadow mode (MOO-836; 05 §4.3): after the run is locked, ask JEV its four questions about the prepared state and log
+// the answer. Nothing here can reach the run: its status and route were written above, and the row is locked. A failed
+// or slow call is logged as failed; if even the log write fails, the run is still complete.
+async function shadowDecision(ctx: OrgContext, runId: string, input: PreparedStateInput): Promise<void> {
+  try {
+    const state = buildPreparedState(input);
+    const call = await askJev(state, { apiKey: process.env["TYPESAFE_API_KEY"], timeoutMs: DECISION_POLICY_V1.thresholds.jev_timeout_ms });
+    await appSql().begin(async (tx) => {
+      await tx`select set_config('app.org_id', ${ctx.orgId}, true)`;
+      await recordJevRun(tx, { orgId: ctx.orgId, runId, decisionMode: "shadow", state, call, policy: DECISION_POLICY_V1 });
+    });
+  } catch (e) {
+    console.error("shadow decision could not be recorded", { runId, error: e instanceof Error ? e.message : String(e) });
   }
 }
 
