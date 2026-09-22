@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { boolean, customType, date, index, integer, jsonb, numeric, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
-import { Criticality, DecisionMode, FinalStatus, FindingStatus, JevRoute, OrgRole, ReviewStatus, RuleCategory, RuleKind, RunStatus, SourceStatus } from "@parcelpilot/contracts";
+import { BriefingOutcome, Criticality, DecisionMode, FinalStatus, FindingStatus, JevRoute, ModelCallStatus, ModelProvider, OrgRole, ReviewStatus, RuleCategory, RuleKind, RunStatus, SourceStatus, ValidationEffect, ValidationResult, ValidatorName } from "@parcelpilot/contracts";
 
 // zod exposes `.options` as a plain array; drizzle wants a non-empty tuple. Values are identical.
 const tuple = <T extends string>(values: readonly T[]) => values as unknown as [T, ...T[]];
@@ -277,6 +277,11 @@ export const feasibilityRuns = pgTable("feasibility_runs", {
   route: jevRoute("route"),
   policyReasons: jsonb("policy_reasons"),
   lockedAt: timestamp("locked_at", { withTimezone: true }),
+  decisionPolicyVersionId: uuid("decision_policy_version_id").references(() => decisionPolicyVersions.id), // migration 0019; null on runs before M5
+  goldCaseId: text("gold_case_id"), // set only on gold-case runs, with the expert label copied from the gold file
+  goldCaseVersion: integer("gold_case_version"),
+  goldExpectedStatus: finalStatus("gold_expected_status"),
+  goldExpectedRoute: jevRoute("gold_expected_route"),
   createdBy: uuid("created_by").references(() => users.id),
   createdAt: timestamps.createdAt,
 }, (t) => [index("feasibility_runs_org_project_idx").on(t.orgId, t.projectId), index("feasibility_runs_scenario_idx").on(t.scenarioId)]);
@@ -502,3 +507,75 @@ export const retrievalEvidence = pgTable("retrieval_evidence", {
   anchors: jsonb("anchors").notNull().default(sql`'[]'::jsonb`),
   createdAt: timestamps.createdAt,
 }, (t) => [uniqueIndex("retrieval_evidence_run_rank_unique").on(t.retrievalRunId, t.rank), index("retrieval_evidence_run_idx").on(t.retrievalRunId)]);
+
+// ---- group 5 continued: the decision layer's logs (migration 0019; 05 §4.8, §7, §8). Tenant-scoped, append-only. ----
+export const modelProvider = pgEnum("model_provider", tuple(ModelProvider.options));
+export const modelCallStatus = pgEnum("model_call_status", tuple(ModelCallStatus.options));
+export const briefingOutcome = pgEnum("briefing_outcome", tuple(BriefingOutcome.options));
+export const validationResult = pgEnum("validation_result", tuple(ValidationResult.options));
+export const validationEffect = pgEnum("validation_effect", tuple(ValidationEffect.options));
+export const validatorName = pgEnum("validator_name", tuple(ValidatorName.options));
+
+// Product-wide, never edited; the repo copy (DECISION_POLICY_V1) is the authority and the seed must match it.
+export const decisionPolicyVersions = pgTable("decision_policy_versions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  version: text("version").notNull().unique(),
+  config: jsonb("config").notNull(),
+  createdAt: timestamps.createdAt,
+});
+
+export const jevRuns = pgTable("jev_runs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  feasibilityRunId: uuid("feasibility_run_id").notNull().references(() => feasibilityRuns.id),
+  provider: modelProvider("provider").notNull(),
+  decisionMode: decisionMode("decision_mode").notNull(),
+  inputState: jsonb("input_state").notNull(),
+  inputStateHash: text("input_state_hash").notNull(),
+  questionSetVersion: text("question_set_version").notNull(),
+  modelVersion: text("model_version"),
+  rawResponse: jsonb("raw_response"),
+  answers: jsonb("answers"),
+  recommendedRoute: jevRoute("recommended_route"),
+  routeConfidence: numeric("route_confidence"),
+  status: modelCallStatus("status").notNull(),
+  error: text("error"),
+  latencyMs: integer("latency_ms"),
+  inputTokens: integer("input_tokens"),
+  outputTokens: integer("output_tokens"),
+  costEstimateUsd: numeric("cost_estimate_usd"),
+  usedByPolicy: boolean("used_by_policy").notNull().default(false),
+  createdAt: timestamps.createdAt,
+}, (t) => [index("jev_runs_feasibility_idx").on(t.feasibilityRunId, t.provider, t.createdAt)]);
+
+export const briefingRuns = pgTable("briefing_runs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  feasibilityRunId: uuid("feasibility_run_id").notNull().references(() => feasibilityRuns.id),
+  contract: jsonb("contract").notNull(),
+  contractHash: text("contract_hash").notNull(),
+  promptVersion: text("prompt_version").notNull(),
+  schemaVersion: text("schema_version").notNull(),
+  modelVersion: text("model_version"),
+  rawOutput: text("raw_output"),
+  validatedOutput: jsonb("validated_output"),
+  outcome: briefingOutcome("outcome").notNull(),
+  error: text("error"),
+  latencyMs: integer("latency_ms"),
+  inputTokens: integer("input_tokens"),
+  outputTokens: integer("output_tokens"),
+  costEstimateUsd: numeric("cost_estimate_usd"),
+  createdAt: timestamps.createdAt,
+}, (t) => [index("briefing_runs_feasibility_idx").on(t.feasibilityRunId, t.createdAt)]);
+
+export const validationRuns = pgTable("validation_runs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  briefingRunId: uuid("briefing_run_id").notNull().references(() => briefingRuns.id),
+  validator: validatorName("validator").notNull(),
+  result: validationResult("result").notNull(),
+  effect: validationEffect("effect").notNull().default("none"),
+  removedSentenceIds: text("removed_sentence_ids").array().notNull().default(sql`'{}'::text[]`),
+  detail: jsonb("detail").notNull().default(sql`'{}'::jsonb`),
+  createdAt: timestamps.createdAt,
+}, (t) => [uniqueIndex("validation_runs_one_per_validator").on(t.briefingRunId, t.validator)]);

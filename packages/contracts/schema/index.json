@@ -22,5 +22,13 @@
   "DecisionLayerOutput": "DecisionLayerOutput.schema.json",
   "CitationGateInput": "CitationGateInput.schema.json",
   "MemoInput": "MemoInput.schema.json",
-  "EvidenceBundle": "EvidenceBundle.schema.json"
+  "EvidenceBundle": "EvidenceBundle.schema.json",
+  "DecisionPolicy": "DecisionPolicy.schema.json",
+  "ActionId": "ActionId.schema.json",
+  "ModelProvider": "ModelProvider.schema.json",
+  "ModelCallStatus": "ModelCallStatus.schema.json",
+  "BriefingOutcome": "BriefingOutcome.schema.json",
+  "ValidationResult": "ValidationResult.schema.json",
+  "ValidationEffect": "ValidationEffect.schema.json",
+  "ValidatorName": "ValidatorName.schema.json"
 }

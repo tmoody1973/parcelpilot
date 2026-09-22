@@ -1,0 +1,12 @@
+{
+  "$id": "parcelpilot/ValidationEffect.v1",
+  "title": "ValidationEffect",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "none",
+    "sentence_removed",
+    "action_removed",
+    "brief_failed"
+  ]
+}

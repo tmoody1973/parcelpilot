@@ -1,0 +1,15 @@
+{
+  "$id": "parcelpilot/ActionId.v1",
+  "title": "ActionId",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "proceed_to_concept_design",
+    "revise_scenario",
+    "engage_zoning_professional",
+    "contact_city",
+    "collect_missing_information",
+    "request_early_city_zoning_review",
+    "confirm_parking_configuration"
+  ]
+}

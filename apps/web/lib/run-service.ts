@@ -1,8 +1,8 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { auditEvents, calculations, feasibilityRuns, layerSnapshotIdsFor, loadApprovedRules, projects, scenarios, sourceStates, withOrg, computeIntersections } from "@parcelpilot/db";
-import { ScenarioInputs, type Coverage, type EvidenceFlags, type Finding, type ParcelFacts as EngineFacts, type PolicyResult } from "@parcelpilot/contracts";
+import { auditEvents, calculations, decisionPolicyVersionId, feasibilityRuns, layerSnapshotIdsFor, loadApprovedRules, projects, scenarios, sourceStates, withOrg, computeIntersections } from "@parcelpilot/db";
+import { DECISION_POLICY_V1, ScenarioInputs, type Coverage, type EvidenceFlags, type Finding, type ParcelFacts as EngineFacts, type PolicyResult } from "@parcelpilot/contracts";
 import { evaluate, RULES_ENGINE_VERSION } from "@parcelpilot/rules-engine";
 import { checkCitations, finalStatus } from "@parcelpilot/zoning-core";
 import { appDb, serviceSql } from "./db.ts";
@@ -65,6 +65,7 @@ export async function runScenario(ctx: OrgContext, scenarioId: string): Promise<
     decision_mode: "rules_only",
   });
 
+  const policyVersionId = await decisionPolicyVersionId(sql, DECISION_POLICY_V1); // the table finalStatus used above
   const ruleVersionSet = Object.fromEntries(rules.map((r) => [r.family_id, r.id]));
   const inputHash = createHash("sha256").update(JSON.stringify({ inputs, parcel_snapshot_id: snap.id, layerSnapshotIds, ruleVersionSet, engine: RULES_ENGINE_VERSION })).digest("hex");
   const stored: StoredResult = { ...policy, coverage: engine.coverage, evidence, analysis_date: analysisDate, rules_engine_version: RULES_ENGINE_VERSION, parcel_retrieved_at: snap.retrieved_at };
@@ -74,7 +75,7 @@ export async function runScenario(ctx: OrgContext, scenarioId: string): Promise<
     const [run] = await tx.insert(feasibilityRuns).values({
       orgId: ctx.orgId, projectId: project.id, scenarioId: scenario.id, parcelSnapshotId: snap.id, gisLayerSnapshotIds: layerSnapshotIds,
       inputHash, scenarioInputs: inputs, ruleVersionSet, decisionMode: "rules_only", status: "succeeded",
-      finalStatus: policy.final_status, route: policy.route, policyReasons: stored, lockedAt: now, createdBy: ctx.userId,
+      finalStatus: policy.final_status, route: policy.route, policyReasons: stored, lockedAt: now, createdBy: ctx.userId, decisionPolicyVersionId: policyVersionId,
     }).returning();
     const calcs = await tx.insert(calculations).values(engine.findings.map((f) => ({
       orgId: ctx.orgId, feasibilityRunId: run!.id, ruleCategory: f.category, findingStatus: f.status, criticality: f.criticality,

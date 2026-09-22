@@ -1,0 +1,224 @@
+{
+  "$id": "parcelpilot/DecisionPolicy.v1",
+  "title": "DecisionPolicy",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^decision_policy\\.v\\d+$"
+    },
+    "thresholds": {
+      "type": "object",
+      "properties": {
+        "route_confidence_min": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "manual_review_true_at": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "summary_safe_false_below": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk_medium_at": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "risk_high_at": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "jev_timeout_ms": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "route_confidence_min",
+        "manual_review_true_at",
+        "summary_safe_false_below",
+        "risk_medium_at",
+        "risk_high_at",
+        "jev_timeout_ms"
+      ],
+      "additionalProperties": false
+    },
+    "decision_table": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "proceed_to_concept_design",
+              "revise_scenario",
+              "verify_before_committing",
+              "insufficient_evidence"
+            ]
+          },
+          "if_fired": {
+            "type": "string",
+            "pattern": "^O\\d$"
+          },
+          "if_special": {
+            "type": "boolean",
+            "const": true
+          },
+          "risk": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "route": {
+            "type": "string",
+            "enum": [
+              "proceed_to_concept_design",
+              "revise_scenario",
+              "contact_city",
+              "engage_zoning_professional",
+              "collect_missing_information",
+              "insufficient_evidence"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "risk",
+          "route"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "allowed_next_actions": {
+      "type": "object",
+      "properties": {
+        "by_status": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "enum": [
+              "proceed_to_concept_design",
+              "revise_scenario",
+              "verify_before_committing",
+              "insufficient_evidence"
+            ]
+          },
+          "additionalProperties": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "proceed_to_concept_design",
+                "revise_scenario",
+                "engage_zoning_professional",
+                "contact_city",
+                "collect_missing_information",
+                "request_early_city_zoning_review",
+                "confirm_parking_configuration"
+              ]
+            }
+          },
+          "required": [
+            "proceed_to_concept_design",
+            "revise_scenario",
+            "verify_before_committing",
+            "insufficient_evidence"
+          ]
+        },
+        "by_trigger_kind": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "proceed_to_concept_design",
+                "revise_scenario",
+                "engage_zoning_professional",
+                "contact_city",
+                "collect_missing_information",
+                "request_early_city_zoning_review",
+                "confirm_parking_configuration"
+              ]
+            }
+          }
+        },
+        "by_category_needing_verification": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "proceed_to_concept_design",
+                "revise_scenario",
+                "engage_zoning_professional",
+                "contact_city",
+                "collect_missing_information",
+                "request_early_city_zoning_review",
+                "confirm_parking_configuration"
+              ]
+            }
+          }
+        },
+        "when_missing_inputs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "proceed_to_concept_design",
+              "revise_scenario",
+              "engage_zoning_professional",
+              "contact_city",
+              "collect_missing_information",
+              "request_early_city_zoning_review",
+              "confirm_parking_configuration"
+            ]
+          }
+        }
+      },
+      "required": [
+        "by_status",
+        "by_trigger_kind",
+        "by_category_needing_verification",
+        "when_missing_inputs"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "thresholds",
+    "decision_table",
+    "allowed_next_actions"
+  ],
+  "additionalProperties": false
+}

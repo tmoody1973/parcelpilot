@@ -1,0 +1,11 @@
+{
+  "$id": "parcelpilot/ValidationResult.v1",
+  "title": "ValidationResult",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "pass",
+    "fail",
+    "skipped"
+  ]
+}
