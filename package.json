@@ -31,7 +31,8 @@
     "embed": "node --conditions=development packages/db/src/cli/embed.ts",
     "retrieve": "node --conditions=development packages/retrieval/src/cli/retrieve.ts",
     "retrieval:eval": "node --conditions=development packages/retrieval/src/cli/eval.ts",
-    "retrieval:bakeoff": "node --conditions=development packages/retrieval/src/cli/bakeoff.ts"
+    "retrieval:bakeoff": "node --conditions=development packages/retrieval/src/cli/bakeoff.ts",
+    "evidence:bundle": "node --conditions=development packages/retrieval/src/cli/bundle.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

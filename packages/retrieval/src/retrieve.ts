@@ -138,7 +138,7 @@ export function fuse(lexical: Row[], semantic: Row[], ruleRows: Row[]): Hit[] {
   add(semantic, "semantic");
   const pinned = new Set(ruleRows.map((r) => r.chunk_id));
   for (const r of ruleRows) if (!acc.has(r.chunk_id)) acc.set(r.chunk_id, toHit(r, {}));
-  const reasonOf = (h: Hit) => [pinned.has(h.chunk_id) ? (h.source_type === "table_row" ? "table row cited by an approved rule" : "passage cited by an approved rule's condition") : null, h.lexical_rank ? `keyword rank ${h.lexical_rank}` : null, h.semantic_rank ? `meaning rank ${h.semantic_rank}` : null].filter(Boolean).join("; ");
+  const reasonOf = (h: Hit) => [pinned.has(h.chunk_id) ? (h.source_type === "table_row" ? "table row cited by a signed-off rule" : "passage cited by a signed-off rule's condition") : null, h.lexical_rank ? `keyword rank ${h.lexical_rank}` : null, h.semantic_rank ? `meaning rank ${h.semantic_rank}` : null].filter(Boolean).join("; ");
   return [...acc.values()]
     .map((h) => ({ ...h, reason: reasonOf(h) }))
     .sort((a, b) => Number(pinned.has(b.chunk_id)) - Number(pinned.has(a.chunk_id)) || b.relevance - a.relevance || a.chunk_id.localeCompare(b.chunk_id));

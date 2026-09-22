@@ -141,6 +141,9 @@ importers:
 
   packages/retrieval:
     dependencies:
+      '@parcelpilot/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@parcelpilot/db':
         specifier: workspace:*
         version: link:../db
