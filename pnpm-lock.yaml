@@ -35,6 +35,9 @@ importers:
       '@parcelpilot/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@parcelpilot/retrieval':
+        specifier: workspace:*
+        version: link:../../packages/retrieval
       '@parcelpilot/rules-engine':
         specifier: workspace:*
         version: link:../../packages/rules-engine

@@ -18,6 +18,7 @@
     "@clerk/nextjs": "^6.9.0",
     "@parcelpilot/contracts": "workspace:*",
     "@parcelpilot/db": "workspace:*",
+    "@parcelpilot/retrieval": "workspace:*",
     "@parcelpilot/rules-engine": "workspace:*",
     "@parcelpilot/zoning-core": "workspace:*",
     "drizzle-orm": "^0.44.0",
