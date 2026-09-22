@@ -45,7 +45,10 @@ test("at most one active embedding version", () => rolledBack(owner, async (tx) 
 test("retrieval runs and evidence are append-only and tenant-isolated; offline runs are invisible to tenants", () => rolledBack(owner, async (tx) => {
   const [orgA] = await tx`insert into organizations (name, slug, clerk_org_id) values ('A', 'rs-a-' || gen_random_uuid(), 'rs-a-' || gen_random_uuid()) returning id`;
   const [orgB] = await tx`insert into organizations (name, slug, clerk_org_id) values ('B', 'rs-b-' || gen_random_uuid(), 'rs-b-' || gen_random_uuid()) returning id`;
-  const [chunk] = await tx`select id from code_chunks limit 1`;
+  // CI's database has no ingested corpus, so the test makes its own chunk.
+  const [d] = await tx`insert into source_documents (jurisdiction_id, source_type, title, sha256, retrieved_at, retrieval_method, status) values ('milwaukee-wi', 'ordinance_subchapter', 't', 'rs-' || gen_random_uuid(), now(), 'manual_upload', 'active') returning id`;
+  const [chunk] = await tx`insert into code_chunks (family_id, version, jurisdiction_id, chapter, section, source_type, source_document_id, page_start, text)
+    values ('rs-' || gen_random_uuid(), 1, 'milwaukee-wi', '295', '295-605-2', 'ordinance_text', ${d!["id"]}, 16, 'Height, maximum') returning id`;
   const [runA] = await tx`insert into retrieval_runs (org_id, subquestion, category, planner_version) values (${orgA!["id"]}, 'height', 'height', 'test') returning id`;
   await tx`insert into retrieval_runs (org_id, subquestion, planner_version) values (null, 'offline eval', 'test')`;
   const [ev] = await tx`insert into retrieval_evidence (retrieval_run_id, org_id, code_chunk_id, rank, selection_reason) values (${runA!["id"]}, ${orgA!["id"]}, ${chunk!["id"]}, 1, 'test') returning id`;
