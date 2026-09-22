@@ -17,4 +17,4 @@
 
 **How we'll know if this was right.** MOO-825: the LB3/RB1/RB2 use and height candidates are critical; Tarik approves them in the UI and the audit trail shows one `rule.approved` per rule with `approved_by` = Tarik. If any critical rule sits in `in_review` for more than a week waiting on the owner, the bottleneck is real and option 1 should be revisited.
 
-**What actually happened.** _(Tarik fills in later.)_
+**What actually happened.** _(Tarik fills in later.)_	

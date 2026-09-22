@@ -14,6 +14,7 @@ export const GET = withReviewer(async (_actor, req: Request) => {
   const status = ReviewStatus.safeParse(u.searchParams.get("status"));
   const type = u.searchParams.get("type");
   if (type && !(REVIEW_TASK_TYPES as readonly string[]).includes(type)) return fail("invalid_type", `type must be one of ${REVIEW_TASK_TYPES.join(", ")}`, 400);
-  const tasks = await listTasks(serviceSql(), { jurisdictionId: JURISDICTION, ...(status.success ? { status: status.data } : {}), ...(type ? { taskType: type as TaskType } : {}) });
+  const district = u.searchParams.get("district");
+  const tasks = await listTasks(serviceSql(), { jurisdictionId: JURISDICTION, ...(status.success ? { status: status.data } : {}), ...(type ? { taskType: type as TaskType } : {}), ...(district ? { district } : {}) });
   return ok(tasks, { meta: { total: tasks.length } });
 });

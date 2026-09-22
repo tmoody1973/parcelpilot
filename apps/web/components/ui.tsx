@@ -31,7 +31,7 @@ export function CardHeader({ title, subtitle, action }: { title: ReactNode; subt
   );
 }
 
-export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+export function Field({ label, hint, children }: { label: string; hint?: string | undefined; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1 text-sm">
       <span className="font-medium text-ink">{label}</span>
