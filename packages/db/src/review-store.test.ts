@@ -93,6 +93,21 @@ test("claim → approve mints a versioned rule with citations; audit rows for bo
   assert.ok(loaded.some((r) => r.id === res.rule!.id && r.citations.length === 1), "the engine loader sees the minted rule with its citation");
 }));
 
+test("a rule whose condition cites the same page as its own citation still loads with its evidence", () => rolledBack(async (tx) => {
+  const fx = await fixtures(tx);
+  await approveMerge(tx, fx);
+  const [sha] = await tx`select sha256 from source_documents where id = ${fx.docId}`;
+  const condition = { id: "average_front_setback", description: "LB1 front maximum reads 'average'", evaluable: false, effect: { status: "verify" },
+    citation: { document_id: sha!["sha256"], page: 16, printed_page: 824, section: "295-605-2", table: "Table 295-605-2", excerpt: "Front setback, maximum (ft.): LB1 average" } };
+  const candId = await candidate(tx, fx, { category: "setback_front", kind: "min_setback_ft", params: { min_ft: 0 }, conditions: [condition] });
+  await generateReviewTasks(tx, "milwaukee-wi");
+  const res = await approveTask(tx, fx.reviewer, await taskFor(tx, candId));
+  const loaded = (await loadApprovedRules(tx as unknown as postgres.Sql, { jurisdictionId: "milwaukee-wi", districts: ["LB1"], date: "2026-09-22" })).find((r) => r.id === res.rule!.id);
+  assert.ok(loaded, "the rule loads");
+  assert.equal(loaded.citations.length, 1, "keeps its own cell citation");
+  assert.equal(loaded.conditions[0]?.id, "average_front_setback");
+}));
+
 test("reject needs a reason, creates no rule, and the audit row carries the reason", () => rolledBack(async (tx) => {
   const fx = await fixtures(tx);
   await approveMerge(tx, fx);

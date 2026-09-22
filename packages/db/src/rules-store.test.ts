@@ -23,7 +23,7 @@ test("LB1 rules load as engine-ready ZoningRule[] with sha256 document ids and c
 
 test("date and district filters: nothing before the effective date, nothing for an unseeded district", async () => {
   assert.equal((await loadApprovedRules(sql, { jurisdictionId: "milwaukee-wi", districts: ["LB1"], date: "2025-01-01" })).length, 0);
-  assert.equal((await loadApprovedRules(sql, { jurisdictionId: "milwaukee-wi", districts: ["RB1"], date: "2026-09-21" })).length, 0);
+  assert.equal((await loadApprovedRules(sql, { jurisdictionId: "milwaukee-wi", districts: ["ZZ9"], date: "2026-09-21" })).length, 0, "a district with no rules");
   assert.equal((await loadApprovedRules(sql, { jurisdictionId: "milwaukee-wi", districts: [], date: "2026-09-21" })).length, 0);
 });
 

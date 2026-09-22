@@ -34,9 +34,14 @@ export async function loadApprovedRules(sql: postgres.Sql, input: { jurisdiction
   const ordered = [...rows].sort((a, b) => a.district_code.localeCompare(b.district_code) || a.category.localeCompare(b.category) || a.family_id.localeCompare(b.family_id));
   return ordered.map((r) => {
     const conditions = Array.isArray(r.conditions) ? (r.conditions as Array<{ citation: RuleCitation }>) : [];
-    // A condition's citation is stored inside the jsonb; the rule's own citations exclude those rows.
-    const conditionKeys = new Set(conditions.map((c) => `${c.citation.document_id}:${c.citation.page}:${c.citation.section}`));
-    const citations = (byRule.get(r.id) ?? []).filter((c) => !conditionKeys.has(`${c.document_id}:${c.page}:${c.section}`));
+    // A condition's citation is stored inside the jsonb; the seed also links it in rule_citations, so the rule's own
+    // citations exclude an identical row. Keyed on the excerpt too: a queue-born rule and its condition may cite the
+    // same table page (the "average" front-setback cell next to the "none" minimum), and the rule keeps its own cell.
+    const key = (c: RuleCitation) => `${c.document_id}:${c.page}:${c.section}:${c.excerpt ?? ""}`;
+    const conditionKeys = new Set(conditions.map((c) => key(c.citation)));
+    const all = byRule.get(r.id) ?? [];
+    const own = all.filter((c) => !conditionKeys.has(key(c)));
+    const citations = own.length ? own : all; // a rule is never loaded without its evidence
     return ZoningRule.parse({ id: r.id, family_id: r.family_id, version: r.version, jurisdiction_id: r.jurisdiction_id, district_code: r.district_code, category: r.category, kind: r.kind, params: r.params, conditions, criticality: r.criticality, citations, effective_start: r.effective_start, effective_end: r.effective_end, status: "approved" });
   });
 }
