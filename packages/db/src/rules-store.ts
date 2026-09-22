@@ -11,13 +11,15 @@ type CitationRow = { zoning_rule_id: string; citation_id: string; sha256: string
 
 export async function loadApprovedRules(sql: postgres.Sql, input: { jurisdictionId: string; districts: string[]; date: string }): Promise<ZoningRule[]> {
   if (input.districts.length === 0) return [];
+  // Rows are append-only, so a re-approval is a new version that supersedes the old one (MOO-819): the engine gets
+  // the highest approved, in-force version of each family, never two versions of the same rule.
   const rows = await sql<RuleRow[]>`
-    select id, family_id, version, jurisdiction_id, district_code, category, kind, params, conditions, criticality,
+    select distinct on (family_id) id, family_id, version, jurisdiction_id, district_code, category, kind, params, conditions, criticality,
            effective_start::text as effective_start, effective_end::text as effective_end
     from zoning_rules
     where jurisdiction_id = ${input.jurisdictionId} and district_code = any(${input.districts}) and status = 'approved'
       and effective_start <= ${input.date}::date and (effective_end is null or effective_end > ${input.date}::date)
-    order by district_code, category, family_id`;
+    order by family_id, version desc`;
   if (rows.length === 0) return [];
   const cites = await sql<CitationRow[]>`
     select rc.zoning_rule_id, c.id as citation_id, d.sha256, c.page_number, c.printed_page, c.section, c.anchor, c.excerpt
@@ -29,7 +31,8 @@ export async function loadApprovedRules(sql: postgres.Sql, input: { jurisdiction
     const cite: RuleCitation = { citation_id: c.citation_id, document_id: c.sha256, page: c.page_number, section: c.section ?? "", excerpt: c.excerpt, ...(c.printed_page ? { printed_page: c.printed_page } : {}), ...(c.anchor ? { table: c.anchor } : {}) };
     byRule.set(c.zoning_rule_id, [...(byRule.get(c.zoning_rule_id) ?? []), cite]);
   }
-  return rows.map((r) => {
+  const ordered = [...rows].sort((a, b) => a.district_code.localeCompare(b.district_code) || a.category.localeCompare(b.category) || a.family_id.localeCompare(b.family_id));
+  return ordered.map((r) => {
     const conditions = Array.isArray(r.conditions) ? (r.conditions as Array<{ citation: RuleCitation }>) : [];
     // A condition's citation is stored inside the jsonb; the rule's own citations exclude those rows.
     const conditionKeys = new Set(conditions.map((c) => `${c.citation.document_id}:${c.citation.page}:${c.citation.section}`));

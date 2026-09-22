@@ -23,7 +23,8 @@
     "gold:live": "node apps/web/scripts/gold-live.mjs",
     "ingest:pages": "cd services/worker-py && uv run python -m app.ingest_pages ../../data",
     "ingest:structure": "cd services/worker-py && uv run python -m app.ingest_structure",
-    "ingest:tables": "cd services/worker-py && uv run python -m app.ingest_tables ../../data"
+    "ingest:tables": "cd services/worker-py && uv run python -m app.ingest_tables ../../data",
+    "review:sweep": "node --conditions=development packages/db/src/cli/review-sweep.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

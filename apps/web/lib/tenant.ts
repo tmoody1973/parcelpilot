@@ -1,4 +1,3 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { memberships, organizations, users } from "@parcelpilot/db";
 import { serviceDb } from "./db.ts";
 
@@ -7,9 +6,11 @@ export type OrgContext = { orgId: string; userId: string };
 // Thrown when the caller has no session (401) or no active organization (403). Route handlers map
 // it to the matching HTTP status so tenant data never leaks to an unscoped caller.
 export class OrgContextError extends Error {
-  constructor(readonly status: 401 | 403, message: string) {
+  readonly status: 401 | 403;
+  constructor(status: 401 | 403, message: string) {
     super(message);
     this.name = "OrgContextError";
+    this.status = status;
   }
 }
 
@@ -35,6 +36,7 @@ async function identityFromRequest(req?: Request): Promise<Identity> {
     if (!clerkOrgId) throw new OrgContextError(403, "no active organization (dev: set x-dev-org)");
     return { clerkUserId, clerkOrgId, orgName: h?.get("x-dev-org-name") ?? cookies["pp-dev-org-name"] ?? clerkOrgId, email: `${clerkUserId}@dev.local`, fullName: null };
   }
+  const { auth, currentUser } = await import("@clerk/nextjs/server"); // loaded only outside dev auth mode
   const { userId: clerkUserId, orgId: clerkOrgId, orgSlug } = await auth();
   if (!clerkUserId) throw new OrgContextError(401, "not signed in");
   if (!clerkOrgId) throw new OrgContextError(403, "no active organization");

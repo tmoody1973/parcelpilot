@@ -20,8 +20,12 @@ try {
   // The cited documents, registered if `pnpm seed:sources` has not run here (CI has no PDFs or MinIO).
   // Keyed by sha256 like the Python seed, so whichever runs second is a no-op.
   for (const d of files.flatMap((f) => f.documents ?? [])) {
-    await sql`insert into source_documents (jurisdiction_id, source_type, title, sha256, local_path, retrieved_at, retrieval_method, published_marker, page_count, status, review_status)
-      values ('milwaukee-wi', ${d.source_type}, ${d.title}, ${d.sha256}, ${d.local_path}, now(), 'manual_upload', ${d.published_marker}, ${d.page_count}, 'active', 'approved') on conflict (sha256) do nothing`;
+    // effective_start is the printed publication stamp (M/D/YYYY): the review queue mints a rule's effective_start from it (MOO-819).
+    const [m, day, y] = String(d.published_marker ?? "").split("/");
+    const effectiveStart = y && m && day ? `${y}-${m.padStart(2, "0")}-${day.padStart(2, "0")}` : null;
+    await sql`insert into source_documents (jurisdiction_id, source_type, title, sha256, local_path, retrieved_at, retrieval_method, published_marker, page_count, status, review_status, effective_start)
+      values ('milwaukee-wi', ${d.source_type}, ${d.title}, ${d.sha256}, ${d.local_path}, now(), 'manual_upload', ${d.published_marker}, ${d.page_count}, 'active', 'approved', ${effectiveStart}) on conflict (sha256) do nothing`;
+    await sql`update source_documents set effective_start = ${effectiveStart} where sha256 = ${d.sha256} and effective_start is null`;
   }
 
   const [reviewer] = await sql`insert into users (email, full_name) values (${REVIEWER_EMAIL}, 'Interim reviewer')

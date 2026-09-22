@@ -10,7 +10,8 @@
     "test:e2e": "playwright test",
     "maplibre:worker": "mkdir -p public && cp node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs public/",
     "predev": "pnpm maplibre:worker",
-    "prebuild": "pnpm maplibre:worker"
+    "prebuild": "pnpm maplibre:worker",
+    "test": "node --conditions=development --test \"lib/**/*.test.ts\""
   },
   "dependencies": {
     "@clerk/nextjs": "^6.9.0",
