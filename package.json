@@ -28,7 +28,8 @@
     "candidates:extract": "cd services/worker-py && uv run python -m app.extract_candidates",
     "rules:review-doc": "cd services/worker-py && uv run python -m app.rules_review_doc",
     "corpus:activate": "node --conditions=development packages/db/src/cli/corpus-activate.ts",
-    "embed": "node --conditions=development packages/db/src/cli/embed.ts"
+    "embed": "node --conditions=development packages/db/src/cli/embed.ts",
+    "retrieve": "node --conditions=development packages/retrieval/src/cli/retrieve.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
