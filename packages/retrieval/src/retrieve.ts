@@ -1,11 +1,12 @@
 import type postgres from "postgres";
 import { activeVersion, localHashProvider, openAiProvider, toVectorLiteral, type EmbeddingVersion, type Provider } from "@parcelpilot/db";
+import type { RequiredContextSlot } from "@parcelpilot/contracts";
 
 // The hybrid retriever (MOO-830; 04 §6). For one subquestion and one parcel context it returns ranked evidence plus the
 // context a reader needs around it, and records what was searched and found. It orders evidence; it never decides
-// pass/fail (the rules engine reads only approved zoning_rules).
+// pass/fail (the rules engine reads only approved zoning_rules). // banned-ok: rule review status from the database
 //
-// Order: hard filters → exact lexical lookup → semantic search under one embedding version → approved-rule table rows
+// Order: hard filters → exact lexical lookup → semantic search under one embedding version → approved-rule table rows // banned-ok: rule review status
 // pinned first → Reciprocal Rank Fusion → optional rerank (order only) → required-context expansion.
 type Q = postgres.Sql | postgres.TransactionSql;
 export const PLANNER_VERSION = "hybrid-v1";
@@ -35,7 +36,8 @@ export type Hit = {
   lexical_rank: number | null; semantic_rank: number | null; lexical_score: number | null; semantic_score: number | null; rerank_score: number | null; relevance: number;
   reason: string; context_type: string | null; footnotes: string[];
 };
-export type ContextSlot = "parent_section" | "adjacent" | "cross_reference" | "exception" | "definition" | "superseding_amendment" | "district_general_provision" | "overlay";
+// The contract owns the slot vocabulary; the retriever uses the same enum so the two can never drift.
+export type ContextSlot = RequiredContextSlot;
 export type RetrieveResult = { run_id: string | null; version: EmbeddingVersion; hits: Hit[]; context: Hit[]; context_found: Partial<Record<ContextSlot, boolean>>; filters: Record<string, unknown> };
 
 // District prefix → the subchapter that regulates it, plus the general subchapters every question may need.
@@ -92,7 +94,7 @@ export async function retrieve(sql: Q, input: RetrieveInput): Promise<RetrieveRe
     from code_chunks c join source_documents d on d.id = c.source_document_id
     where c.embedding_version_id = ${version.id} and c.embedding is not null and ${where}
     order by c.embedding <=> ${toVectorLiteral(qv!)}::vector, c.id limit ${LIST_DEPTH}`;
-  // Approved rules for this category: their cited table rows are pinned first, never the rule number alone (04 §6.2 step 4).
+  // Approved rules for this category: their cited table rows are pinned first, never the rule number alone (04 §6.2 step 4). // banned-ok: rule review status
   const ruleRows = input.category ? await sql<Row[]>`
     select distinct on (c.id) ${COLS(sql)}, 1::float as score
     from zoning_rules z join rule_citations rc on rc.zoning_rule_id = z.id join citations ci on ci.id = rc.citation_id
@@ -101,7 +103,7 @@ export async function retrieve(sql: Q, input: RetrieveInput): Promise<RetrieveRe
         -- a condition's citation is prose (e.g. s. 295-603-2-a-2, the street-level dwelling limit): pin that section's chunk
         or (c.source_type <> 'table_row' and ci.anchor is distinct from ('Table ' || ci.section) and c.page_start <= ci.page_number and coalesce(c.page_end, c.page_start) >= ci.page_number))
     join source_documents d on d.id = c.source_document_id
-    where z.jurisdiction_id = ${input.jurisdictionId} and z.status = 'approved' and z.category = ${input.category}::rule_category and z.district_code = any(${input.districts}::text[])
+    where z.jurisdiction_id = ${input.jurisdictionId} and z.status = 'approved' and z.category = ${input.category}::rule_category and z.district_code = any(${input.districts}::text[]) -- banned-ok: rule review status
       and ${where}` : [];
 
   const fused = fuse(lexical, semantic, ruleRows);
@@ -136,7 +138,7 @@ export function fuse(lexical: Row[], semantic: Row[], ruleRows: Row[]): Hit[] {
   add(semantic, "semantic");
   const pinned = new Set(ruleRows.map((r) => r.chunk_id));
   for (const r of ruleRows) if (!acc.has(r.chunk_id)) acc.set(r.chunk_id, toHit(r, {}));
-  const reasonOf = (h: Hit) => [pinned.has(h.chunk_id) ? (h.source_type === "table_row" ? "table row cited by an approved rule" : "passage cited by an approved rule's condition") : null, h.lexical_rank ? `keyword rank ${h.lexical_rank}` : null, h.semantic_rank ? `meaning rank ${h.semantic_rank}` : null].filter(Boolean).join("; ");
+  const reasonOf = (h: Hit) => [pinned.has(h.chunk_id) ? (h.source_type === "table_row" ? "table row cited by an approved rule" : "passage cited by an approved rule's condition") : null, h.lexical_rank ? `keyword rank ${h.lexical_rank}` : null, h.semantic_rank ? `meaning rank ${h.semantic_rank}` : null].filter(Boolean).join("; "); // banned-ok: rule review status, internal retrieval reason
   return [...acc.values()]
     .map((h) => ({ ...h, reason: reasonOf(h) }))
     .sort((a, b) => Number(pinned.has(b.chunk_id)) - Number(pinned.has(a.chunk_id)) || b.relevance - a.relevance || a.chunk_id.localeCompare(b.chunk_id));

@@ -2,7 +2,7 @@
 // Usage: pnpm retrieve --districts LB1 [--demo] [--bundle] [--category height --q "maximum height"]
 import postgres from "postgres";
 import type { SourceStatus } from "@parcelpilot/contracts";
-import { retrieve, type RetrieveResult } from "../retrieve.ts";
+import { retrieve } from "../retrieve.ts";
 import { assembleBundle, type BundleDocument, type BundleSource } from "../assemble.ts";
 
 const args = process.argv.slice(2);
@@ -25,7 +25,7 @@ try {
   const runIds: string[] = [];
   const sources: BundleSource[] = [];
   for (const [category, q] of questions) {
-    const r: RetrieveResult = await retrieve(sql, { jurisdictionId: "milwaukee-wi", subquestion: q, category, districts, analysisDate });
+    const r = await retrieve(sql, { jurisdictionId: "milwaukee-wi", subquestion: q, category, districts, analysisDate });
     runIds.push(r.run_id!);
     sources.push({ subquestion: q, category, districts, result: r });
     console.log(`\n[${category ?? "district"}] "${q}"  run ${r.run_id}  context found: ${JSON.stringify(r.context_found)}`);

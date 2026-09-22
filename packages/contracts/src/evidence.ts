@@ -43,8 +43,7 @@ export const BundleSubquestion = z.object({
     rank: z.number().int().positive(),
     context_type: RequiredContextSlot.nullable(), // null for a primary hit
   })),
-  required_context_found: z.record(z.string(), z.boolean()), // by slot, only the slots the retriever looked for
-  missing_context: z.array(RequiredContextSlot), // slots looked for but not found
+  required_context_found: z.record(z.string(), z.boolean()), // by slot, only the slots the retriever looked for (04 §7.1)
 });
 export type BundleSubquestion = z.infer<typeof BundleSubquestion>;
 

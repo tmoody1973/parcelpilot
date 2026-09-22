@@ -22,7 +22,6 @@ const bundle = {
       run_id: "run-1",
       evidence: [{ source_id: "chunk_295_505_2", rank: 1, context_type: null }],
       required_context_found: { parent_section: true, definition: false },
-      missing_context: ["definition" as const],
     },
   ],
   jev_flags: { active_version_confirmed: true, overlay_detected: false, required_context_complete: false, coverage_gap_list: ["height:definition"] },

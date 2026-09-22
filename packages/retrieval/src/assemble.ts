@@ -1,15 +1,9 @@
-import { EvidenceBundle, type BundleEvidence, type RequiredContextSlot } from "@parcelpilot/contracts";
-import type { SourceStatus } from "@parcelpilot/contracts";
+import { EvidenceBundle, type BundleEvidence, type SourceStatus } from "@parcelpilot/contracts";
 import type { ContextSlot, Hit, RetrieveResult } from "./retrieve.ts";
 
 // The evidence-bundle assembler (MOO-833; 04 §7, 06 §M4). It packages one or more retrieval passes into the frozen
 // EvidenceBundle that M5 hands to the briefing LLM and the JEV state builder. It reorders and labels evidence; it
 // never decides pass/fail and never writes text of its own — every excerpt is a served chunk's own bytes.
-
-// The retriever names its slots as strings; the contract owns the slot enum. This fails to compile if the two drift.
-type SlotParity = [ContextSlot] extends [RequiredContextSlot] ? ([RequiredContextSlot] extends [ContextSlot] ? true : never) : never;
-const _slotParity: SlotParity = true;
-void _slotParity;
 
 // What a served chunk's source document contributes to a citation (title, link, status), keyed by document sha.
 export type BundleDocument = { title: string; official_url: string | null; status: SourceStatus };
@@ -65,11 +59,10 @@ export function assembleBundle(input: AssembleInput): EvidenceBundle {
     });
 
     const found = s.result.context_found;
-    const missing = (Object.keys(found) as ContextSlot[]).filter((slot) => found[slot] === false);
     const scope = s.category ?? s.districts[0] ?? "district";
-    for (const slot of missing) coverageGaps.push(`${scope}:${slot}`);
+    for (const slot of Object.keys(found) as ContextSlot[]) if (found[slot] === false) coverageGaps.push(`${scope}:${slot}`);
 
-    return { subquestion: s.subquestion, category: s.category, districts: s.districts, run_id: s.result.run_id, evidence, required_context_found: found, missing_context: missing };
+    return { subquestion: s.subquestion, category: s.category, districts: s.districts, run_id: s.result.run_id, evidence, required_context_found: found };
   });
 
   return EvidenceBundle.parse({

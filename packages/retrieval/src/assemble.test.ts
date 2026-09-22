@@ -52,9 +52,9 @@ test("hits rank ahead of context, and a context chunk keeps its slot label", () 
 });
 
 test("a slot the retriever looked for but did not find becomes a coverage gap", () => {
-  const missing: Partial<Record<ContextSlot, boolean>> = { parent_section: true, definition: false, superseding_amendment: false };
-  const bundle = assembleBundle({ ...base, sources: [{ subquestion: "max height", category: "height", districts: ["RM4"], result: result({ context_found: missing }) }] });
-  assert.deepEqual(bundle.subquestions[0]!.missing_context.sort(), ["definition", "superseding_amendment"]);
+  const found: Partial<Record<ContextSlot, boolean>> = { parent_section: true, definition: false, superseding_amendment: false };
+  const bundle = assembleBundle({ ...base, sources: [{ subquestion: "max height", category: "height", districts: ["RM4"], result: result({ context_found: found }) }] });
+  assert.deepEqual(bundle.subquestions[0]!.required_context_found, found);
   assert.deepEqual(bundle.jev_flags.coverage_gap_list.sort(), ["height:definition", "height:superseding_amendment"]);
   assert.equal(bundle.jev_flags.required_context_complete, false);
 });

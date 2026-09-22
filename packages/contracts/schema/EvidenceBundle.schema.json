@@ -186,22 +186,6 @@
             "additionalProperties": {
               "type": "boolean"
             }
-          },
-          "missing_context": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "parent_section",
-                "adjacent",
-                "cross_reference",
-                "exception",
-                "district_general_provision",
-                "overlay",
-                "definition",
-                "superseding_amendment"
-              ]
-            }
           }
         },
         "required": [
@@ -210,8 +194,7 @@
           "districts",
           "run_id",
           "evidence",
-          "required_context_found",
-          "missing_context"
+          "required_context_found"
         ],
         "additionalProperties": false
       }
