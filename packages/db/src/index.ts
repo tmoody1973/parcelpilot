@@ -8,3 +8,4 @@ export * from "./rules-store.ts";
 export * from "./review-store.ts";
 export * from "./corpus-activation.ts";
 export * from "./embeddings.ts";
+export * from "./decision-policy.ts";

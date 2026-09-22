@@ -1,5 +1,5 @@
 import {
-  FINAL_STATUS_PERMISSIVENESS, PolicyInput, type DecisionLayerOutput, type FinalStatus, type JevRisk, type JevRoute, type PolicyFlags, type PolicyResult,
+  DECISION_POLICY_V1, FINAL_STATUS_PERMISSIVENESS, PolicyInput, type DecisionLayerOutput, type DecisionPolicy, type FinalStatus, type JevRisk, type JevRoute, type PolicyFlags, type PolicyResult,
 } from "@parcelpilot/contracts";
 
 // The final-status policy (docs/planning/05_decisioning_design.md §3 and §4.1). A pure function:
@@ -40,18 +40,14 @@ function triggersFor(p: PolicyInput["parcel"]): string[] {
   ];
 }
 
-// Rules-only decision table (05 §4.1): the state after overrides → (risk, route).
-function rulesOnlyRoute(status: FinalStatus, fired: Fired[], parcel: PolicyInput["parcel"]): { risk: JevRisk | null; route: JevRoute } {
-  const has = (prefix: string) => fired.some((f) => f.code.startsWith(prefix));
-  switch (status) {
-    case "insufficient_evidence": return { risk: null, route: has("O1") ? "insufficient_evidence" : "collect_missing_information" };
-    case "revise_scenario": return { risk: "high", route: "revise_scenario" };
-    case "verify_before_committing": {
-      const special = specialDistrict(parcel) || parcel.gis_ambiguity;
-      return { risk: special ? "high" : "medium", route: special ? "contact_city" : has("O2") ? "collect_missing_information" : "engage_zoning_professional" };
-    }
-    case "proceed_to_concept_design": return { risk: "low", route: "proceed_to_concept_design" };
-  }
+// Rules-only decision table (05 §4.1): the state after overrides → (risk, route). The table itself is data in the
+// versioned decision policy; the first matching row wins, and the schema guarantees a fallback row per status.
+function rulesOnlyRoute(status: FinalStatus, fired: Fired[], parcel: PolicyInput["parcel"], policy: DecisionPolicy = DECISION_POLICY_V1): { risk: JevRisk | null; route: JevRoute } {
+  const special = specialDistrict(parcel) || parcel.gis_ambiguity;
+  const row = policy.decision_table.find((r) => r.status === status
+    && (!r.if_fired || fired.some((f) => f.code.startsWith(`${r.if_fired}:`)))
+    && (!r.if_special || special))!;
+  return { risk: row.risk, route: row.route };
 }
 
 // O6/O7 (05 §3): the decision layer may only make the floor stricter. Stubs until JEV lands (MOO-8xx):

@@ -6,3 +6,4 @@ export * from "./rules.ts";
 export * from "./policy.ts";
 export * from "./memo.ts";
 export * from "./evidence.ts";
+export * from "./decisioning.ts";

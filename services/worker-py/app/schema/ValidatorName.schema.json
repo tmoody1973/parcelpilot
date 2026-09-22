@@ -1,0 +1,20 @@
+{
+  "$id": "parcelpilot/ValidatorName.v1",
+  "title": "ValidatorName",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "schema",
+    "contract_hash",
+    "status_lock",
+    "citation_membership",
+    "uncited_claim",
+    "numeric_alignment",
+    "action_allowlist",
+    "banned_phrases",
+    "finding_coverage",
+    "abstention",
+    "unknown_as_pass",
+    "citation_support"
+  ]
+}

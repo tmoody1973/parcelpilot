@@ -1,0 +1,10 @@
+{
+  "$id": "parcelpilot/ModelCallStatus.v1",
+  "title": "ModelCallStatus",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "string",
+  "enum": [
+    "ok",
+    "failed"
+  ]
+}
