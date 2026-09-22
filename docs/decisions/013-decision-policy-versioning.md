@@ -1,6 +1,6 @@
 # 013 — Decision policy: one versioned object in the repo, copied into the database; v1 action list
 
-**Date:** 2026-09-22 · **Status:** proposed (Claude drafted; Tarik to confirm the v1 action list) · **Linear:** MOO-834
+**Date:** 2026-09-22 · **Status:** decided · **Decided by:** Tarik (accepted the v1 action list 2026-09-22); Claude drafted and recommended · **Linear:** MOO-834
 
 **Decision.** Every number and table the decision layer reads (the JEV thresholds, the rules-only decision table, and the list of next actions a memo may suggest) lives in one versioned object, `DECISION_POLICY_V1` in `packages/contracts/src/decisioning.ts`. Migration 0019 copies it into `decision_policy_versions`, each new run records which row it used, and a test fails if the two copies ever differ. A gold-case run carries its expert label on the run itself.
 
@@ -11,9 +11,9 @@
 2. **Database is the authority, with an "active" flag an operator can flip.** Thresholds can change without a deploy. Cost: the running code and the flagged row can disagree, a flip isn't reviewed like code, and "which policy was live on Tuesday" needs an audit trail we don't have.
 3. **Keep constants in code.** Cost: no id per run, which fails the design's reproducibility requirement.
 
-**What we chose and why.** Option 1 (Claude, pending Tarik's confirmation). Policy changes are rare and safety-relevant, so they should go through code review and CI like the rules engine does. The issue as written asked for "one row active at a time". That was dropped: the code decides which version is used, and the run stores that version's id.
+**What we chose and why.** Option 1 (recommended by Claude, accepted by Tarik). Policy changes are rare and safety-relevant, so they should go through code review and CI like the rules engine does. The issue as written asked for "one row active at a time". That was dropped: the code decides which version is used, and the run stores that version's id.
 
-**The v1 next-action list (the part that needs Tarik's eye).** The design names only the routes plus two example actions, so v1 is kept to what the validators already imply:
+**The v1 next-action list (accepted by Tarik).** The design names only the routes plus two example actions, so v1 is kept to what the validators already imply:
 
 | Final status | Actions a memo may suggest |
 |---|---|
