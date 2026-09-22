@@ -127,6 +127,13 @@
       "when": 1790099668735,
       "tag": "0017_retrieval_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790100312614,
+      "tag": "0018_embedding_versions_activation",
+      "breakpoints": true
     }
   ]
 }
