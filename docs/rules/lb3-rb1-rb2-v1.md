@@ -40,4 +40,4 @@ Side-street setback maximum (needs a corner-lot fact), glazing and build-out per
 
 ## Reviewer sign-off
 
-Interim reviewer (product owner, per MOO-795): ______ Date: ______ (signed on Linear MOO-825)
+Interim reviewer (product owner, per MOO-795): Tarik Moody Date: 9/22/26 (signed on Linear MOO-825)
