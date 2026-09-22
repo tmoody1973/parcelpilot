@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { PageRef } from "../lib/review-dto.ts";
 
 // The page image with boxes drawn over it, and the page text below (04 §10 step 2: "the source page image").
@@ -12,6 +12,7 @@ const RENDER_SCALE = 2;
 
 export function PageViewer({ page, boxes = [], caption }: { page: PageRef | null; boxes?: Box[]; caption?: string }) {
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  useEffect(() => setSize(null), [page?.id]); // a new page must never be scaled with the previous image's dimensions
   if (!page) return <p className="rounded-md border border-dashed border-line px-3 py-4 text-sm text-muted">No page image is linked to this item.</p>;
   const norm = (b: Box["bbox"]): [number, number, number, number] => (Array.isArray(b) ? b : [b.x0, b.y0, b.x1, b.y1]);
   return (

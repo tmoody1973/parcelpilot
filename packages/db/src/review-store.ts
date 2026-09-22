@@ -72,7 +72,7 @@ export async function generateReviewTasks(sql: Q, jurisdictionId: string): Promi
   return { merge_review: merge.count, page_review: page.count, footnote_review: footnote.count, rule_candidate_review: candidate.count };
 }
 
-export async function listTasks(sql: Q, filter: { jurisdictionId: string; status?: ReviewStatus; taskType?: TaskType; district?: string; limit?: number }): Promise<ReviewTask[]> {
+export async function listTasks(sql: Q, filter: { jurisdictionId: string; id?: string; status?: ReviewStatus; taskType?: TaskType; district?: string; limit?: number }): Promise<ReviewTask[]> {
   // One left join per entity type; `subject` tells a reviewer what the task is about without opening it.
   return sql<ReviewTask[]>`
     select t.id, t.jurisdiction_id, t.task_type, t.entity_type, t.entity_id, t.assigned_to, t.status, t.priority, t.reason, t.resolved_by, t.resolved_at::text, t.created_at::text, t.updated_at::text,
@@ -100,10 +100,11 @@ export async function listTasks(sql: Q, filter: { jurisdictionId: string; status
     left join source_documents ntd on ntd.id = nt.source_document_id
     left join source_documents sd on t.entity_type = 'source_document' and sd.id = t.entity_id
     where t.jurisdiction_id = ${filter.jurisdictionId}
+      ${filter.id ? sql`and t.id = ${filter.id}` : sql``}
       ${filter.status ? sql`and t.status = ${filter.status}` : sql``}
       ${filter.taskType ? sql`and t.task_type = ${filter.taskType}` : sql``}
       ${filter.district ? sql`and c.district_code = ${filter.district}` : sql``}
-    order by case t.status when 'in_review' then 0 when 'unreviewed' then 1 else 2 end, t.priority nulls last, t.created_at
+    order by case t.status when 'in_review' then 0 when 'unreviewed' then 1 else 2 end, array_position(${SEVERITY as unknown as string[]}::text[], t.priority::text) nulls last, t.created_at
     limit ${filter.limit ?? 200}`;
 }
 
@@ -131,8 +132,8 @@ async function pageByNumber(sql: Q, docId: string, n: number): Promise<PageRef |
 }
 
 export async function getTaskDetail(sql: Q, taskId: string): Promise<TaskDetail> {
-  const [task] = await listTasks(sql, { jurisdictionId: (await sql<{ j: string }[]>`select jurisdiction_id as j from review_tasks where id = ${taskId}`)[0]?.j ?? "", limit: 1 }).then((rows) => rows.filter((r) => r.id === taskId));
-  const t = task ?? (await sql<ReviewTask[]>`select id, jurisdiction_id, task_type, entity_type, entity_id, assigned_to, status, priority, reason, resolved_by, resolved_at::text, created_at::text, updated_at::text from review_tasks where id = ${taskId}`)[0];
+  const [j] = await sql<{ j: string }[]>`select jurisdiction_id as j from review_tasks where id = ${taskId}`;
+  const [t] = j ? await listTasks(sql, { jurisdictionId: j.j, id: taskId, limit: 1 }) : [];
   if (!t) throw new ReviewError("not_found", "review task not found", 404);
   if (t.task_type === "rule_candidate_review") {
     const [c] = await sql<Array<TaskDetail extends infer _ ? { id: string; family_id: string; district_code: string; category: string; proposed_rule: Record<string, unknown>; extracted_value: unknown; row_key: string | null; reviewer_status: ReviewStatus; reviewer_notes: string | null; extraction_method: string; approved_rule_id: string | null; source_table_id: string | null; citation_ids: string[] } : never>>`
@@ -154,8 +155,10 @@ export async function getTaskDetail(sql: Q, taskId: string): Promise<TaskDetail>
       select id, family_key, caption, page_start, page_end, column_schema as columns, merge_review_status, jsonb_array_length(canonical_rows) as row_count from source_tables where id = ${t.entity_id}`;
     if (!st) throw new ReviewError("not_found", "table family not found", 404);
     const frags = await sql<Array<Omit<FragmentRef, "page"> & { document_page_id: string | null }>>`select id, page_number, bbox, headers, rows, extractor, continuation_signals, document_page_id from table_fragments where source_table_id = ${st.id} order by page_number`;
-    const fragments: FragmentRef[] = [];
-    for (const f of frags) { const { document_page_id, ...rest } = f; fragments.push({ ...rest, page: await pageById(sql, document_page_id) }); }
+    const pageIds = frags.map((f) => f.document_page_id).filter((id): id is string => !!id);
+    const pages = pageIds.length ? await sql<PageRef[]>`select id, page_number, printed_page, raw_text, image_ref from document_pages where id = any(${pageIds})` : [];
+    const byId = new Map(pages.map((p) => [p.id, p]));
+    const fragments: FragmentRef[] = frags.map(({ document_page_id, ...rest }) => ({ ...rest, page: document_page_id ? byId.get(document_page_id) ?? null : null }));
     return { task: t, kind: "merge_review", table: st, fragments };
   }
   if (t.task_type === "page_review") {

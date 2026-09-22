@@ -25,7 +25,7 @@ export function TaskView({ taskId }: { taskId: string }) {
   const [outcome, setOutcome] = useState<Outcome | null>(null);
 
   const load = useCallback(() => api.getReviewTask(taskId).then(setDetail).catch(setError), [taskId]);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { setDetail(null); setError(null); setOutcome(null); setReason(""); void load(); }, [load]); // a new task id must never show the previous task's state
 
   if (isForbidden(error)) return <GatePage />;
   if (error) return <LoadError error={error} />;
@@ -87,7 +87,7 @@ export function TaskView({ taskId }: { taskId: string }) {
         </div>
 
         <div className="flex min-w-0 flex-col gap-4">
-          {detail.kind === "rule_candidate_review" ? <CandidateSide detail={detail} open={open} busy={busy} taskId={taskId} onEdited={(t) => { setOutcome({ kind: "ok", audit: t.audit, task: t }); void load(); }} /> : null}
+          {detail.kind === "rule_candidate_review" ? <CandidateSide detail={detail} viewerRole={detail.viewer_role} open={open} busy={busy} taskId={taskId} onEdited={(t) => { setOutcome({ kind: "ok", audit: t.audit, task: t }); void load(); }} /> : null}
           {detail.kind === "merge_review" ? (
             <Card><CardHeader title="Table family" subtitle={`${detail.table.family_key} · pages ${detail.table.page_start}–${detail.table.page_end} · ${detail.table.row_count} canonical rows · merge status ${TASK_STATUS_COPY[detail.table.merge_review_status]?.label ?? detail.table.merge_review_status}`} />
               <p className="px-4 py-3 text-sm text-muted">Approving the merge lets rule candidates be drawn from this table's rows. Rejecting closes the family; a corrected extraction is a new table.</p></Card>
@@ -115,7 +115,7 @@ export function TaskView({ taskId }: { taskId: string }) {
   );
 }
 
-function CandidateSide({ detail, open, busy, taskId, onEdited }: { detail: Extract<TaskDetail, { kind: "rule_candidate_review" }>; open: boolean; busy: boolean; taskId: string; onEdited: (t: ReviewTask) => void }) {
+function CandidateSide({ detail, viewerRole, open, busy, taskId, onEdited }: { detail: Extract<TaskDetail, { kind: "rule_candidate_review" }>; viewerRole: string; open: boolean; busy: boolean; taskId: string; onEdited: (t: ReviewTask) => void }) {
   const { candidate, row, table, footnotes, citations } = detail;
   const suggested = typeof candidate.proposed_rule["label_suggested_by"] === "string"; // slot for an LLM-suggested label (M4+); flagged visibly if ever present
   return (
@@ -147,7 +147,7 @@ function CandidateSide({ detail, open, busy, taskId, onEdited }: { detail: Extra
       <Card>
         <CardHeader title="Proposed rule" subtitle={`family ${candidate.family_id}${candidate.reviewer_notes ? ` · last note: ${candidate.reviewer_notes}` : ""}`} />
         <div className="px-4 py-3">
-          <CandidateEditor proposal={candidate.proposed_rule} canLowerCriticality={false} disabled={!open || busy} onSave={async (patch, reason) => onEdited(await api.editTask(taskId, reason, patch))} />
+          <CandidateEditor key={candidate.id} proposal={candidate.proposed_rule} canLowerCriticality={viewerRole === "owner"} disabled={!open || busy} onSave={async (patch, reason) => onEdited(await api.editTask(taskId, reason, patch))} />
         </div>
       </Card>
     </>

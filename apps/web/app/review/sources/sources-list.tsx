@@ -15,7 +15,7 @@ import { Badge, Button, Card, CardHeader, Empty, Input, Select } from "../../../
 export function SourcesList() {
   const [rows, setRows] = useState<SourceSummary[] | null>(null);
   const [error, setError] = useState<unknown>(null);
-  const [reason, setReason] = useState("");
+  const [reason, setReason] = useState<Record<string, string>>({}); // keyed per document so a reason never lands on the wrong audit row
   const [successor, setSuccessor] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -29,13 +29,14 @@ export function SourcesList() {
 
   async function act(id: string, action: "activate" | "supersede" | "withdraw") {
     setMessage(null);
-    if (!reason.trim()) { setMessage("State the reason first."); return; }
+    const why = (reason[id] ?? "").trim();
+    if (!why) { setMessage("State the reason on that document's row first."); return; }
     if (action === "supersede" && !successor[id]) { setMessage("Pick the successor document first."); return; }
     setBusy(true);
     try {
-      const r = await api.transitionSource(id, action, { reason: reason.trim(), ...(action === "supersede" ? { successor_id: successor[id] } : {}) });
+      const r = await api.transitionSource(id, action, { reason: why, ...(action === "supersede" ? { successor_id: successor[id] } : {}) });
       setMessage(`${auditCopy(r.audit.action)} · audit ${r.audit.id}`);
-      setReason("");
+      setReason({ ...reason, [id]: "" });
       await load();
     } catch (e) { setMessage(e instanceof Error ? e.message : "Action failed."); } finally { setBusy(false); }
   }
@@ -47,13 +48,7 @@ export function SourcesList() {
         <h1 className="mt-1 text-lg font-semibold text-ink">Source documents</h1>
         <p className="text-xs text-muted">A superseded or withdrawn document is never served as current; its chunks drop out of the active view without being edited.</p>
       </div>
-      <Card>
-        <CardHeader title="Reason for the next action" subtitle="Required for activate, supersede and withdraw; kept in the audit trail." />
-        <div className="flex flex-col gap-2 px-4 py-3">
-          <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. 2026 amendment published; this version is out of date" data-testid="source-reason" />
-          {message ? <p className="text-xs text-muted" data-testid="source-message">{message}</p> : null}
-        </div>
-      </Card>
+      {message ? <p className="rounded-md border border-line bg-canvas px-3 py-2 text-xs text-muted" data-testid="source-message">{message}</p> : null}
       <Card>
         <ul className="divide-y divide-line" data-testid="sources-list">
           {rows.map((d) => (
@@ -67,6 +62,7 @@ export function SourcesList() {
               </div>
               {d.status === "pending_review" || d.status === "active" ? (
                 <div className="flex flex-wrap items-center gap-2">
+                  <Input className="sm:max-w-md" value={reason[d.id] ?? ""} onChange={(e) => setReason({ ...reason, [d.id]: e.target.value })} placeholder="Reason (required; kept in the audit trail)" data-testid="source-reason" />
                   {d.status === "pending_review" ? <Button variant="secondary" disabled={busy} onClick={() => void act(d.id, "activate")}>Activate</Button> : null}
                   <Select className="w-auto" value={successor[d.id] ?? ""} onChange={(e) => setSuccessor({ ...successor, [d.id]: e.target.value })}>
                     <option value="">Successor…</option>
