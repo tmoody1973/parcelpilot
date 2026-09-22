@@ -1,7 +1,7 @@
 """Validate values against the canonical enums emitted from packages/contracts (JSON Schema)."""
 
 import json
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 
 from jsonschema import Draft202012Validator
@@ -9,7 +9,7 @@ from jsonschema import Draft202012Validator
 SCHEMA_DIR = Path(__file__).parent / "schema"
 
 
-@lru_cache(maxsize=None)
+@cache
 def schema(name: str) -> dict:
     return json.loads((SCHEMA_DIR / f"{name}.schema.json").read_text())
 

@@ -15,7 +15,7 @@ import os
 import re
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 logging.getLogger("pypdf").setLevel(logging.ERROR)  # font-encoding chatter from the large plan PDFs
@@ -112,7 +112,7 @@ def main(argv: list[str]) -> int:
         region_name="us-east-1",
     )
     bucket = os.environ.get("S3_BUCKET", "parcelpilot-sources")
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     inserted = uploaded = skipped = 0
 
     with psycopg.connect(db_url) as conn:

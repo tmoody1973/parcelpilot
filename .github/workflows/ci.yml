@@ -61,5 +61,6 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
+      - run: sudo apt-get update -q && sudo apt-get install -y -q tesseract-ocr # OCR fallback under test
       - run: uv sync --frozen
       - run: uv run pytest -q
