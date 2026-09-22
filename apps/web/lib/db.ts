@@ -17,3 +17,8 @@ function required(name: string): string {
 export function appDb(): Db { return (app ??= createDb(required("DATABASE_APP_URL"))); }
 export function serviceDb(): Db { return (service ??= createDb(required("DATABASE_SERVICE_URL"))); }
 export function serviceSql(): postgres.Sql { return (serviceRaw ??= postgres(required("DATABASE_SERVICE_URL"), { max: 4, prepare: false })); }
+// Tests end the pools so the node test runner can exit; the server never calls this.
+export async function closeDb(): Promise<void> {
+  await Promise.all([app?.$client.end(), service?.$client.end(), serviceRaw?.end()]);
+  app = service = serviceRaw = undefined;
+}

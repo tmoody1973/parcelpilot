@@ -1,0 +1,234 @@
+import type postgres from "postgres";
+import { ZoningRule, type OrgRole, type ReviewStatus, type RuleCitation } from "@parcelpilot/contracts";
+
+// The reviewer queue (04 §10, MOO-819). Every function runs on the service connection because the queue,
+// candidates, rules and sources are jurisdiction-shared. Transitions take a transaction so a route can
+// wrap one HTTP call in one `sql.begin`; tests pass a rolled-back transaction the same way.
+export type Q = postgres.Sql | postgres.TransactionSql;
+export type Actor = { userId: string; orgId: string; role: OrgRole };
+export const REVIEWER_ROLES: readonly OrgRole[] = ["reviewer", "owner", "admin"];
+export type TaskType = "rule_candidate_review" | "merge_review" | "page_review" | "footnote_review" | "source_review" | "gis_ambiguity";
+
+export class ReviewError extends Error {
+  readonly code: string;
+  readonly status: 400 | 403 | 404 | 409;
+  constructor(code: string, message: string, status: 400 | 403 | 404 | 409) {
+    super(message);
+    this.name = "ReviewError";
+    this.code = code;
+    this.status = status;
+  }
+}
+
+export type ReviewTask = {
+  id: string; jurisdiction_id: string; task_type: TaskType; entity_type: string; entity_id: string; assigned_to: string | null;
+  status: ReviewStatus; priority: string | null; reason: string | null; resolved_by: string | null; resolved_at: string | null; created_at: string; updated_at: string;
+};
+
+const PENDING: ReviewStatus[] = ["unreviewed", "in_review"];
+const AUDIT_ENTITY: Record<TaskType, string> = { rule_candidate_review: "rule", merge_review: "merge", page_review: "page", footnote_review: "footnote", source_review: "source", gis_ambiguity: "gis" };
+const OCR_DENSITY_THRESHOLD = 0.5; // services/worker-py/app/pages.py: native characters per square inch below which a page was OCR'd
+
+// ---- generation: code decides what needs a human look; idempotent per (task_type, entity_type, entity_id) ----
+
+export async function generateReviewTasks(sql: Q, jurisdictionId: string): Promise<Record<string, number>> {
+  const merge = await sql`
+    insert into review_tasks (jurisdiction_id, task_type, entity_type, entity_id, priority, reason)
+    select d.jurisdiction_id, 'merge_review', 'source_table', t.id, 'high',
+           'Table ' || t.family_key || ' spans pages ' || t.page_start || '-' || t.page_end || ': confirm the fragments are one table and the headers carry over'
+    from source_tables t join source_documents d on d.id = t.source_document_id
+    where d.jurisdiction_id = ${jurisdictionId} and t.merge_review_status = 'unreviewed'
+      and (select count(*) from table_fragments f where f.source_table_id = t.id) > 1
+    on conflict (task_type, entity_type, entity_id) do nothing`;
+  const page = await sql`
+    insert into review_tasks (jurisdiction_id, task_type, entity_type, entity_id, priority, reason)
+    select d.jurisdiction_id, 'page_review', 'document_page', p.id, 'medium',
+           case when p.ocr_confidence is not null then 'ocr: confidence ' || p.ocr_confidence else 'thin: char_density ' || coalesce(p.char_density::text, 'unknown') end
+    from document_pages p join source_documents d on d.id = p.source_document_id
+    where d.jurisdiction_id = ${jurisdictionId} and (p.ocr_confidence is not null or p.char_density is null or p.char_density < ${OCR_DENSITY_THRESHOLD})
+    on conflict (task_type, entity_type, entity_id) do nothing`;
+  const footnote = await sql`
+    insert into review_tasks (jurisdiction_id, task_type, entity_type, entity_id, priority, reason)
+    select d.jurisdiction_id, 'footnote_review', 'table_footnote', n.id, 'medium',
+           'Footnote ' || n.marker || ' on table ' || t.family_key || ': confirm which rows it modifies'
+    from table_footnotes n join source_tables t on t.id = n.source_table_id join source_documents d on d.id = t.source_document_id
+    where d.jurisdiction_id = ${jurisdictionId}
+    on conflict (task_type, entity_type, entity_id) do nothing`;
+  const candidate = await sql`
+    insert into review_tasks (jurisdiction_id, task_type, entity_type, entity_id, priority, reason)
+    select c.jurisdiction_id, 'rule_candidate_review', 'rule_candidate', c.id,
+           coalesce((c.proposed_rule->>'criticality')::criticality, 'medium'),
+           'Candidate ' || c.category || ' rule for ' || c.district_code || ' extracted by ' || c.extraction_method
+    from rule_candidates c
+    where c.jurisdiction_id = ${jurisdictionId} and c.reviewer_status in ('unreviewed', 'in_review')
+    on conflict (task_type, entity_type, entity_id) do nothing`;
+  return { merge_review: merge.count, page_review: page.count, footnote_review: footnote.count, rule_candidate_review: candidate.count };
+}
+
+export async function listTasks(sql: Q, filter: { jurisdictionId: string; status?: ReviewStatus; taskType?: TaskType; limit?: number }): Promise<ReviewTask[]> {
+  return sql<ReviewTask[]>`
+    select id, jurisdiction_id, task_type, entity_type, entity_id, assigned_to, status, priority, reason, resolved_by, resolved_at::text, created_at::text, updated_at::text
+    from review_tasks
+    where jurisdiction_id = ${filter.jurisdictionId}
+      ${filter.status ? sql`and status = ${filter.status}` : sql``}
+      ${filter.taskType ? sql`and task_type = ${filter.taskType}` : sql``}
+    order by case status when 'in_review' then 0 when 'unreviewed' then 1 else 2 end, priority nulls last, created_at
+    limit ${filter.limit ?? 200}`;
+}
+
+// ---- transitions: unreviewed → in_review → approved | rejected; every one leaves an audit row ----
+
+async function loadTask(sql: Q, taskId: string): Promise<ReviewTask> {
+  const [t] = await sql<ReviewTask[]>`select id, jurisdiction_id, task_type, entity_type, entity_id, assigned_to, status, priority, reason, resolved_by, resolved_at::text, created_at::text, updated_at::text from review_tasks where id = ${taskId} for update`;
+  if (!t) throw new ReviewError("not_found", "review task not found", 404);
+  return t;
+}
+
+function mustBePending(t: ReviewTask): void {
+  if (!PENDING.includes(t.status)) throw new ReviewError("not_pending", `task is already ${t.status}`, 409);
+}
+
+async function audit(sql: Q, actor: Actor, action: string, entityType: string, entityId: string, payload: Record<string, unknown>): Promise<void> {
+  await sql`insert into audit_events (org_id, actor_user_id, action, entity_type, entity_id, payload) values (${actor.orgId}, ${actor.userId}, ${action}, ${entityType}, ${entityId}, ${sql.json(payload as never)})`;
+}
+
+async function saveTask(sql: Q, taskId: string, set: { status: ReviewStatus; assigned_to?: string | null; resolved_by?: string | null; reason?: string | null }): Promise<ReviewTask> {
+  const resolved = set.status === "approved" || set.status === "rejected";
+  const [t] = await sql<ReviewTask[]>`
+    update review_tasks set status = ${set.status},
+      assigned_to = coalesce(${set.assigned_to ?? null}, assigned_to),
+      resolved_by = ${resolved ? (set.resolved_by ?? null) : null}, resolved_at = ${resolved ? sql`now()` : null},
+      reason = coalesce(${set.reason ?? null}, reason), updated_at = now()
+    where id = ${taskId}
+    returning id, jurisdiction_id, task_type, entity_type, entity_id, assigned_to, status, priority, reason, resolved_by, resolved_at::text, created_at::text, updated_at::text`;
+  return t!;
+}
+
+export async function claimTask(sql: Q, actor: Actor, taskId: string): Promise<ReviewTask> {
+  const t = await loadTask(sql, taskId);
+  mustBePending(t);
+  if (t.status === "in_review" && t.assigned_to && t.assigned_to !== actor.userId) throw new ReviewError("already_claimed", "task is in review by another reviewer", 409);
+  const saved = await saveTask(sql, taskId, { status: "in_review", assigned_to: actor.userId });
+  await audit(sql, actor, "review_task.claimed", "review_task", taskId, { task_type: t.task_type, entity_type: t.entity_type, entity_id: t.entity_id });
+  return saved;
+}
+
+export async function rejectTask(sql: Q, actor: Actor, taskId: string, reason: string | null): Promise<ReviewTask> {
+  if (!reason?.trim()) throw new ReviewError("reason_required", "a rejection needs a stated reason", 400);
+  const t = await loadTask(sql, taskId);
+  mustBePending(t);
+  if (t.task_type === "rule_candidate_review") {
+    await sql`update rule_candidates set reviewer_status = 'rejected', reviewer_id = ${actor.userId}, reviewer_notes = ${reason}, updated_at = now() where id = ${t.entity_id}`;
+  }
+  const saved = await saveTask(sql, taskId, { status: "rejected", resolved_by: actor.userId, reason });
+  await audit(sql, actor, `${AUDIT_ENTITY[t.task_type]}.rejected`, t.entity_type, t.entity_id, { task_id: taskId, reason });
+  return saved;
+}
+
+const EDITABLE_KEYS = ["district_code", "category", "kind", "params", "conditions", "criticality"] as const;
+
+// An edit changes the proposal a reviewer will approve, never a rule: the candidate is the only mutable thing here.
+export async function editTask(sql: Q, actor: Actor, taskId: string, reason: string | null, patch: unknown): Promise<ReviewTask> {
+  if (!reason?.trim()) throw new ReviewError("reason_required", "an edit needs a stated reason", 400);
+  const t = await loadTask(sql, taskId);
+  mustBePending(t);
+  if (t.task_type !== "rule_candidate_review") throw new ReviewError("not_editable", `a ${t.task_type} task has nothing to edit`, 409);
+  if (!patch || typeof patch !== "object" || Array.isArray(patch)) throw new ReviewError("patch_required", "edit needs a patch object", 400);
+  const unknown = Object.keys(patch).filter((k) => !(EDITABLE_KEYS as readonly string[]).includes(k));
+  if (unknown.length) throw new ReviewError("patch_invalid", `cannot edit ${unknown.join(", ")}; editable: ${EDITABLE_KEYS.join(", ")}`, 400);
+  const [before] = await sql<{ proposed_rule: unknown }[]>`select proposed_rule from rule_candidates where id = ${t.entity_id}`;
+  const [after] = await sql<{ proposed_rule: unknown }[]>`
+    update rule_candidates set proposed_rule = proposed_rule || ${sql.json(patch as never)}, reviewer_id = ${actor.userId}, reviewer_notes = ${reason}, reviewer_status = 'in_review', updated_at = now()
+    where id = ${t.entity_id} returning proposed_rule`;
+  const saved = await saveTask(sql, taskId, { status: "in_review", assigned_to: actor.userId, reason });
+  await audit(sql, actor, "rule.edited", t.entity_type, t.entity_id, { task_id: taskId, reason, patch, before: before?.proposed_rule, after: after?.proposed_rule });
+  return saved;
+}
+
+export type ApproveResult = { task: ReviewTask; rule?: { id: string; family_id: string; version: number; supersedes_id: string | null }; pending_second_approval?: true };
+
+export async function approveTask(sql: Q, actor: Actor, taskId: string): Promise<ApproveResult> {
+  const t = await loadTask(sql, taskId);
+  mustBePending(t);
+  if (t.task_type === "rule_candidate_review") return approveCandidate(sql, actor, t);
+  if (t.task_type === "merge_review") {
+    await sql`update source_tables set merge_review_status = 'approved' where id = ${t.entity_id}`;
+  }
+  const task = await saveTask(sql, taskId, { status: "approved", resolved_by: actor.userId });
+  await audit(sql, actor, `${AUDIT_ENTITY[t.task_type]}.approved`, t.entity_type, t.entity_id, { task_id: taskId });
+  return { task };
+}
+
+type CandidateRow = { id: string; jurisdiction_id: string; family_id: string; district_code: string; category: string; proposed_rule: Record<string, unknown>; citation_ids: string[]; reviewer_status: ReviewStatus; reviewer_id: string | null };
+type CitationRow = { id: string; sha256: string; page_number: number; printed_page: number | null; section: string | null; anchor: string | null; excerpt: string; effective_start: string | null };
+
+// Approval mints: one new zoning_rules row (version = previous + 1, supersedes the previous), its rule_citations,
+// and the candidate flips to approved. A critical rule needs the owner's sign-off (04 §10 step 5): a reviewer's
+// approval is recorded as the first sign-off and the task stays in review until an owner approves.
+async function approveCandidate(sql: Q, actor: Actor, t: ReviewTask): Promise<ApproveResult> {
+  const [cand] = await sql<CandidateRow[]>`select id, jurisdiction_id, family_id, district_code, category, proposed_rule, citation_ids, reviewer_status, reviewer_id from rule_candidates where id = ${t.entity_id} for update`;
+  if (!cand) throw new ReviewError("not_found", "rule candidate not found", 404);
+  if (cand.reviewer_status === "approved" || cand.reviewer_status === "rejected") throw new ReviewError("not_pending", `candidate is already ${cand.reviewer_status}`, 409);
+  const proposal = cand.proposed_rule;
+  if (proposal["criticality"] === "critical" && actor.role !== "owner") {
+    await sql`update rule_candidates set reviewer_status = 'in_review', reviewer_id = ${actor.userId}, updated_at = now() where id = ${cand.id}`;
+    const task = await saveTask(sql, t.id, { status: "in_review", assigned_to: actor.userId });
+    await audit(sql, actor, "rule.first_approved", t.entity_type, t.entity_id, { task_id: t.id, awaiting: "owner" });
+    return { task, pending_second_approval: true };
+  }
+  if (cand.citation_ids.length === 0) throw new ReviewError("no_citations", "a rule cannot be approved without a citation", 409);
+  const cites = await sql<CitationRow[]>`
+    select c.id, d.sha256, c.page_number, c.printed_page, c.section, c.anchor, c.excerpt, d.effective_start::text as effective_start
+    from citations c join source_documents d on d.id = c.source_document_id where c.id = any(${cand.citation_ids}) order by c.page_number, c.section`;
+  if (cites.length !== cand.citation_ids.length) throw new ReviewError("citation_missing", "a cited row does not exist", 409);
+  const stamps = cites.map((c) => c.effective_start).filter((s): s is string => !!s).sort();
+  const effectiveStart = stamps[0];
+  if (!effectiveStart) throw new ReviewError("source_unstamped", "the cited source has no effective_start; stamp the document first", 409);
+  const citations: RuleCitation[] = cites.map((c) => ({ citation_id: c.id, document_id: c.sha256, page: c.page_number, section: c.section ?? "", excerpt: c.excerpt, ...(c.printed_page ? { printed_page: c.printed_page } : {}), ...(c.anchor ? { table: c.anchor } : {}) }));
+  const [prev] = await sql<{ id: string; version: number }[]>`select id, version from zoning_rules where family_id = ${cand.family_id} order by version desc limit 1 for update`;
+  const version = (prev?.version ?? 0) + 1;
+  // The contract validates kind/category/params together; approval never stores a rule the engine could not load.
+  const rule = ZoningRule.parse({
+    id: "pending", family_id: cand.family_id, version, jurisdiction_id: cand.jurisdiction_id, district_code: proposal["district_code"] ?? cand.district_code,
+    category: proposal["category"] ?? cand.category, kind: proposal["kind"], params: proposal["params"], conditions: proposal["conditions"] ?? [], criticality: proposal["criticality"],
+    citations, effective_start: effectiveStart, effective_end: proposal["effective_end"] ?? null, status: "approved",
+  });
+  const [row] = await sql<{ id: string }[]>`
+    insert into zoning_rules (family_id, version, jurisdiction_id, district_code, category, kind, params, conditions, criticality, status, approved_by, approved_at, effective_start, effective_end, supersedes_id)
+    values (${rule.family_id}, ${version}, ${rule.jurisdiction_id}, ${rule.district_code}, ${rule.category}, ${rule.kind}, ${sql.json(rule.params as never)}, ${sql.json(rule.conditions as never)}, ${rule.criticality}, 'approved', ${actor.userId}, now(), ${rule.effective_start}, ${rule.effective_end}, ${prev?.id ?? null})
+    returning id`;
+  const ruleId = row!.id;
+  for (const c of cites) await sql`insert into rule_citations (zoning_rule_id, citation_id) values (${ruleId}, ${c.id})`;
+  await sql`update rule_candidates set reviewer_status = 'approved', reviewer_id = ${actor.userId}, approved_rule_id = ${ruleId}, updated_at = now() where id = ${cand.id}`;
+  const task = await saveTask(sql, t.id, { status: "approved", resolved_by: actor.userId });
+  await audit(sql, actor, "rule.approved", "zoning_rule", ruleId, { task_id: t.id, candidate_id: cand.id, family_id: cand.family_id, version, supersedes_id: prev?.id ?? null, citations: cites.map((c) => c.id) });
+  return { task, rule: { id: ruleId, family_id: cand.family_id, version, supersedes_id: prev?.id ?? null } };
+}
+
+// ---- source lifecycle: pending_review → active → superseded | withdrawn. Chunks and tables are never touched; active_code_chunks filters. ----
+
+export type SourceAction = "activate" | "supersede" | "withdraw";
+type SourceRow = { id: string; status: string; effective_start: string | null; effective_end: string | null; supersedes_id: string | null };
+
+export async function transitionSource(sql: Q, actor: Actor, sourceId: string, action: SourceAction, successorId?: string | null): Promise<SourceRow> {
+  const [doc] = await sql<SourceRow[]>`select id, status, effective_start::text, effective_end::text, supersedes_id from source_documents where id = ${sourceId} for update`;
+  if (!doc) throw new ReviewError("not_found", "source document not found", 404);
+  let saved: SourceRow | undefined;
+  if (action === "activate") {
+    if (doc.status !== "pending_review") throw new ReviewError("not_pending", `a ${doc.status} document cannot be activated; a code revision is a new document`, 409);
+    [saved] = await sql<SourceRow[]>`update source_documents set status = 'active', review_status = 'approved' where id = ${sourceId} returning id, status, effective_start::text, effective_end::text, supersedes_id`;
+  } else if (action === "supersede") {
+    if (!successorId) throw new ReviewError("successor_required", "supersede needs the successor document's id", 400);
+    if (successorId === sourceId) throw new ReviewError("successor_invalid", "a document cannot supersede itself", 400);
+    const [next] = await sql<SourceRow[]>`select id, status, effective_start::text, effective_end::text, supersedes_id from source_documents where id = ${successorId}`;
+    if (!next) throw new ReviewError("not_found", "successor document not found", 404);
+    if (doc.status === "superseded" || doc.status === "withdrawn") throw new ReviewError("not_active", `document is already ${doc.status}`, 409);
+    [saved] = await sql<SourceRow[]>`update source_documents set status = 'superseded', effective_end = coalesce(${next.effective_start}::date, current_date) where id = ${sourceId} returning id, status, effective_start::text, effective_end::text, supersedes_id`;
+    await sql`update source_documents set supersedes_id = ${sourceId} where id = ${successorId} and supersedes_id is null`;
+  } else {
+    if (doc.status === "withdrawn") throw new ReviewError("not_active", "document is already withdrawn", 409);
+    [saved] = await sql<SourceRow[]>`update source_documents set status = 'withdrawn', effective_end = coalesce(effective_end, current_date) where id = ${sourceId} returning id, status, effective_start::text, effective_end::text, supersedes_id`;
+  }
+  await audit(sql, actor, `source.${action === "supersede" ? "superseded" : action === "activate" ? "activated" : "withdrawn"}`, "source_document", sourceId, { from: doc.status, to: saved!.status, successor_id: successorId ?? null, effective_end: saved!.effective_end });
+  return saved!;
+}

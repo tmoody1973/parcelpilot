@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { OrgContextError, requireOrgContext, type OrgContext } from "./tenant.ts";
 
 // Response envelope for every route handler (docs/planning/02_architecture.md §5): { ok, data, error, meta }.
@@ -7,12 +6,12 @@ export type Envelope<T> = { ok: true; data: T; meta?: Record<string, unknown> } 
 
 export function ok<T>(data: T, init: { status?: number; meta?: Record<string, unknown> } = {}): Response {
   const body: Envelope<T> = init.meta ? { ok: true, data, meta: init.meta } : { ok: true, data };
-  return NextResponse.json(body, { status: init.status ?? 200 });
+  return Response.json(body, { status: init.status ?? 200 });
 }
 
 export function fail(code: string, message: string, status = 400, issues?: unknown): Response {
   const body: Envelope<never> = { ok: false, error: issues ? { code, message, issues } : { code, message } };
-  return NextResponse.json(body, { status });
+  return Response.json(body, { status });
 }
 
 // Wraps a tenant-scoped route handler: resolves the caller's org context first (401/403 as envelopes),
