@@ -333,7 +333,7 @@ export const codeSections = pgTable("code_sections", {
   sortOrder: integer("sort_order").notNull(),
   confidence: text("confidence").notNull().default("high"), // low → page_review task
   createdAt: timestamps.createdAt,
-}, (t) => [index("code_sections_doc_sort_idx").on(t.sourceDocumentId, t.sortOrder), index("code_sections_section_idx").on(t.sourceDocumentId, t.section)]);
+}, (t) => [uniqueIndex("code_sections_doc_section_sort_idx").on(t.sourceDocumentId, t.section, t.sortOrder), index("code_sections_section_idx").on(t.sourceDocumentId, t.section)]);
 
 export const embeddingVersions = pgTable("embedding_versions", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
