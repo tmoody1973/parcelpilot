@@ -139,6 +139,22 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
+  packages/retrieval:
+    dependencies:
+      '@parcelpilot/db':
+        specifier: workspace:*
+        version: link:../db
+      postgres:
+        specifier: ^3.4.0
+        version: 3.4.9
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.4
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   packages/rules-engine:
     dependencies:
       '@parcelpilot/contracts':
