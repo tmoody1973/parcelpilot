@@ -148,3 +148,17 @@ Rules for LB1 **and** LB2 (the gold set G06–G08 is LB2). Memo is HTML with a p
 | MOO-815 | Findings, coverage, and status panels in the workspace | MOO-814 |
 | MOO-816 | Templated memo with disclaimer, provenance, page citations | MOO-814 |
 | MOO-817 | Gold-case CI — all 15 exact-match, demo case live end to end | 810, 812, 813, 814 |
+
+## M2 (created 2026-09-21, in dependency order)
+Sources: 06 M2, PRD §10.4 B/C, 03 §4.4, 04 §3.6 and §10, decisions 002/003, 08 Q-05. Tarik's calls: all eight; first queue-approved rules for LB3, RB1, RB2; `CH295-sub6.pdf` committed as a CI fixture (public City document). The pipeline's proof is reproducing the 14 signed LB1/LB2 values from the extracted table.
+
+| # | Issue | Depends on |
+|---|---|---|
+| MOO-818 | Schema group 4b — pages, sections, chunks, tables, fragments, footnotes, candidates, review tasks; `active_code_chunks` view | MOO-811 |
+| MOO-820 | Page extraction in worker-py — text, density, page images, OCR path; all 12 subchapters | MOO-818 |
+| MOO-822 | Docling evaluation spike on Tables 295-505-2 and 295-605-2 (decision 009) | MOO-820 |
+| MOO-823 | Structure and chunks — section tree, chunks with neighbors, tags, full-text; sub6 chunked in CI | MOO-820 |
+| MOO-824 | Table families — multi-page reconstruction with footnotes; reproduces the 14 signed values | 818, 820, 822 |
+| MOO-819 | Review queue backend — tasks, role gate, approval mints a versioned rule, source lifecycle | MOO-818 |
+| MOO-821 | Reviewer UI — queue, page-level viewer, candidate editor, approve / edit / reject with reason | MOO-819 |
+| MOO-825 | First queue-born rules — LB3, RB1, RB2 candidates, LB1/LB2 reconciled, footnote policy (decision 010) | 824, 819, 821 |
