@@ -175,3 +175,17 @@ Sources: 06 M4, 04 §4–§9, 03 §4.6, 05 §5 (briefing contract), decision 008
 | MOO-831 | Labelled passage set + evaluation harness — Recall@k, table-row + footnote recall, CI gate at 04 §9.3 targets | MOO-830 |
 | MOO-832 | Reranker bake-off (decision 012) — none / bge / Cohere / JEV on the harness | MOO-831 |
 | MOO-833 | Evidence bundle contract + assembler — EvidenceBundle in contracts, required-context slots, JEV flags; demo + RB1 parcels | 830, 831 |
+
+## M5 (created 2026-09-22, in dependency order)
+Sources: 06 M5, 05 §3–§9, decision 012. Tarik's calls: all eight; the briefing model is chosen by measurement (claude-fable-5-1 vs claude-sonnet-5 on the 15 gold cases, cheapest one that meets the gates becomes the default); the structured-output baseline (comparator 2) moves to M6. Count note: 05 §7 lists eleven deterministic validators plus the JEV citation-support check; 06's "eleven checks" are the deterministic ones. Starting state: no `jev_runs`/`briefing_runs`/`validation_runs`/`decision_policy_versions`; `run-service` hardcodes `rules_only`; retrieval runs only offline.
+
+| # | Issue | Depends on |
+|---|---|---|
+| MOO-834 | Decision-layer schema (group 5) — jev_runs, briefing_runs, validation_runs, decision_policy_versions, decision_comparisons view | — |
+| MOO-835 | Retrieval wired into runs — retrieve per category on lock, freeze the evidence bundle + hash on the run | MOO-834 |
+| MOO-836 | Prepared state + JEV in shadow — statuses only, four questions in one call, 2 s timeout → rules_only, every call logged | 834, 835 |
+| MOO-837 | Frozen briefing contract + briefing model — built only after lock; evaluate fable-5-1 vs sonnet-5 (decision 013) | 834, 835 |
+| MOO-838 | The eleven deterministic validators — each writes validation_runs; hard failure → templated brief | MOO-837 |
+| MOO-839 | Memo from the validated brief — preliminary label, citations to pages, banned-word scan across the gold set | MOO-838 |
+| MOO-840 | Gold set through shadow + comparison dashboard — /review/decisions, CI fails on unsafe-permissive > 0 | 836, 839 |
+| MOO-841 | Citation-support check (JEV, flag off by default) — can only remove sentences | MOO-838 |
