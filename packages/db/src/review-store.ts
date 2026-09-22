@@ -1,5 +1,6 @@
 import type postgres from "postgres";
 import { ZoningRule, type OrgRole, type ReviewStatus, type RuleCitation } from "@parcelpilot/contracts";
+import { settleChunksForTask } from "./corpus-activation.ts";
 
 // The reviewer queue (04 §10, MOO-819). Every function runs on the service connection because the queue,
 // candidates, rules and sources are jurisdiction-shared. Transitions take a transaction so a route can
@@ -232,8 +233,9 @@ export async function rejectTask(sql: Q, actor: Actor, taskId: string, reason: s
     // A rejected merge closes the family: the trigger keeps candidates out, and a corrected extraction is a new source_tables row.
     await sql`update source_tables set merge_review_status = 'rejected' where id = ${t.entity_id}`;
   }
+  const chunksWithdrawn = await settleChunksForTask(sql, t, "reject");
   const saved = await saveTask(sql, taskId, { status: "rejected", resolved_by: actor.userId, reason });
-  const a = await audit(sql, actor, `${AUDIT_ENTITY[t.task_type]}.rejected`, t.entity_type, t.entity_id, { task_id: taskId, reason });
+  const a = await audit(sql, actor, `${AUDIT_ENTITY[t.task_type]}.rejected`, t.entity_type, t.entity_id, { task_id: taskId, reason, chunks_withdrawn: chunksWithdrawn });
   return { ...saved, audit: a };
 }
 
@@ -269,8 +271,9 @@ export async function approveTask(sql: Q, actor: Actor, taskId: string): Promise
   if (t.task_type === "merge_review") {
     await sql`update source_tables set merge_review_status = 'approved' where id = ${t.entity_id}`;
   }
+  const chunksActivated = await settleChunksForTask(sql, t, "approve");
   const task = await saveTask(sql, taskId, { status: "approved", resolved_by: actor.userId });
-  const a = await audit(sql, actor, `${AUDIT_ENTITY[t.task_type]}.approved`, t.entity_type, t.entity_id, { task_id: taskId });
+  const a = await audit(sql, actor, `${AUDIT_ENTITY[t.task_type]}.approved`, t.entity_type, t.entity_id, { task_id: taskId, chunks_activated: chunksActivated });
   return { task: { ...task, audit: a } };
 }
 
