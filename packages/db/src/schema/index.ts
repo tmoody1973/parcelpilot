@@ -579,3 +579,19 @@ export const validationRuns = pgTable("validation_runs", {
   detail: jsonb("detail").notNull().default(sql`'{}'::jsonb`),
   createdAt: timestamps.createdAt,
 }, (t) => [uniqueIndex("validation_runs_one_per_validator").on(t.briefingRunId, t.validator)]);
+
+// The evidence a run was locked with (migration 0020; MOO-835). One frozen row per run: `assembled` with the bundle and
+// its SHA-256 over stable key order, or `unavailable` with the error (the memo then uses the templated brief).
+export const evidenceBundleStatus = pgEnum("evidence_bundle_status", ["assembled", "unavailable"]);
+export const runEvidenceBundles = pgTable("run_evidence_bundles", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  feasibilityRunId: uuid("feasibility_run_id").notNull().unique().references(() => feasibilityRuns.id),
+  status: evidenceBundleStatus("status").notNull(),
+  retrievalRunIds: uuid("retrieval_run_ids").array().notNull().default(sql`'{}'::uuid[]`),
+  tokenBudget: integer("token_budget").notNull(),
+  bundle: jsonb("bundle"),
+  bundleSha256: text("bundle_sha256"),
+  error: text("error"),
+  createdAt: timestamps.createdAt,
+});

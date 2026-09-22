@@ -2,18 +2,20 @@
   "version": "evidence_bundle.v1",
   "run_id": null,
   "retrieval_run_ids": [
-    "00dd908c-276a-410b-94d1-957d183cd7d8",
-    "17c21e97-9e5d-4b17-9aa4-d4724b8cf462",
-    "8d7205e0-7ada-4e14-ae70-da96b4c91c3c",
-    "62c9bb98-323e-41ae-ac08-8c34cb5ea549",
-    "5ac45e72-875f-48ad-bfbf-eedf30810364",
-    "86b702f6-f8a1-448b-af14-5bf73308a707",
-    "bbd7c390-32f6-44cd-9a50-fa64a6f77ac2"
+    "bef38832-64bd-49d7-b54e-b4c5e74fd143",
+    "7958589c-83b9-402a-abfb-8c3252bda01a",
+    "4fd72554-530c-48e9-bbc8-ea125587f909",
+    "fff3d50d-cde9-4360-80ba-168176fb4a7f",
+    "1c3b8f1d-79ac-4c09-8a94-8525ddb01d97",
+    "4d4ab9fb-f6f0-4a88-a9bb-0a5ae78e5ade",
+    "e8f52300-f272-4a91-ab44-c3be2ec55563",
+    "52dd7fc8-30f2-4a9e-a111-d5015cd4fc66",
+    "b0cf7fe1-2b86-4a7c-89e8-789216d694bc"
   ],
   "analysis_date": "2026-09-22",
   "embedding_version_id": "3d0aec24-bc92-4797-848a-e4deca4b78b3",
   "token_budget": 6000,
-  "tokens_used": 4172,
+  "tokens_used": 4623,
   "items": [
     {
       "source_id": "198a9062664e:295-603-1:multi_family_dwelling@1",
@@ -202,6 +204,62 @@
       "token_count": 43
     },
     {
+      "source_id": "198a9062664e:295-603-2-a-1:1@1",
+      "chunk_id": "7cf3b948-9e98-43f4-8851-3c32a2e60af1",
+      "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
+      "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
+      "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
+      "section": "295-603-2-a-1",
+      "page": 6,
+      "printed_page": 816,
+      "anchors": [
+        {
+          "page": 6,
+          "page_end": 6
+        }
+      ],
+      "verbatim_excerpt": "At the street level of the primary street, accessory parking, storage facilities or mechanical equipment shall occupy not more than 40% of the interior street frontage zone of the street level area. The interior street frontage zone, which requires street-activating uses, shall be 15 feet in depth in this district.",
+      "status": "active",
+      "category": "parking",
+      "subquestion": "minimum off-street parking spaces required for a multi-family dwelling in RB1",
+      "required_context_type": null,
+      "selection_reason": "keyword rank 4; meaning rank 6",
+      "rank": 7,
+      "footnote_markers": [],
+      "token_count": 79
+    },
+    {
+      "source_id": "198a9062664e:295-605-2:rear_street_setback_maximum_ft@1",
+      "chunk_id": "f054fc55-451d-45fc-b97f-933c1a74f6d4",
+      "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
+      "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
+      "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
+      "section": "295-605-2",
+      "page": 16,
+      "printed_page": 824,
+      "anchors": [
+        {
+          "page": 16,
+          "bbox": [
+            90.024,
+            223.49,
+            684.099985,
+            237.16999999999996
+          ],
+          "row_index_on_page": 10
+        }
+      ],
+      "verbatim_excerpt": "Table 295-605-2. Rear street setback, maximum (ft.) (Secondary Street). NS1: none; NS2: none; LB1: none; LB2: none; LB3: none; RB1: none; RB2: none; CS: none.",
+      "status": "active",
+      "category": "lot_coverage",
+      "subquestion": "maximum lot coverage in RB1",
+      "required_context_type": null,
+      "selection_reason": "keyword rank 4; meaning rank 6",
+      "rank": 8,
+      "footnote_markers": [],
+      "token_count": 40
+    },
+    {
       "source_id": "198a9062664e:295-601-3:1@1",
       "chunk_id": "4090e07b-a9d6-42f5-94ca-354ccd65f7a7",
       "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
@@ -222,7 +280,7 @@
       "subquestion": "RB1 district purpose and where it applies",
       "required_context_type": null,
       "selection_reason": "keyword rank 1; meaning rank 1",
-      "rank": 7,
+      "rank": 9,
       "footnote_markers": [],
       "token_count": 135
     },
@@ -253,7 +311,7 @@
       "subquestion": "Is a multi-family dwelling allowed in RB1, with retail on the ground floor?",
       "required_context_type": null,
       "selection_reason": "table row cited by a signed-off rule",
-      "rank": 8,
+      "rank": 10,
       "footnote_markers": [],
       "token_count": 24
     },
@@ -278,7 +336,7 @@
       "subquestion": "maximum and minimum building height in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 1; meaning rank 1",
-      "rank": 9,
+      "rank": 11,
       "footnote_markers": [],
       "token_count": 640
     },
@@ -303,7 +361,7 @@
       "subquestion": "front setback minimum and maximum in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 2; meaning rank 4",
-      "rank": 10,
+      "rank": 12,
       "footnote_markers": [],
       "token_count": 103
     },
@@ -334,7 +392,7 @@
       "subquestion": "side setback in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 4; meaning rank 2",
-      "rank": 11,
+      "rank": 13,
       "footnote_markers": [],
       "token_count": 38
     },
@@ -365,7 +423,7 @@
       "subquestion": "rear setback in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 3; meaning rank 2",
-      "rank": 12,
+      "rank": 14,
       "footnote_markers": [],
       "token_count": 38
     },
@@ -396,9 +454,34 @@
       "subquestion": "lot area per dwelling unit in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 2; meaning rank 3",
-      "rank": 13,
+      "rank": 15,
       "footnote_markers": [],
       "token_count": 131
+    },
+    {
+      "source_id": "198a9062664e:295-603-4-e:1@1",
+      "chunk_id": "4cc52665-6dca-4536-872b-223ebafcb018",
+      "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
+      "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
+      "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
+      "section": "295-603-4-e",
+      "page": 12,
+      "printed_page": 822,
+      "anchors": [
+        {
+          "page": 12,
+          "page_end": 12
+        }
+      ],
+      "verbatim_excerpt": "The location of accessory off-street parking spaces, including parking for 4 or fewer vehicles, shall comply with all applicable parking location standards set forth in s. 295-603-2.",
+      "status": "active",
+      "category": "parking",
+      "subquestion": "minimum off-street parking spaces required for a multi-family dwelling in RB1",
+      "required_context_type": null,
+      "selection_reason": "keyword rank 6; meaning rank 8",
+      "rank": 16,
+      "footnote_markers": [],
+      "token_count": 46
     },
     {
       "source_id": "198a9062664e:295-605-2:refer_to_design_standards_in_subch_5_for_this_residential_di@1",
@@ -423,11 +506,11 @@
       ],
       "verbatim_excerpt": "Table 295-605-2. Refer to design standards in subch. 5 for this residential district (Design Standards for Single family and Two-family Dwellings). NS1: RM1; NS2: RM4; LB1: RM2; LB2: RM5; LB3: RM5; RB1: RM2; RB2: RM5; CS: RM4.",
       "status": "active",
-      "category": null,
-      "subquestion": "RB1 district purpose and where it applies",
+      "category": "lot_coverage",
+      "subquestion": "maximum lot coverage in RB1",
       "required_context_type": null,
-      "selection_reason": "keyword rank 3; meaning rank 2",
-      "rank": 14,
+      "selection_reason": "keyword rank 15; meaning rank 1",
+      "rank": 17,
       "footnote_markers": [],
       "token_count": 57
     },
@@ -452,7 +535,7 @@
       "subquestion": "Is a multi-family dwelling allowed in RB1, with retail on the ground floor?",
       "required_context_type": null,
       "selection_reason": "keyword rank 1; meaning rank 6",
-      "rank": 15,
+      "rank": 18,
       "footnote_markers": [],
       "token_count": 30
     },
@@ -477,7 +560,7 @@
       "subquestion": "maximum and minimum building height in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 6; meaning rank 5",
-      "rank": 16,
+      "rank": 19,
       "footnote_markers": [],
       "token_count": 162
     },
@@ -508,7 +591,7 @@
       "subquestion": "side setback in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 3; meaning rank 6",
-      "rank": 17,
+      "rank": 20,
       "footnote_markers": [],
       "token_count": 34
     },
@@ -539,9 +622,65 @@
       "subquestion": "rear setback in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 4; meaning rank 3",
-      "rank": 18,
+      "rank": 21,
       "footnote_markers": [],
       "token_count": 40
+    },
+    {
+      "source_id": "198a9062664e:295-603-2-k-2:1@1",
+      "chunk_id": "04505004-6c51-4161-84ba-dfbc6e343a17",
+      "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
+      "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
+      "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
+      "section": "295-603-2-k-2",
+      "page": 8,
+      "printed_page": 818,
+      "anchors": [
+        {
+          "page": 8,
+          "page_end": 8
+        }
+      ],
+      "verbatim_excerpt": "The adult day care shall have at least 2 spaces available to the day care center for parking or loading. The spaces shall be located on the premises or on the street immediately adjacent to the site of the adult day care, provided that such on-street spaces are available for public use during the operation of the adult day care. The on-street parking spaces shall be in compliance with all city parking regulations and shall each measure at least 20 feet long if they are parallel parking spaces. L. Animal Hospital/Clinic, Animal Boarding Facility or Animal Grooming or Training Facility. No outdoor run or outdoor kennels shall be provided on the premises.",
+      "status": "active",
+      "category": "parking",
+      "subquestion": "minimum off-street parking spaces required for a multi-family dwelling in RB1",
+      "required_context_type": null,
+      "selection_reason": "keyword rank 1; meaning rank 15",
+      "rank": 22,
+      "footnote_markers": [],
+      "token_count": 165
+    },
+    {
+      "source_id": "198a9062664e:295-605-2:multiple_principal_buildings_permitted@1",
+      "chunk_id": "da3a649c-2f08-4aa0-aabf-7ffd0ffe992a",
+      "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
+      "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
+      "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
+      "section": "295-605-2",
+      "page": 16,
+      "printed_page": 824,
+      "anchors": [
+        {
+          "page": 16,
+          "bbox": [
+            90.024,
+            464.74,
+            684.099985,
+            478.41999999999996
+          ],
+          "row_index_on_page": 24
+        }
+      ],
+      "verbatim_excerpt": "Table 295-605-2. Multiple principal buildings permitted? (Secondary Street). NS1: yes NS1; NS2: yes NS2; LB1: yes LB1; LB2: yes LB2; LB3: yes LB3; RB1: yes RB1; RB2: yes RB2; CS: yes CS.",
+      "status": "active",
+      "category": "lot_coverage",
+      "subquestion": "maximum lot coverage in RB1",
+      "required_context_type": null,
+      "selection_reason": "keyword rank 8; meaning rank 7",
+      "rank": 23,
+      "footnote_markers": [],
+      "token_count": 47
     },
     {
       "source_id": "198a9062664e:295-601:1@1",
@@ -564,7 +703,7 @@
       "subquestion": "RB1 district purpose and where it applies",
       "required_context_type": null,
       "selection_reason": "keyword rank 4; meaning rank 3",
-      "rank": 19,
+      "rank": 24,
       "footnote_markers": [],
       "token_count": 49
     },
@@ -589,7 +728,7 @@
       "subquestion": "maximum and minimum building height in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 4; meaning rank 8",
-      "rank": 20,
+      "rank": 25,
       "footnote_markers": [],
       "token_count": 81
     },
@@ -620,7 +759,7 @@
       "subquestion": "front setback minimum and maximum in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 7; meaning rank 1",
-      "rank": 21,
+      "rank": 26,
       "footnote_markers": [],
       "token_count": 45
     },
@@ -651,40 +790,59 @@
       "subquestion": "side setback in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 5; meaning rank 5",
-      "rank": 22,
+      "rank": 27,
       "footnote_markers": [],
       "token_count": 40
     },
     {
-      "source_id": "198a9062664e:295-605-2:rear_street_setback_maximum_ft@1",
-      "chunk_id": "f054fc55-451d-45fc-b97f-933c1a74f6d4",
+      "source_id": "198a9062664e:295-605-4-b-1:1@1",
+      "chunk_id": "14101eb2-c4bb-4182-bf71-3cf9b34c98f2",
       "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
       "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
       "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
-      "section": "295-605-2",
-      "page": 16,
-      "printed_page": 824,
+      "section": "295-605-4-b-1",
+      "page": 19,
+      "printed_page": 827,
       "anchors": [
         {
-          "page": 16,
-          "bbox": [
-            90.024,
-            223.49,
-            684.099985,
-            237.16999999999996
-          ],
-          "row_index_on_page": 10
+          "page": 19,
+          "page_end": 19
         }
       ],
-      "verbatim_excerpt": "Table 295-605-2. Rear street setback, maximum (ft.) (Secondary Street). NS1: none; NS2: none; LB1: none; LB2: none; LB3: none; RB1: none; RB2: none; CS: none.",
+      "verbatim_excerpt": "General. Off-street parking spaces for uses in commercial zoning districts shall be provided in accordance with the requirements of s. 295-403-2 and shall meet the design standards of s. 295-403-3.",
       "status": "active",
-      "category": "setback_rear",
-      "subquestion": "rear setback in RB1",
+      "category": "parking",
+      "subquestion": "minimum off-street parking spaces required for a multi-family dwelling in RB1",
       "required_context_type": null,
-      "selection_reason": "keyword rank 5; meaning rank 4",
-      "rank": 23,
+      "selection_reason": "keyword rank 17; meaning rank 1",
+      "rank": 28,
       "footnote_markers": [],
-      "token_count": 40
+      "token_count": 50
+    },
+    {
+      "source_id": "198a9062664e:295-605-1-a:1@1",
+      "chunk_id": "232dfe0b-bfea-4ad9-ad98-db852fa6c8be",
+      "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
+      "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
+      "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
+      "section": "295-605-1-a",
+      "page": 12,
+      "printed_page": 822,
+      "anchors": [
+        {
+          "page": 12,
+          "page_end": 12
+        }
+      ],
+      "verbatim_excerpt": "An objective of these design standards is to ensure that buildings in commercial districts fit within the context in which they are built. Lot sizes, lot coverage, height and other design parameters vary by district to ensure that the requirements of this section closely match the existing built environment.",
+      "status": "active",
+      "category": "lot_coverage",
+      "subquestion": "maximum lot coverage in RB1",
+      "required_context_type": null,
+      "selection_reason": "keyword rank 2; meaning rank 15",
+      "rank": 29,
+      "footnote_markers": [],
+      "token_count": 78
     },
     {
       "source_id": "198a9062664e:295-603-1:two_family_dwelling@1",
@@ -713,7 +871,7 @@
       "subquestion": "Is a multi-family dwelling allowed in RB1, with retail on the ground floor?",
       "required_context_type": null,
       "selection_reason": "keyword rank 11; meaning rank 3",
-      "rank": 24,
+      "rank": 30,
       "footnote_markers": [],
       "token_count": 30
     },
@@ -738,7 +896,7 @@
       "subquestion": "maximum and minimum building height in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 2; meaning rank 11",
-      "rank": 25,
+      "rank": 31,
       "footnote_markers": [],
       "token_count": 99
     },
@@ -763,7 +921,7 @@
       "subquestion": "front setback minimum and maximum in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 5; meaning rank 9",
-      "rank": 26,
+      "rank": 32,
       "footnote_markers": [],
       "token_count": 52
     },
@@ -788,7 +946,7 @@
       "subquestion": "side setback in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 2; meaning rank 9",
-      "rank": 27,
+      "rank": 33,
       "footnote_markers": [],
       "token_count": 114
     },
@@ -819,34 +977,34 @@
       "subquestion": "lot area per dwelling unit in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 6; meaning rank 4",
-      "rank": 28,
+      "rank": 34,
       "footnote_markers": [],
       "token_count": 45
     },
     {
-      "source_id": "198a9062664e:295-605-1-a:1@1",
-      "chunk_id": "232dfe0b-bfea-4ad9-ad98-db852fa6c8be",
+      "source_id": "198a9062664e:295-605-5-h-1:1@1",
+      "chunk_id": "3265aa39-c193-4a82-b02d-743060c07583",
       "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
       "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
       "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
-      "section": "295-605-1-a",
-      "page": 12,
-      "printed_page": 822,
+      "section": "295-605-5-h-1",
+      "page": 22,
+      "printed_page": 830,
       "anchors": [
         {
-          "page": 12,
-          "page_end": 12
+          "page": 22,
+          "page_end": 22
         }
       ],
-      "verbatim_excerpt": "An objective of these design standards is to ensure that buildings in commercial districts fit within the context in which they are built. Lot sizes, lot coverage, height and other design parameters vary by district to ensure that the requirements of this section closely match the existing built environment.",
+      "verbatim_excerpt": "A sign pertaining to the construction of a building or the sale or lease of vacant land shall not exceed: Zoning District Max. Sign Area NS1 and NS2 36 sq. ft. LB1, LB2 and CS 48 sq. ft. RB1, RB2 and LB3 72 sq. ft.",
       "status": "active",
-      "category": null,
-      "subquestion": "RB1 district purpose and where it applies",
+      "category": "lot_coverage",
+      "subquestion": "maximum lot coverage in RB1",
       "required_context_type": null,
-      "selection_reason": "keyword rank 7; meaning rank 11",
-      "rank": 29,
+      "selection_reason": "keyword rank 12; meaning rank 5",
+      "rank": 35,
       "footnote_markers": [],
-      "token_count": 78
+      "token_count": 54
     },
     {
       "source_id": "198a9062664e:295-605-2:height_minimum_ft@1",
@@ -875,9 +1033,65 @@
       "subquestion": "maximum and minimum building height in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 8; meaning rank 7",
-      "rank": 30,
+      "rank": 36,
       "footnote_markers": [],
       "token_count": 35
+    },
+    {
+      "source_id": "198a9062664e:295-605-2:minimum_build_out_secondary_street_frontage@1",
+      "chunk_id": "87977354-1cfc-4c94-8eba-7104bd17c71c",
+      "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
+      "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
+      "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
+      "section": "295-605-2",
+      "page": 16,
+      "printed_page": 824,
+      "anchors": [
+        {
+          "page": 16,
+          "bbox": [
+            90.024,
+            451.03,
+            684.099985,
+            464.74
+          ],
+          "row_index_on_page": 23
+        }
+      ],
+      "verbatim_excerpt": "Table 295-605-2. Minimum build-out, secondary street frontage (Secondary Street). NS1: none; NS2: none; LB1: none; LB2: none; LB3: 50%; RB1: none; RB2: none; CS: none.",
+      "status": "active",
+      "category": "parking",
+      "subquestion": "minimum off-street parking spaces required for a multi-family dwelling in RB1",
+      "required_context_type": null,
+      "selection_reason": "keyword rank 13; meaning rank 11",
+      "rank": 37,
+      "footnote_markers": [],
+      "token_count": 42
+    },
+    {
+      "source_id": "198a9062664e:295-605-2-b-4:1@1",
+      "chunk_id": "d965cad3-880c-4666-a9f4-2c632aeb57a2",
+      "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
+      "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
+      "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
+      "section": "295-605-2-b-4",
+      "page": 12,
+      "printed_page": 822,
+      "anchors": [
+        {
+          "page": 12,
+          "page_end": 12
+        }
+      ],
+      "verbatim_excerpt": "Other Streets. Each lot with 2 or more street frontages shall have one primary street and one secondary street. The setback requirements of table 295-605-2 shall not apply to any street lot line that does not abut a primary or secondary street.",
+      "status": "active",
+      "category": "lot_coverage",
+      "subquestion": "maximum lot coverage in RB1",
+      "required_context_type": null,
+      "selection_reason": "keyword rank 7; meaning rank 11",
+      "rank": 38,
+      "footnote_markers": [],
+      "token_count": 61
     },
     {
       "source_id": "198a9062664e:295-603-2-h:1@1",
@@ -900,7 +1114,7 @@
       "subquestion": "RB1 district purpose and where it applies",
       "required_context_type": null,
       "selection_reason": "keyword rank 11; meaning rank 8",
-      "rank": 31,
+      "rank": 39,
       "footnote_markers": [],
       "token_count": 63
     },
@@ -931,7 +1145,7 @@
       "subquestion": "Is a multi-family dwelling allowed in RB1, with retail on the ground floor?",
       "required_context_type": null,
       "selection_reason": "keyword rank 10; meaning rank 7",
-      "rank": 32,
+      "rank": 40,
       "footnote_markers": [],
       "token_count": 31
     },
@@ -956,7 +1170,7 @@
       "subquestion": "maximum and minimum building height in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 13; meaning rank 3",
-      "rank": 33,
+      "rank": 41,
       "footnote_markers": [],
       "token_count": 23
     },
@@ -981,9 +1195,40 @@
       "subquestion": "side setback in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 12; meaning rank 3",
-      "rank": 34,
+      "rank": 42,
       "footnote_markers": [],
       "token_count": 8
+    },
+    {
+      "source_id": "198a9062664e:295-605-2:minimum_glazed_area_secondary_street_frontage@1",
+      "chunk_id": "075a53bb-1504-45cb-8238-2086c8e6d6ed",
+      "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
+      "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
+      "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
+      "section": "295-605-2",
+      "page": 16,
+      "printed_page": 824,
+      "anchors": [
+        {
+          "page": 16,
+          "bbox": [
+            90.024,
+            423.66999999999996,
+            684.099985,
+            437.35
+          ],
+          "row_index_on_page": 21
+        }
+      ],
+      "verbatim_excerpt": "Table 295-605-2. Minimum glazed area, secondary street frontage (Secondary Street). NS1: 10%; NS2: 15%; LB1: 10%; LB2: 15%; LB3: 15%; RB1: 10%; RB2: 15%; CS: 10%.",
+      "status": "active",
+      "category": "lot_coverage",
+      "subquestion": "maximum lot coverage in RB1",
+      "required_context_type": null,
+      "selection_reason": "keyword rank 10; meaning rank 8",
+      "rank": 43,
+      "footnote_markers": [],
+      "token_count": 41
     },
     {
       "source_id": "198a9062664e:295-605-2-a:1@1",
@@ -1006,7 +1251,7 @@
       "subquestion": "RB1 district purpose and where it applies",
       "required_context_type": null,
       "selection_reason": "keyword rank 15; meaning rank 16",
-      "rank": 35,
+      "rank": 44,
       "footnote_markers": [],
       "token_count": 183
     },
@@ -1037,7 +1282,7 @@
       "subquestion": "Is a multi-family dwelling allowed in RB1, with retail on the ground floor?",
       "required_context_type": null,
       "selection_reason": "keyword rank 9; meaning rank 8",
-      "rank": 36,
+      "rank": 45,
       "footnote_markers": [],
       "token_count": 33
     },
@@ -1062,7 +1307,7 @@
       "subquestion": "maximum and minimum building height in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 3; meaning rank 15",
-      "rank": 37,
+      "rank": 46,
       "footnote_markers": [],
       "token_count": 47
     },
@@ -1087,7 +1332,7 @@
       "subquestion": "front setback minimum and maximum in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 4; meaning rank 16",
-      "rank": 38,
+      "rank": 47,
       "footnote_markers": [],
       "token_count": 124
     },
@@ -1112,7 +1357,7 @@
       "subquestion": "rear setback in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 6; meaning rank 10",
-      "rank": 39,
+      "rank": 48,
       "footnote_markers": [],
       "token_count": 63
     },
@@ -1143,40 +1388,59 @@
       "subquestion": "lot area per dwelling unit in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 10; meaning rank 10",
-      "rank": 40,
+      "rank": 49,
       "footnote_markers": [],
       "token_count": 40
     },
     {
-      "source_id": "198a9062664e:295-605-2:multiple_principal_buildings_permitted@1",
-      "chunk_id": "da3a649c-2f08-4aa0-aabf-7ffd0ffe992a",
+      "source_id": "198a9062664e:295-605-4-e-2:1@1",
+      "chunk_id": "fe76b529-76b9-4647-b8d5-81914b30ae6e",
       "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
       "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
       "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
-      "section": "295-605-2",
-      "page": 16,
-      "printed_page": 824,
+      "section": "295-605-4-e-2",
+      "page": 20,
+      "printed_page": 828,
       "anchors": [
         {
-          "page": 16,
-          "bbox": [
-            90.024,
-            464.74,
-            684.099985,
-            478.41999999999996
-          ],
-          "row_index_on_page": 24
+          "page": 20,
+          "page_end": 20
         }
       ],
-      "verbatim_excerpt": "Table 295-605-2. Multiple principal buildings permitted? (Secondary Street). NS1: yes NS1; NS2: yes NS2; LB1: yes LB1; LB2: yes LB2; LB3: yes LB3; RB1: yes RB1; RB2: yes RB2; CS: yes CS.",
+      "verbatim_excerpt": "Parking Lots. All uses, with the exception of single-family and 2-family dwellings, shall provide parking lot landscaping in accordance with s. 295-405.",
       "status": "active",
-      "category": null,
-      "subquestion": "RB1 district purpose and where it applies",
+      "category": "parking",
+      "subquestion": "minimum off-street parking spaces required for a multi-family dwelling in RB1",
       "required_context_type": null,
-      "selection_reason": "keyword rank 16; meaning rank 15",
-      "rank": 41,
+      "selection_reason": "keyword rank 20; meaning rank 7",
+      "rank": 50,
       "footnote_markers": [],
-      "token_count": 47
+      "token_count": 38
+    },
+    {
+      "source_id": "198a9062664e:295-605-5-c:1@1",
+      "chunk_id": "831bfef4-aebb-4b36-b0ac-0b2f031e856f",
+      "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
+      "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
+      "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
+      "section": "295-605-5-c",
+      "page": 21,
+      "printed_page": 829,
+      "anchors": [
+        {
+          "page": 21,
+          "page_end": 21
+        }
+      ],
+      "verbatim_excerpt": "When the wall on which a wall sign is to be mounted is set back more than 150 feet from the street property line, the maximum permitted sign area may be doubled in the LB1, LB2, RB1, RB2 and CS districts. This adjustment shall follow and be in addition to the calculation of permitted area in par. b.",
+      "status": "active",
+      "category": "lot_coverage",
+      "subquestion": "maximum lot coverage in RB1",
+      "required_context_type": null,
+      "selection_reason": "keyword rank 6; meaning rank 14",
+      "rank": 51,
+      "footnote_markers": [],
+      "token_count": 75
     },
     {
       "source_id": "198a9062664e:295-605-2-i-2-b:1@1",
@@ -1199,7 +1463,7 @@
       "subquestion": "Is a multi-family dwelling allowed in RB1, with retail on the ground floor?",
       "required_context_type": null,
       "selection_reason": "keyword rank 4; meaning rank 17",
-      "rank": 42,
+      "rank": 52,
       "footnote_markers": [],
       "token_count": 167
     },
@@ -1230,7 +1494,7 @@
       "subquestion": "maximum and minimum building height in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 11; meaning rank 9",
-      "rank": 43,
+      "rank": 53,
       "footnote_markers": [],
       "token_count": 41
     },
@@ -1255,34 +1519,9 @@
       "subquestion": "rear setback in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 9; meaning rank 11",
-      "rank": 44,
+      "rank": 54,
       "footnote_markers": [],
       "token_count": 36
-    },
-    {
-      "source_id": "198a9062664e:295-605-5-h-1:1@1",
-      "chunk_id": "3265aa39-c193-4a82-b02d-743060c07583",
-      "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
-      "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
-      "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
-      "section": "295-605-5-h-1",
-      "page": 22,
-      "printed_page": 830,
-      "anchors": [
-        {
-          "page": 22,
-          "page_end": 22
-        }
-      ],
-      "verbatim_excerpt": "A sign pertaining to the construction of a building or the sale or lease of vacant land shall not exceed: Zoning District Max. Sign Area NS1 and NS2 36 sq. ft. LB1, LB2 and CS 48 sq. ft. RB1, RB2 and LB3 72 sq. ft.",
-      "status": "active",
-      "category": "density",
-      "subquestion": "lot area per dwelling unit in RB1",
-      "required_context_type": null,
-      "selection_reason": "keyword rank 15; meaning rank 8",
-      "rank": 45,
-      "footnote_markers": [],
-      "token_count": 54
     },
     {
       "source_id": "198a9062664e:295-605-5-a:1@1",
@@ -1305,40 +1544,9 @@
       "subquestion": "RB1 district purpose and where it applies",
       "required_context_type": null,
       "selection_reason": "keyword rank 10; meaning rank 40",
-      "rank": 46,
+      "rank": 55,
       "footnote_markers": [],
       "token_count": 112
-    },
-    {
-      "source_id": "198a9062664e:295-605-2:minimum_build_out_secondary_street_frontage@1",
-      "chunk_id": "87977354-1cfc-4c94-8eba-7104bd17c71c",
-      "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
-      "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
-      "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
-      "section": "295-605-2",
-      "page": 16,
-      "printed_page": 824,
-      "anchors": [
-        {
-          "page": 16,
-          "bbox": [
-            90.024,
-            451.03,
-            684.099985,
-            464.74
-          ],
-          "row_index_on_page": 23
-        }
-      ],
-      "verbatim_excerpt": "Table 295-605-2. Minimum build-out, secondary street frontage (Secondary Street). NS1: none; NS2: none; LB1: none; LB2: none; LB3: 50%; RB1: none; RB2: none; CS: none.",
-      "status": "active",
-      "category": "height",
-      "subquestion": "maximum and minimum building height in RB1",
-      "required_context_type": null,
-      "selection_reason": "keyword rank 9; meaning rank 13",
-      "rank": 47,
-      "footnote_markers": [],
-      "token_count": 42
     },
     {
       "source_id": "198a9062664e:295-605-2-c:1@1",
@@ -1361,7 +1569,7 @@
       "subquestion": "front setback minimum and maximum in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 28; meaning rank 2",
-      "rank": 48,
+      "rank": 56,
       "footnote_markers": [],
       "token_count": 6
     },
@@ -1386,65 +1594,34 @@
       "subquestion": "side setback in RB1",
       "required_context_type": null,
       "selection_reason": "keyword rank 9; meaning rank 12",
-      "rank": 49,
+      "rank": 57,
       "footnote_markers": [],
       "token_count": 70
     },
     {
-      "source_id": "198a9062664e:295-605-5-c:1@1",
-      "chunk_id": "831bfef4-aebb-4b36-b0ac-0b2f031e856f",
+      "source_id": "198a9062664e:295-605-3-b:1@1",
+      "chunk_id": "4c1111dd-02f0-4c5d-bb09-c37981e6e33e",
       "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
       "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
       "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
-      "section": "295-605-5-c",
-      "page": 21,
-      "printed_page": 829,
+      "section": "295-605-3-b",
+      "page": 19,
+      "printed_page": 827,
       "anchors": [
         {
-          "page": 21,
-          "page_end": 21
+          "page": 19,
+          "page_end": 19
         }
       ],
-      "verbatim_excerpt": "When the wall on which a wall sign is to be mounted is set back more than 150 feet from the street property line, the maximum permitted sign area may be doubled in the LB1, LB2, RB1, RB2 and CS districts. This adjustment shall follow and be in addition to the calculation of permitted area in par. b.",
+      "verbatim_excerpt": "Any structure accessory to a single-family or 2-family dwelling shall meet the requirements set forth in table 295-505-3.",
       "status": "active",
-      "category": "setback_rear",
-      "subquestion": "rear setback in RB1",
+      "category": "parking",
+      "subquestion": "minimum off-street parking spaces required for a multi-family dwelling in RB1",
       "required_context_type": null,
-      "selection_reason": "keyword rank 10; meaning rank 12",
-      "rank": 50,
+      "selection_reason": "keyword rank 5; meaning rank 25",
+      "rank": 58,
       "footnote_markers": [],
-      "token_count": 75
-    },
-    {
-      "source_id": "198a9062664e:295-605-2:minimum_glazed_area_secondary_street_frontage@1",
-      "chunk_id": "075a53bb-1504-45cb-8238-2086c8e6d6ed",
-      "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
-      "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
-      "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
-      "section": "295-605-2",
-      "page": 16,
-      "printed_page": 824,
-      "anchors": [
-        {
-          "page": 16,
-          "bbox": [
-            90.024,
-            423.66999999999996,
-            684.099985,
-            437.35
-          ],
-          "row_index_on_page": 21
-        }
-      ],
-      "verbatim_excerpt": "Table 295-605-2. Minimum glazed area, secondary street frontage (Secondary Street). NS1: 10%; NS2: 15%; LB1: 10%; LB2: 15%; LB3: 15%; RB1: 10%; RB2: 15%; CS: 10%.",
-      "status": "active",
-      "category": "density",
-      "subquestion": "lot area per dwelling unit in RB1",
-      "required_context_type": null,
-      "selection_reason": "keyword rank 8; meaning rank 17",
-      "rank": 51,
-      "footnote_markers": [],
-      "token_count": 41
+      "token_count": 31
     },
     {
       "source_id": "198a9062664e:295-603-1:1@1",
@@ -1467,7 +1644,7 @@
       "subquestion": "Is a multi-family dwelling allowed in RB1, with retail on the ground floor?",
       "required_context_type": "parent_section",
       "selection_reason": "required context: parent section",
-      "rank": 52,
+      "rank": 59,
       "footnote_markers": [],
       "token_count": 56
     },
@@ -1492,7 +1669,7 @@
       "subquestion": "maximum and minimum building height in RB1",
       "required_context_type": "parent_section",
       "selection_reason": "required context: parent section",
-      "rank": 53,
+      "rank": 60,
       "footnote_markers": [],
       "token_count": 8
     },
@@ -1517,7 +1694,7 @@
       "subquestion": "front setback minimum and maximum in RB1",
       "required_context_type": "cross_reference",
       "selection_reason": "required context: cross reference",
-      "rank": 54,
+      "rank": 61,
       "footnote_markers": [],
       "token_count": 6
     },
@@ -1542,7 +1719,7 @@
       "subquestion": "RB1 district purpose and where it applies",
       "required_context_type": "adjacent",
       "selection_reason": "required context: adjacent",
-      "rank": 55,
+      "rank": 62,
       "footnote_markers": [],
       "token_count": 47
     },
@@ -1567,7 +1744,7 @@
       "subquestion": "Is a multi-family dwelling allowed in RB1, with retail on the ground floor?",
       "required_context_type": "parent_section",
       "selection_reason": "required context: parent section",
-      "rank": 56,
+      "rank": 63,
       "footnote_markers": [],
       "token_count": 6
     },
@@ -1592,34 +1769,34 @@
       "subquestion": "maximum and minimum building height in RB1",
       "required_context_type": "parent_section",
       "selection_reason": "required context: parent section",
-      "rank": 57,
+      "rank": 64,
       "footnote_markers": [],
       "token_count": 4
     },
     {
-      "source_id": "198a9062664e:295-603-2-a-1:1@1",
-      "chunk_id": "7cf3b948-9e98-43f4-8851-3c32a2e60af1",
+      "source_id": "198a9062664e:295-603-4-f:1@1",
+      "chunk_id": "40b357ca-aed0-43df-b84a-31decdb24d59",
       "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
       "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
       "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
-      "section": "295-603-2-a-1",
-      "page": 6,
-      "printed_page": 816,
+      "section": "295-603-4-f",
+      "page": 12,
+      "printed_page": 822,
       "anchors": [
         {
-          "page": 6,
-          "page_end": 6
+          "page": 12,
+          "page_end": 12
         }
       ],
-      "verbatim_excerpt": "At the street level of the primary street, accessory parking, storage facilities or mechanical equipment shall occupy not more than 40% of the interior street frontage zone of the street level area. The interior street frontage zone, which requires street-activating uses, shall be 15 feet in depth in this district.",
+      "verbatim_excerpt": "The equipment shall meet the standards set forth in s. 295- 403-3-f.",
       "status": "active",
-      "category": "use",
-      "subquestion": "Is a multi-family dwelling allowed in RB1, with retail on the ground floor?",
+      "category": "parking",
+      "subquestion": "minimum off-street parking spaces required for a multi-family dwelling in RB1",
       "required_context_type": "adjacent",
       "selection_reason": "required context: adjacent",
-      "rank": 58,
+      "rank": 65,
       "footnote_markers": [],
-      "token_count": 79
+      "token_count": 17
     },
     {
       "source_id": "198a9062664e:295-605-2-f-3:1@1",
@@ -1642,7 +1819,7 @@
       "subquestion": "maximum and minimum building height in RB1",
       "required_context_type": "adjacent",
       "selection_reason": "required context: adjacent",
-      "rank": 59,
+      "rank": 66,
       "footnote_markers": [],
       "token_count": 70
     },
@@ -1667,9 +1844,34 @@
       "subquestion": "front setback minimum and maximum in RB1",
       "required_context_type": "parent_section",
       "selection_reason": "required context: parent section",
-      "rank": 60,
+      "rank": 67,
       "footnote_markers": [],
       "token_count": 5
+    },
+    {
+      "source_id": "198a9062664e:295-603-2-k:1@1",
+      "chunk_id": "6784c669-0bae-4db9-9ced-1b8aa41a25b3",
+      "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
+      "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
+      "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
+      "section": "295-603-2-k",
+      "page": 8,
+      "printed_page": 818,
+      "anchors": [
+        {
+          "page": 8,
+          "page_end": 8
+        }
+      ],
+      "verbatim_excerpt": "Adult Day Care.",
+      "status": "active",
+      "category": "parking",
+      "subquestion": "minimum off-street parking spaces required for a multi-family dwelling in RB1",
+      "required_context_type": "parent_section",
+      "selection_reason": "required context: parent section",
+      "rank": 68,
+      "footnote_markers": [],
+      "token_count": 4
     },
     {
       "source_id": "198a9062664e:subchapter-6:1@1",
@@ -1692,7 +1894,7 @@
       "subquestion": "RB1 district purpose and where it applies",
       "required_context_type": "parent_section",
       "selection_reason": "required context: parent section",
-      "rank": 61,
+      "rank": 69,
       "footnote_markers": [],
       "token_count": 5
     },
@@ -1717,7 +1919,7 @@
       "subquestion": "maximum and minimum building height in RB1",
       "required_context_type": "adjacent",
       "selection_reason": "required context: adjacent",
-      "rank": 62,
+      "rank": 70,
       "footnote_markers": [],
       "token_count": 37
     },
@@ -1742,9 +1944,34 @@
       "subquestion": "front setback minimum and maximum in RB1",
       "required_context_type": "adjacent",
       "selection_reason": "required context: adjacent",
-      "rank": 63,
+      "rank": 71,
       "footnote_markers": [],
       "token_count": 127
+    },
+    {
+      "source_id": "198a9062664e:295-603-2-k-1:1@1",
+      "chunk_id": "32cd5d2a-e08f-49af-b55f-3a3e8250a122",
+      "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
+      "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
+      "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
+      "section": "295-603-2-k-1",
+      "page": 8,
+      "printed_page": 818,
+      "anchors": [
+        {
+          "page": 8,
+          "page_end": 8
+        }
+      ],
+      "verbatim_excerpt": "The adult day care center shall have a maximum capacity of 40 clients per shift.",
+      "status": "active",
+      "category": "parking",
+      "subquestion": "minimum off-street parking spaces required for a multi-family dwelling in RB1",
+      "required_context_type": "adjacent",
+      "selection_reason": "required context: adjacent",
+      "rank": 72,
+      "footnote_markers": [],
+      "token_count": 20
     },
     {
       "source_id": "198a9062664e:295-605-2-g:1@1",
@@ -1767,9 +1994,34 @@
       "subquestion": "maximum and minimum building height in RB1",
       "required_context_type": "adjacent",
       "selection_reason": "required context: adjacent",
-      "rank": 64,
+      "rank": 73,
       "footnote_markers": [],
       "token_count": 48
+    },
+    {
+      "source_id": "198a9062664e:295-603-2-m:1@1",
+      "chunk_id": "d416d32f-f424-4d0f-bbbc-9417e8eedae3",
+      "official_url": "https://city.milwaukee.gov/ImageLibrary/Groups/ccClerk/Ordinances/Volume-2/CH295-sub6.pdf",
+      "document_title": "Chapter 295 Subchapter 6 — Commercial Districts",
+      "document_sha256": "198a9062664ed8499838570152f0111392dd126366a4950b0dd3e28f32362f24",
+      "section": "295-603-2-m",
+      "page": 8,
+      "printed_page": 818,
+      "anchors": [
+        {
+          "page": 8,
+          "page_end": 8
+        }
+      ],
+      "verbatim_excerpt": "Not more than 15 vehicles available for rent may be kept on the premises.",
+      "status": "active",
+      "category": "parking",
+      "subquestion": "minimum off-street parking spaces required for a multi-family dwelling in RB1",
+      "required_context_type": "adjacent",
+      "selection_reason": "required context: adjacent",
+      "rank": 74,
+      "footnote_markers": [],
+      "token_count": 19
     }
   ],
   "required_context": {
@@ -1779,8 +2031,10 @@
       "primary_in_bundle": true,
       "parent_section": true,
       "adjacent": true,
+      "definition": false,
       "cross_reference": false,
       "exception": false,
+      "superseding_amendment": false,
       "district_general_provision": false,
       "overlay": false
     },
@@ -1790,8 +2044,10 @@
       "primary_in_bundle": true,
       "parent_section": true,
       "adjacent": true,
+      "definition": false,
       "cross_reference": false,
       "exception": false,
+      "superseding_amendment": false,
       "district_general_provision": false,
       "overlay": false
     },
@@ -1801,8 +2057,10 @@
       "primary_in_bundle": true,
       "parent_section": true,
       "adjacent": true,
+      "definition": false,
       "cross_reference": true,
       "exception": false,
+      "superseding_amendment": false,
       "district_general_provision": false,
       "overlay": false
     },
@@ -1812,8 +2070,10 @@
       "primary_in_bundle": true,
       "parent_section": true,
       "adjacent": false,
+      "definition": false,
       "cross_reference": false,
       "exception": false,
+      "superseding_amendment": false,
       "district_general_provision": false,
       "overlay": false
     },
@@ -1823,8 +2083,10 @@
       "primary_in_bundle": true,
       "parent_section": true,
       "adjacent": false,
+      "definition": false,
       "cross_reference": false,
       "exception": false,
+      "superseding_amendment": false,
       "district_general_provision": false,
       "overlay": false
     },
@@ -1834,8 +2096,36 @@
       "primary_in_bundle": true,
       "parent_section": true,
       "adjacent": false,
+      "definition": false,
       "cross_reference": false,
       "exception": false,
+      "superseding_amendment": false,
+      "district_general_provision": false,
+      "overlay": false
+    },
+    "parking": {
+      "primary_found": true,
+      "rule_row_found": false,
+      "primary_in_bundle": true,
+      "parent_section": true,
+      "adjacent": true,
+      "definition": false,
+      "cross_reference": false,
+      "exception": false,
+      "superseding_amendment": false,
+      "district_general_provision": false,
+      "overlay": false
+    },
+    "lot_coverage": {
+      "primary_found": true,
+      "rule_row_found": false,
+      "primary_in_bundle": true,
+      "parent_section": true,
+      "adjacent": false,
+      "definition": false,
+      "cross_reference": false,
+      "exception": false,
+      "superseding_amendment": false,
       "district_general_provision": false,
       "overlay": false
     },
@@ -1845,8 +2135,10 @@
       "primary_in_bundle": true,
       "parent_section": true,
       "adjacent": true,
+      "definition": false,
       "cross_reference": false,
       "exception": false,
+      "superseding_amendment": false,
       "district_general_provision": false,
       "overlay": false
     }
@@ -1854,10 +2146,7 @@
   "flags": {
     "active_version_confirmed": true,
     "overlay_detected": false,
-    "coverage_gaps": [
-      "parking",
-      "lot_coverage"
-    ],
+    "coverage_gaps": [],
     "dropped_for_budget": 0,
     "refused_inactive": 0
   }

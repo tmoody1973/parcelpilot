@@ -5,7 +5,8 @@ import { auditEvents, calculations, decisionPolicyVersionId, feasibilityRuns, la
 import { DECISION_POLICY_V1, ScenarioInputs, type Coverage, type EvidenceFlags, type Finding, type ParcelFacts as EngineFacts, type PolicyResult } from "@parcelpilot/contracts";
 import { evaluate, RULES_ENGINE_VERSION } from "@parcelpilot/rules-engine";
 import { checkCitations, finalStatus } from "@parcelpilot/zoning-core";
-import { appDb, serviceSql } from "./db.ts";
+import { attachEvidence, evidenceTokenBudget } from "@parcelpilot/retrieval";
+import { appDb, appSql, serviceSql } from "./db.ts";
 import type { FeasibilityRun } from "./dto.ts";
 import type { OrgContext } from "./tenant.ts";
 
@@ -88,7 +89,22 @@ export async function runScenario(ctx: OrgContext, scenarioId: string): Promise<
     await tx.insert(auditEvents).values({ orgId: ctx.orgId, actorUserId: ctx.userId, action: "feasibility_run.locked", entityType: "feasibility_run", entityId: run!.id, afterHash: inputHash, payload: { final_status: policy.final_status, route: policy.route, reasons: policy.reasons } });
     return { run: run!, calcs };
   });
+  await freezeEvidence(ctx, { runId: run.id, districts: summary.base_zoning, overlays: summary.overlays, analysisDate, scenario: inputs });
   return { kind: "run", run: runDto(run, calcs) };
+}
+
+// After the run is locked: retrieve for every category in scope and freeze the bundle (MOO-835). Evidence never changes
+// the status above, and a failure here never fails the run: attachEvidence records `unavailable`, and if even that write
+// fails the run simply has no bundle row, which the memo treats the same way.
+async function freezeEvidence(ctx: OrgContext, i: { runId: string; districts: string[]; overlays: string[]; analysisDate: string; scenario: ScenarioInputs }): Promise<void> {
+  try {
+    await appSql().begin(async (tx) => {
+      await tx`select set_config('app.org_id', ${ctx.orgId}, true)`;
+      await attachEvidence(tx, { ...i, orgId: ctx.orgId, jurisdictionId: JURISDICTION, categories: IN_SCOPE, tokenBudget: evidenceTokenBudget() });
+    });
+  } catch (e) {
+    console.error("evidence bundle could not be recorded", { runId: i.runId, error: e instanceof Error ? e.message : String(e) });
+  }
 }
 
 export async function getRun(ctx: OrgContext, runId: string): Promise<FeasibilityRun | null> {
