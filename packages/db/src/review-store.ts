@@ -7,7 +7,8 @@ import { ZoningRule, type OrgRole, type ReviewStatus, type RuleCitation } from "
 export type Q = postgres.Sql | postgres.TransactionSql;
 export type Actor = { userId: string; orgId: string; role: OrgRole };
 export const REVIEWER_ROLES: readonly OrgRole[] = ["reviewer", "owner", "admin"];
-export type TaskType = "rule_candidate_review" | "merge_review" | "page_review" | "footnote_review" | "source_review" | "gis_ambiguity";
+export const REVIEW_TASK_TYPES = ["rule_candidate_review", "merge_review", "page_review", "footnote_review", "source_review", "gis_ambiguity"] as const;
+export type TaskType = (typeof REVIEW_TASK_TYPES)[number];
 
 export class ReviewError extends Error {
   readonly code: string;

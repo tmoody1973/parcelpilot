@@ -23,7 +23,8 @@ export function withTenant<A extends unknown[]>(handler: (ctx: OrgContext, ...ar
       return await handler(await requireOrgContext(req), ...args);
     } catch (e) {
       if (e instanceof OrgContextError) return fail(e.status === 401 ? "unauthenticated" : "no_active_org", e.message, e.status);
-      return fail("internal_error", e instanceof Error ? e.message : "unexpected error", 500);
+      console.error("route handler failed", e); // full detail stays server-side; the caller never sees driver or schema text
+      return fail("internal_error", "unexpected error", 500);
     }
   };
 }

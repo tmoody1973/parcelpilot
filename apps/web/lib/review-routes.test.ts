@@ -57,3 +57,9 @@ test("no identity at all is a 401 envelope, before any role check", async () => 
   const res = await tasks.GET(new Request("http://t/api/review/tasks"));
   assert.equal(res.status, 401);
 });
+
+test("a bad type filter is a 400 envelope, not a database error", async () => {
+  const res = await tasks.GET(new Request("http://t/api/review/tasks?type=nonsense", { headers: headers("reviewer") }));
+  assert.equal(res.status, 400);
+  assert.equal(((await res.json()) as { error: { code: string } }).error.code, "invalid_type");
+});
