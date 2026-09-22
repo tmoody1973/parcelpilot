@@ -7,7 +7,7 @@ import { EvidenceBundle, findBannedPhrases, type EvidenceItem } from "@parcelpil
 // after the run is refused, not served, and the flags say so.
 type Q = postgres.Sql | postgres.TransactionSql;
 const CATEGORIES = ["use", "height", "setback_front", "setback_side", "setback_rear", "density", "parking", "lot_coverage"] as const;
-const SLOTS = ["parent_section", "adjacent", "cross_reference", "exception", "district_general_provision", "overlay"] as const;
+const SLOTS = ["parent_section", "adjacent", "definition", "cross_reference", "exception", "superseding_amendment", "district_general_provision", "overlay"] as const;
 
 type EvRow = {
   run_id: string; category: string | null; subquestion: string; filters: { overlays?: string[] }; embedding_version_id: string | null; run_started: string;

@@ -99,3 +99,24 @@ test("with pins on, a reranker cannot move approved-rule rows out of first place
   assert.notEqual(raw.hits[0]!.chunk_id, w.c.lb1Height, "without pins the reranker decides");
 }));
 
+test("context slots: a defined term resolves through its section to the definition; an amendment to the passage's section is pulled in", () => rolledBack(async (tx) => {
+  const w = await world(tx);
+  const doc = (await tx`select source_document_id from code_chunks where id = ${w.c.prose}`)[0]!["source_document_id"];
+  // Definitions sit in subchapter 2, outside an LB1 question's chapter family; the cross reference points at the section.
+  const [defSec] = await tx`insert into code_sections (source_document_id, chapter, section, heading, sort_order) values (${doc}, '295', '295-201-270', 'Height', 900) returning id`;
+  const [def] = await tx`insert into code_chunks (family_id, version, jurisdiction_id, chapter, subchapter, section, heading, source_type, source_document_id, page_start, text, status, effective_start)
+    values ('rt-' || gen_random_uuid(), 1, ${w.J}, '295', '2', '295-201-270', 'Height', 'definition', ${doc}, 3, '"Height" means the vertical distance from grade to the highest point of the roof.', 'active', '2025-07-15') returning id`;
+  const [amend] = await tx`insert into code_chunks (family_id, version, jurisdiction_id, chapter, subchapter, section, heading, source_type, source_document_id, page_start, text, status, effective_start)
+    values ('rt-' || gen_random_uuid(), 1, ${w.J}, '295', '6', '295-605-2-f', 'Amendment', 'amendment', ${doc}, 17, 'Building height is measured from average grade. (File 250001)', 'active', '2025-07-15') returning id`;
+  const [withRef] = await tx`insert into code_chunks (family_id, version, jurisdiction_id, chapter, subchapter, section, heading, source_type, district_codes, rule_categories, source_document_id, page_start, text, cross_reference_ids, status, effective_start)
+    values ('rt-' || gen_random_uuid(), 1, ${w.J}, '295', '6', '295-605-2-f', 'Building height', 'ordinance_text', '{}', '{height}', ${doc}, 15, 'Maximum building height maximum height height limit applies.', ${[defSec!["id"]]}::uuid[], 'active', '2025-07-15') returning id`;
+  const { embedChunks } = await import("@parcelpilot/db");
+  await embedChunks(tx, model, w.v, { documentIds: [doc as string] });
+  const r = await retrieve(tx, { jurisdictionId: w.J, subquestion: "maximum height limit", category: "height", districts: ["LB1"], analysisDate: "2026-09-22", versionId: w.v.id, record: false });
+  assert.ok(r.hits.slice(0, 3).some((h) => h.chunk_id === withRef!["id"]), "the passage with the cross reference is a top hit");
+  assert.equal(r.context_found.definition, true);
+  assert.ok(r.context.some((h) => h.chunk_id === def!["id"] && h.context_type === "definition"), "definition found across subchapters");
+  assert.equal(r.context_found.superseding_amendment, true);
+  assert.ok(r.context.some((h) => h.chunk_id === amend!["id"]), "amendment to the same section found");
+}));
+
