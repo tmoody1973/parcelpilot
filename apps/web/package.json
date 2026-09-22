@@ -14,6 +14,7 @@
     "test": "node --conditions=development --test \"lib/**/*.test.ts\""
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1137.0",
     "@clerk/nextjs": "^6.9.0",
     "@parcelpilot/contracts": "workspace:*",
     "@parcelpilot/db": "workspace:*",
@@ -28,11 +29,11 @@
     "zod": "^4.1.0"
   },
   "devDependencies": {
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "typescript": "^5.7.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
-    "tailwindcss": "^4.3.3"
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.7.0"
   }
 }

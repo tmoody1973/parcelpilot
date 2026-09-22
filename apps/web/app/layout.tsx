@@ -21,6 +21,7 @@ function Shell({ children, controls }: { children: ReactNode; controls: ReactNod
           <nav className="flex items-center gap-4 text-sm text-muted">
             <Link href="/" className="text-muted no-underline hover:text-ink">Workspace</Link>
             <Link href="/projects" className="text-muted no-underline hover:text-ink">Projects</Link>
+            <Link href="/review" className="text-muted no-underline hover:text-ink">Review</Link>
             {controls}
           </nav>
         </header>

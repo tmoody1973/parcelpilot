@@ -11,6 +11,6 @@ const ACTIONS = ["activate", "supersede", "withdraw"] as const;
 export const POST = withReviewer(async (actor, req: Request, { params }: { params: Promise<{ sourceId: string; action: string }> }) => {
   const { sourceId, action } = await params;
   if (!(ACTIONS as readonly string[]).includes(action)) return fail("not_found", `unknown action ${action}`, 404);
-  const successor = stringField(await readJsonBody(req), "successor_id");
-  return ok(await serviceSql().begin((tx) => transitionSource(tx, actor, sourceId, action as (typeof ACTIONS)[number], successor)));
+  const body = await readJsonBody(req);
+  return ok(await serviceSql().begin((tx) => transitionSource(tx, actor, sourceId, action as (typeof ACTIONS)[number], stringField(body, "successor_id"), stringField(body, "reason"))));
 });

@@ -5,8 +5,10 @@ import { approveTask, claimTask, editTask, generateReviewTasks, listTasks, rejec
 import { loadApprovedRules, sourceStates } from "./rules-store.ts";
 
 // Integration tests for the review queue (MOO-819) against the compose DB. Every test writes inside a rolled-back transaction.
-const OWNER = process.env["DATABASE_URL"] ?? "postgres://parcelpilot:parcelpilot@localhost:5432/parcelpilot";
-const owner = postgres(OWNER, { max: 1 });
+// They connect as the service role the routes use, so a statement the role may not run (e.g. a row lock on an
+// append-only table) fails here and not first in production.
+const SERVICE = process.env["DATABASE_SERVICE_URL"] ?? "postgres://parcelpilot_service:parcelpilot-service@localhost:5432/parcelpilot";
+const owner = postgres(SERVICE, { max: 1 });
 test.after(() => owner.end());
 
 class Rollback extends Error {}
@@ -140,7 +142,7 @@ test("a second candidate for the same family mints version 2 that supersedes ver
   assert.equal(v2.version, 2); assert.equal(v2.supersedes_id, v1.id);
   const [snap1after] = await tx`select to_jsonb(z) as row from zoning_rules z where id = ${v1.id}`;
   assert.deepEqual(snap1after!["row"], snap1!["row"], "version 1 is byte-identical after version 2 exists");
-  await assert.rejects(tx.savepoint((sp) => sp`update zoning_rules set params = '{}' where id = ${v1.id}`), /append-only/);
+  await assert.rejects(tx.savepoint((sp) => sp`update zoning_rules set params = '{}' where id = ${v1.id}`), /append-only|permission denied/);
   const loaded = (await loadApprovedRules(tx as unknown as postgres.Sql, { jurisdictionId: "milwaukee-wi", districts: ["LB1"], date: "2026-09-22" })).filter((r) => r.family_id === family);
   assert.deepEqual(loaded.map((r) => r.version), [2], "the engine loader sees only the latest version of the family");
 }));
