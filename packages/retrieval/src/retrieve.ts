@@ -37,7 +37,7 @@ export type Hit = {
   lexical_rank: number | null; semantic_rank: number | null; lexical_score: number | null; semantic_score: number | null; rerank_score: number | null; relevance: number;
   reason: string; context_type: string | null; footnotes: string[];
 };
-export type ContextSlot = "parent_section" | "adjacent" | "cross_reference" | "exception" | "district_general_provision" | "overlay";
+export type ContextSlot = "parent_section" | "adjacent" | "definition" | "cross_reference" | "exception" | "superseding_amendment" | "district_general_provision" | "overlay";
 export type RetrieveResult = { run_id: string | null; version: EmbeddingVersion; hits: Hit[]; context: Hit[]; context_found: Partial<Record<ContextSlot, boolean>>; filters: Record<string, unknown> };
 
 // District prefix → the subchapter that regulates it, plus the general subchapters every question may need.
@@ -174,6 +174,15 @@ async function expandContext(sql: Q, where: ReturnType<typeof filtered>, top: Hi
   for (const h of top) {
     const r = known.get(h.chunk_id);
     if (!r) continue;
+    // A defined term the passage uses (04 §6.3): cross_reference_ids hold code_sections ids, so resolve through the
+    // section to its definition chunk. Definitions live in Subchapter 2, outside most chapter families, so lift that filter.
+    if (r.cross_reference_ids.length) take("definition", await sql<Row[]>`
+      select distinct on (c.id) ${COLS(sql)}, 0::float as score from code_chunks c join source_documents d on d.id = c.source_document_id
+      join code_sections s on s.id = any(${r.cross_reference_ids}::uuid[]) and c.section = s.section and c.source_document_id = s.source_document_id
+      where c.chunk_kind = 'definition' and ${anyChapter} order by c.id limit 3`);
+    // An amendment that supersedes or modifies the passage's own section (idea from PR #31), so a live change is never assumed absent.
+    take("superseding_amendment", await sql<Row[]>`select ${COLS(sql)}, 0::float as score from code_chunks c join source_documents d on d.id = c.source_document_id
+      where c.source_type = 'amendment' and c.section = ${r.section} and ${anyChapter} order by c.page_start, c.id limit 2`);
     // "see s. 295-505-2-b": a section cited in the text is a cross reference even when it sits in another subchapter.
     // Same served / in-force / district rules; only the chapter family is lifted.
     take("cross_reference", await sql<Row[]>`
