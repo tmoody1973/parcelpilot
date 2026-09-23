@@ -7,7 +7,10 @@ import { BriefingOutput, type BriefingContract } from "@parcelpilot/contracts";
 // JSON text is kept. Both candidate models reject sampling parameters, so there is no temperature to set (05 §6 said 0);
 // `effort` is the one knob. Anything other than a complete, schema-valid answer is `failed` → templated brief.
 
-export const BRIEFING_PROMPT_VERSION = "briefing.v1";
+export const BRIEFING_PROMPT_VERSION = "briefing.v2"; // v1 set two rules against each other on insufficient evidence
+// Decision 014 (Tarik, 2026-09-22): Opus 5.5 at effort medium writes briefs by default; GPT-6 Luna is the evaluated backup.
+export const DEFAULT_BRIEFING_MODEL = "claude-opus-5-5";
+export const DEFAULT_BRIEFING_EFFORT = "medium" as const;
 export const BRIEFING_SCHEMA_VERSION = "briefing_output.v1";
 // USD per million tokens (claude-api skill model table, cached 2026-06-24). Thinking is billed as output.
 const PRICES: Record<string, { input: number; output: number }> = {

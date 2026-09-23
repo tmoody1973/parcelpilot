@@ -108,7 +108,9 @@ if (rescore) {
   // Every saved brief is re-checked against its case's contract, rebuilt exactly as the run built it. A hash mismatch
   // means the brief was written from different input, so it is counted and left unscored rather than scored.
   // A later file's brief for the same model and case replaces an earlier one (a retry after a provider outage).
-  const saved = [...new Map(rescore.flatMap((p) => readFileSync(p, "utf8").trim().split("\n").map((l) => JSON.parse(l) as Saved)).map((x) => [`${x.model}|${x.case}`, x])).values()];
+  const saved = [...new Map(rescore.flatMap((p) => readFileSync(p, "utf8").trim().split("\n").map((l) => JSON.parse(l) as Saved)
+    // runs on a later prompt are named with it, so a model's v1 and v2 briefs are scored side by side, not merged
+    .map((x) => (/-v(\d+)-/.test(p) ? { ...x, model: `${x.model} (briefing.v${p.match(/-v(\d+)-/)![1]})` } : x))).map((x) => [`${x.model}|${x.case}`, x])).values()];
   models.splice(0, models.length, ...[...new Set(saved.map((x) => x.model))]);
   const contracts = new Map<string, { contract: BriefingContract; hash: string }>();
   try {
