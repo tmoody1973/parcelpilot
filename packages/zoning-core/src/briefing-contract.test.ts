@@ -91,3 +91,16 @@ test("the client prices a complete answer and fails on refusal, truncation, miss
   const unknown = await writeBrief({ ...base, model: "claude-opus-5", client: fakeClient(response()) });
   assert.equal(unknown.status, "failed", "only the two evaluated models are callable");
 });
+
+test("density and use findings get display strings that cannot be misread", () => {
+  const r = record();
+  r.findings = [
+    { finding: f("use", "verify", { proposed: { value: "multifamily", source: "scenario" }, allowed: { value: "L", operator: "in" } }), calculation_id: "c-use" },
+    { finding: f("density", "fail", { proposed: { value: 28800, unit: "sq ft", source: "scenario" }, allowed: { value: 7000, unit: "sq ft", operator: "<=" } }), calculation_id: "c-den" },
+  ];
+  const c = buildBriefingContract(r, DECISION_POLICY_V1);
+  assert.deepEqual(c.verified_findings.map((v) => [v.proposed, v.allowed]), [
+    ["multifamily", `listed "L" (a limited use: specific standards apply)`],
+    ["28,800 sq ft of lot area required", "7,000 sq ft of lot area available"],
+  ]);
+});

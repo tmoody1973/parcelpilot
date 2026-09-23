@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import type { z } from "zod";
 import { BriefingOutput, type BriefingContract } from "@parcelpilot/contracts";
 
 // The briefing model call (MOO-837; 05 §6). Server-side only; ANTHROPIC_API_KEY from the environment. Structured output
@@ -30,9 +31,18 @@ const cost = (model: string, u: BriefingUsage) => {
   return p ? (u.input_tokens * p.input + u.output_tokens * p.output) / 1_000_000 : null;
 };
 
+export function briefingUserMessage(contract: BriefingContract, contractHash: string, repair?: string[]): string {
+  const base = `contract_hash: ${contractHash}\n\ncontract:\n${JSON.stringify(contract)}`;
+  if (!repair?.length) return base;
+  // A repair is a fresh request, not a replay of the earlier answer: the notes say what the checks rejected.
+  return `${base}\n\nAn earlier draft of this brief was rejected by automated checks. Write the brief again from the contract, fixing each of these:\n${repair.map((r) => `- ${r}`).join("\n")}`;
+}
+
 export async function writeBrief(i: {
   contract: BriefingContract; contractHash: string; system: string; model: string;
   effort?: "low" | "medium" | "high" | "xhigh" | "max"; timeoutMs?: number; client?: Anthropic;
+  schema?: z.ZodType; // briefingOutputSchemaFor(contract, hash); defaults to the general BriefingOutput
+  repair?: string[]; // problems the previous attempt was rejected for
 }): Promise<BriefingCall> {
   const started = performance.now();
   const elapsed = () => Math.round(performance.now() - started);
@@ -43,8 +53,8 @@ export async function writeBrief(i: {
       model: i.model,
       max_tokens: 16000,
       system: i.system,
-      messages: [{ role: "user", content: `contract_hash: ${i.contractHash}\n\ncontract:\n${JSON.stringify(i.contract)}` }],
-      output_config: { format: zodOutputFormat(BriefingOutput), ...(i.effort ? { effort: i.effort } : {}) },
+      messages: [{ role: "user", content: briefingUserMessage(i.contract, i.contractHash, i.repair) }],
+      output_config: { format: zodOutputFormat((i.schema ?? BriefingOutput) as typeof BriefingOutput), ...(i.effort ? { effort: i.effort } : {}) },
     }, { timeout: i.timeoutMs ?? 120_000 });
     const raw = response.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("");
     const usage = { input_tokens: response.usage.input_tokens, output_tokens: response.usage.output_tokens };
