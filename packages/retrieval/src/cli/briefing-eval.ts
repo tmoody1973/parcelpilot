@@ -2,7 +2,7 @@
 // answer (the recipe gold.test.ts proves), offline retrieval freezes the evidence, and one contract is built and hashed.
 // Each model then writes a brief from that same contract, scored by quick pre-validator checks. These checks are not
 // the MOO-838 validators; they are enough to compare models before the validators exist.
-// Usage: pnpm briefing:eval [--models claude-fable-5-1,claude-sonnet-5,openai/gpt-6-luna,google/gemini-3.8-flash] [--cases G01,G02] [--effort high] [--max-usd 15] [--tag name] [--allow-retention openai/gpt-6-luna] | --rescore a.jsonl,b.jsonl --tag combined
+// Usage: pnpm briefing:eval [--models claude-fable-5-1,claude-sonnet-5,openai/gpt-6-luna,google/gemini-3.8-flash] [--cases G01,G02] [--effort high] [--max-usd 15] [--prompt briefing.v2] [--tag name] [--allow-retention openai/gpt-6-luna] | --rescore a.jsonl,b.jsonl --tag combined
 import { readdirSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import postgres from "postgres";
@@ -26,7 +26,8 @@ const suffix = tag ? `${new Date().toISOString().slice(0, 10)}-${tag}` : new Dat
 const root = join(import.meta.dirname, "..", "..", "..", "..");
 const date = new Date().toISOString().slice(0, 10);
 const ANALYSIS_DATE = "2026-09-21"; // the date the gold cases were drafted (gold.test.ts)
-const system = readFileSync(join(root, "prompts", `${BRIEFING_PROMPT_VERSION}.md`), "utf8");
+const promptVersion = flag("--prompt") ?? BRIEFING_PROMPT_VERSION; // e.g. briefing.v2; recorded in the report
+const system = readFileSync(join(root, "prompts", `${promptVersion}.md`), "utf8");
 const RULES = readdirSync(join(root, "packages", "contracts", "rules")).filter((f) => f.endsWith(".json"))
   .flatMap((f) => (JSON.parse(readFileSync(join(root, "packages", "contracts", "rules", f), "utf8")).rules as unknown[]).map((r) => ZoningRule.parse(r)));
 const cases = readdirSync(join(root, "packages", "contracts", "gold")).filter((f) => f.endsWith(".json")).sort()
@@ -151,7 +152,7 @@ function write() {
   });
   const lines = [
     `# Briefing model evaluation — ${date}`, "",
-    `Prompt \`${BRIEFING_PROMPT_VERSION}\`, schema \`briefing_output.v1\`, effort ${effort ?? "model default"}, ${cases.length} gold case(s), one contract per case shared by every model. Measured by \`pnpm briefing:eval\`. Checks are pre-validator approximations of 05 §9, not the MOO-838 validators; a brief "passes" only if every check does. No brief from this run is shown to users.`, "",
+    `Prompt \`${promptVersion}\`, schema \`briefing_output.v1\`, effort ${effort ?? "model default"}, ${cases.length} gold case(s), one contract per case shared by every model. Measured by \`pnpm briefing:eval\`. Checks are pre-validator approximations of 05 §9, not the MOO-838 validators; a brief "passes" only if every check does. No brief from this run is shown to users.`, "",
     "| Model | Briefs | Schema-valid | All checks pass | Status echoed | Citation precision | Uncited claims | Fail/verify coverage | Invented numbers | Banned phrases | Disallowed actions | Abstention correct | p95 latency | Cost per brief | Cost this run |",
     "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ...summary, "",

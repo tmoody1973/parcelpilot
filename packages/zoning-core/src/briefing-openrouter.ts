@@ -10,6 +10,7 @@ import type { BriefingCall } from "./briefing-client.ts";
 // USD per million tokens, from openrouter.ai/api/v1/models on 2026-09-22.
 export const OPENROUTER_PRICES: Record<string, { input: number; output: number }> = {
   "openai/gpt-6-luna": { input: 0.1, output: 0.5 },
+  "openai/gpt-6-luna-pro": { input: 0.1, output: 0.5 }, // same model, reasoning.mode pro (more thinking), same price
   "google/gemini-3.8-flash": { input: 0.75, output: 3.75 },
   "openai/gpt-6-sol": { input: 2, output: 10 }, // launched 2026-09-22; OpenAI-hosted, no zero-retention endpoint
   // Open-weight models served by third-party hosts; list prices (hosts vary, OpenRouter routes to the cheapest eligible).
