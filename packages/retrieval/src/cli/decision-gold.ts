@@ -1,18 +1,21 @@
 // The gold set through shadow mode (MOO-840; 05 §9, decision 016). For every gold case, in order: lock a real run from
 // the shared gold recipe (goldDecision), freeze its evidence, ask JEV in shadow and record the answer, write the brief
 // (all 15 in one Message Batch), render and check the memo. Then read the comparisons back and report.
-//   pnpm decision:gold [--cases G01,G02] [--max-usd 3] [--no-brief] [--citation-support]
-// Needs TYPESAFE_API_KEY (JEV) and ANTHROPIC_API_KEY (briefs). Writes docs/eval/shadow-<date>.md and the recorded JEV
+// --baseline also asks the structured-output baseline (comparator 2, MOO-844) the same four questions about the same
+// prepared state, in one Message Batch, and records each answer with provider = baseline. --max-usd caps briefs and
+// baseline together.
+//   pnpm decision:gold [--cases G01,G02] [--max-usd 3] [--no-brief] [--baseline] [--citation-support]
+// Needs TYPESAFE_API_KEY (JEV) and ANTHROPIC_API_KEY (briefs, baseline). Writes docs/eval/shadow-<date>.md and the recorded JEV
 // fixture the CI gate reads (packages/zoning-core/src/__fixtures__/jev-gold.json).
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import postgres from "postgres";
-import { DECISION_POLICY_V1, GoldCase, ZoningRule, type JevRoute, type PolicyFlags } from "@parcelpilot/contracts";
+import { DECISION_POLICY_V1, GoldCase, ZoningRule, type JevRoute, type PolicyFlags, type PreparedState } from "@parcelpilot/contracts";
 import { briefRun, goldComparisons, goldOrgId, goldSnapshot, lockGoldRun, recordJevRun } from "@parcelpilot/db";
 import { RULES_ENGINE_VERSION } from "@parcelpilot/rules-engine";
 import {
-  BRIEFING_PROMPT_VERSION, DEFAULT_BRIEFING_EFFORT, DEFAULT_BRIEFING_MODEL, askJev, briefingBatcher, buildPreparedState, goldDecision, goldMemoInput,
-  memoBrief, renderMemo, riskBucket, shadowMetrics, validateMemo, type ShadowRow,
+  BASELINE_MODEL, BRIEFING_PROMPT_VERSION, DEFAULT_BRIEFING_EFFORT, DEFAULT_BRIEFING_MODEL, askBaseline, askJev, briefingBatcher, buildPreparedState,
+  goldDecision, goldMemoInput, memoBrief, messageBatcher, renderMemo, riskBucket, shadowMetrics, validateMemo, type ComparatorMetrics, type ShadowRow,
 } from "@parcelpilot/zoning-core";
 import { attachEvidence, evidenceTokenBudget } from "../run-evidence.ts";
 
@@ -21,6 +24,8 @@ const flag = (n: string) => { const i = args.indexOf(n); return i >= 0 ? args[i 
 const only = flag("--cases")?.split(",");
 const maxUsd = Number(flag("--max-usd") ?? 3);
 const withBrief = !args.includes("--no-brief");
+const withBaseline = args.includes("--baseline");
+if (withBaseline && !process.env["ANTHROPIC_API_KEY"]) throw new Error("--baseline needs ANTHROPIC_API_KEY");
 const citationSupport = args.includes("--citation-support"); // the twelfth check (MOO-841); needs TYPESAFE_API_KEY
 
 const JURISDICTION = "milwaukee-wi";
@@ -38,7 +43,7 @@ const service = postgres(process.env["DATABASE_SERVICE_URL"] ?? "postgres://parc
 // ponytail: one connection per case, because each brief's transaction stays open while its batch is processed
 const app = postgres(process.env["DATABASE_APP_URL"] ?? "postgres://parcelpilot_app:parcelpilot-app@localhost:5432/parcelpilot", { max: cases.length + 1 });
 
-type Done = { c: GoldCase; runId: string; decision: ReturnType<typeof goldDecision> };
+type Done = { c: GoldCase; runId: string; decision: ReturnType<typeof goldDecision>; state: PreparedState };
 const done: Done[] = [];
 const fixture: Record<string, { status: "ok" | "failed"; route: JevRoute | null; confidence: number | null; risk_bucket: string | null; error: string | null }> = {};
 
@@ -58,19 +63,31 @@ try {
       bundle: evidence.status === "assembled" ? evidence.bundle : null,
     });
     const call = await askJev(state, { apiKey: process.env["TYPESAFE_API_KEY"], timeoutMs: DECISION_POLICY_V1.thresholds.jev_timeout_ms });
-    await inOrg((tx) => recordJevRun(tx, { orgId, runId, decisionMode: "shadow", state, call, policy: DECISION_POLICY_V1 }));
+    await inOrg((tx) => recordJevRun(tx, { orgId, runId, provider: "jev", decisionMode: "shadow", state, call, policy: DECISION_POLICY_V1 }));
     const ok = call.status === "ok" ? call.response.answers : null;
     fixture[c.id] = { status: call.status, route: ok?.recommended_route.choice ?? null, confidence: ok?.recommended_route.confidence ?? null, risk_bucket: ok ? riskBucket(ok.overall_risk.score, DECISION_POLICY_V1.thresholds) : null, error: call.status === "failed" ? call.error : null };
     console.log(`${c.id} locked ${decision.policy.final_status.padEnd(26)} evidence ${evidence.status.padEnd(11)} JEV ${call.status === "ok" ? `${ok!.recommended_route.choice} @${ok!.recommended_route.confidence.toFixed(2)}` : `failed: ${call.error}`} ${call.latencyMs} ms`);
-    done.push({ c, runId, decision });
+    done.push({ c, runId, decision, state });
   }
 
-  if (withBrief && process.env["ANTHROPIC_API_KEY"]) {
+  let reserved = 0;
+  const batchOptions = { log: (m: string) => console.log(m), approve: (n: number, worst: number) => { if (reserved + worst > maxUsd) throw new Error(`spend cap: ${n} request(s) could cost up to $${worst.toFixed(2)}, over $${maxUsd}`); reserved += worst; } };
+  const baselines = async () => {
+    if (!withBaseline) return;
+    const batcher = messageBatcher(batchOptions);
+    await Promise.all(done.map(async (d) => {
+      const call = await askBaseline(d.state, { send: (p) => batcher.send(p) });
+      await inOrg((tx) => recordJevRun(tx, { orgId, runId: d.runId, provider: "baseline", decisionMode: "structured_output_baseline", state: d.state, call, policy: DECISION_POLICY_V1 }));
+      console.log(`${d.c.id} baseline ${call.status === "ok" ? `${call.response.answers.recommended_route.choice} @${call.response.answers.recommended_route.confidence.toFixed(2)}` : `failed: ${call.error}`}`);
+    }));
+  };
+  const briefs = async () => {
+    if (!withBrief || !process.env["ANTHROPIC_API_KEY"]) return;
     const system = readFileSync(join(root, "prompts", `${BRIEFING_PROMPT_VERSION}.md`), "utf8");
-    let reserved = 0;
-    const batcher = briefingBatcher({ log: (m) => console.log(m), approve: (n, worst) => { if (reserved + worst > maxUsd) throw new Error(`spend cap: ${n} brief(s) could cost up to $${worst.toFixed(2)}, over $${maxUsd}`); reserved += worst; } });
+    const batcher = briefingBatcher(batchOptions);
     await Promise.all(done.map((d) => inOrg((tx) => briefRun(tx, d.runId, { orgId, model: DEFAULT_BRIEFING_MODEL, system, effort: DEFAULT_BRIEFING_EFFORT, write: (i) => batcher.write(i), ...(citationSupport ? { citationSupport: { apiKey: process.env["TYPESAFE_API_KEY"], jurisdictionId: JURISDICTION } } : {}) }))));
-  }
+  };
+  await Promise.all([baselines(), briefs()]);
 
   // Read everything back from the database with the same query the reviewer page uses, then render each memo from its
   // latest brief (validated → the brief's sections; otherwise the template).
@@ -97,21 +114,26 @@ function report(rows: (ShadowRow & { memo: string })[]) {
   const pct = (x: number | null) => (x === null ? "n/a" : `${(100 * x).toFixed(0)}%`);
   const usd = (x: number | null) => (x === null ? "n/a" : `$${x.toFixed(4)}`);
   const date = new Date().toISOString().slice(0, 10);
+  const both = (f: (x: ComparatorMetrics) => string) => `${f(m.jev)} | ${f(m.baseline)}`;
+  const answer = (status: "ok" | "failed" | null, route: JevRoute | null, confidence: number | null, error: string | null | undefined) =>
+    status === "ok" ? `${route} (${confidence?.toFixed(2)})` : status === "failed" ? `failed: ${error ?? "?"}` : "not run";
+  const summary = [
+    `| Metric | JEV | Baseline (\`${BASELINE_MODEL}\`) |`, "|---|---|---|",
+    `| Answered | ${both((x) => `${x.ok} of ${m.cases} (${x.failed} failed)`)} |`,
+    `| Route agreement vs rules-only | ${both((x) => pct(x.agree_rules_only))} |`,
+    `| Route agreement vs expert | ${both((x) => pct(x.agree_expert))} |`,
+    `| Recall on high-risk cases (expert did not say proceed; the comparator did not either) | ${both((x) => `${pct(x.high_risk_recall)} of ${x.high_risk_cases}`)} |`,
+    `| **Unsafe-permissive** (says proceed where rules or expert do not; must be 0 for JEV) | ${both((x) => `**${x.unsafe_permissive}**`)} |`,
+    `| p95 latency | ${m.jev.p95_latency_ms ?? "n/a"} ms | batch |`,
+    `| Cost per case | ${usd(m.jev.cost_per_case_usd)} | ${usd(m.baseline.cost_per_case_usd)} (batch price) |`, "",
+    `Briefs validated: ${m.briefs_validated} of ${rows.length}. Brief cost per case (batch price): ${usd(m.brief_cost_per_case_usd)}.`,
+  ];
   const lines = [
     `# Shadow mode over the gold set — ${date}`, "",
-    `Measured by \`pnpm decision:gold\` (MOO-840, decision 016): ${rows.length} gold case(s), each locked from the shared gold recipe and then run through the live after-lock path (evidence, JEV shadow, brief via the Message Batches API, memo). Every number below is read back from \`decision_comparisons\`, \`jev_runs\` and \`briefing_runs\`. JEV never changes a status in shadow mode; its answers are logged only.`, "",
-    "| Metric | Value |", "|---|---|",
-    `| JEV answered | ${m.jev_ok} of ${m.cases} (${m.jev_failed} failed) |`,
-    `| Route agreement, JEV vs rules-only | ${pct(m.agree_rules_only)} |`,
-    `| Route agreement, JEV vs expert | ${pct(m.agree_expert)} |`,
-    `| Recall on high-risk cases (expert did not say proceed; JEV did not either) | ${pct(m.high_risk_recall)} of ${m.high_risk_cases} |`,
-    `| **Unsafe-permissive** (JEV says proceed where rules or expert do not; must be 0) | **${m.unsafe_permissive}** |`,
-    `| p95 JEV latency | ${m.p95_jev_latency_ms ?? "n/a"} ms |`,
-    `| JEV cost per case | ${usd(m.jev_cost_per_case_usd)} |`,
-    `| Brief cost per case (batch price) | ${usd(m.brief_cost_per_case_usd)} |`,
-    `| Briefs validated | ${m.briefs_validated} of ${rows.length} |`, "",
-    "| Case | Rules-only route | JEV route (confidence) | Expert route | Agrees rules / expert | Brief | Memo |", "|---|---|---|---|---|---|---|",
-    ...rows.map((r) => `| ${r.case_id} | ${r.rules_route} | ${r.jev_status === "ok" ? `${r.jev_route} (${r.jev_confidence?.toFixed(2)})` : `failed: ${r.jev_error ?? "?"}`} | ${r.expert_route} | ${r.jev_status === "ok" ? `${r.jev_route === r.rules_route ? "yes" : "no"} / ${r.jev_route === r.expert_route ? "yes" : "no"}` : "—"} | ${r.brief_outcome ?? "none"} | ${r.memo} |`),
+    `Measured by \`pnpm decision:gold\` (MOO-840, MOO-844, decision 016): ${rows.length} gold case(s), each locked from the shared gold recipe and then run through the live after-lock path (evidence, JEV shadow, brief via the Message Batches API, memo). With \`--baseline\`, the structured-output baseline answers the same four questions about the same prepared state. Every number below is read back from \`decision_comparisons\`, \`jev_runs\` and \`briefing_runs\`. Neither JEV nor the baseline changes a status; their answers are logged only.`, "",
+    ...summary, "",
+    "| Case | Rules-only route | JEV route (confidence) | Baseline route (confidence) | Expert route | JEV agrees rules / expert | Brief | Memo |", "|---|---|---|---|---|---|---|---|",
+    ...rows.map((r) => `| ${r.case_id} | ${r.rules_route} | ${answer(r.jev_status, r.jev_route, r.jev_confidence, r.jev_error)} | ${answer(r.baseline_status, r.baseline_route, r.baseline_confidence, r.baseline_error)} | ${r.expert_route} | ${r.jev_status === "ok" ? `${r.jev_route === r.rules_route ? "yes" : "no"} / ${r.jev_route === r.expert_route ? "yes" : "no"}` : "—"} | ${r.brief_outcome ?? "none"} | ${r.memo} |`),
     "",
   ];
   // A --cases run is partial: its answers are merged into the recorded fixture (other cases kept) and its report gets
@@ -121,6 +143,6 @@ function report(rows: (ShadowRow & { memo: string })[]) {
   const fixturePath = join(root, "packages", "zoning-core", "src", "__fixtures__", "jev-gold.json");
   const previous = only && existsSync(fixturePath) ? (JSON.parse(readFileSync(fixturePath, "utf8")).cases as typeof fixture) : {};
   writeFileSync(fixturePath, JSON.stringify({ recorded: date, cases: { ...previous, ...fixture } }, null, 1) + "\n");
-  console.log(lines.slice(4, 15).join("\n"));
+  console.log(summary.join("\n"));
   console.log(`\nreport: docs/eval/${reportName}  fixture: packages/zoning-core/src/__fixtures__/jev-gold.json (${Object.keys(fixture).length} case(s) ${only ? "merged" : "written"})`);
 }

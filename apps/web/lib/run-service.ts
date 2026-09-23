@@ -162,7 +162,7 @@ async function shadowDecision(ctx: OrgContext, runId: string, input: PreparedSta
     const call = await askJev(state, { apiKey: process.env["TYPESAFE_API_KEY"], timeoutMs: DECISION_POLICY_V1.thresholds.jev_timeout_ms });
     await appSql().begin(async (tx) => {
       await tx`select set_config('app.org_id', ${ctx.orgId}, true)`;
-      await recordJevRun(tx, { orgId: ctx.orgId, runId, decisionMode: "shadow", state, call, policy: DECISION_POLICY_V1 });
+      await recordJevRun(tx, { orgId: ctx.orgId, runId, provider: "jev", decisionMode: "shadow", state, call, policy: DECISION_POLICY_V1 });
     });
   } catch (e) {
     console.error("shadow decision could not be recorded", { runId, error: e instanceof Error ? e.message : String(e) });
