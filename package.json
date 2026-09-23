@@ -34,7 +34,8 @@
     "retrieval:bakeoff": "node --conditions=development packages/retrieval/src/cli/bakeoff.ts",
     "evidence:bundle": "node --conditions=development packages/retrieval/src/cli/bundle.ts",
     "briefing:eval": "node --conditions=development packages/retrieval/src/cli/briefing-eval.ts",
-    "briefing:run": "node --conditions=development packages/retrieval/src/cli/briefing-run.ts"
+    "briefing:run": "node --conditions=development packages/retrieval/src/cli/briefing-run.ts",
+    "briefing:fixtures": "node --conditions=development packages/retrieval/src/cli/gold-brief-fixtures.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

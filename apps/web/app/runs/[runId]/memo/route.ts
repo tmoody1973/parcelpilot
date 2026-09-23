@@ -18,6 +18,7 @@ export const GET = withTenant(async (ctx, _req: Request, { params }: Params) => 
       "cache-control": "private, no-store",
       "x-memo-contract-hash": memo.contract_hash,
       "x-memo-validation": memo.validation.passed ? "passed" : `failed:${memo.validation.problems.join(",")}`,
+      "x-memo-summary": memo.summary, // for checks and support; the page itself only ever says "generated from template"
     },
   });
 });

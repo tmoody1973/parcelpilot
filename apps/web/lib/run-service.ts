@@ -1,10 +1,13 @@
 import "server-only";
 import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { after } from "next/server";
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { auditEvents, calculations, decisionPolicyVersionId, feasibilityRuns, recordJevRun, layerSnapshotIdsFor, loadApprovedRules, projects, scenarios, sourceStates, withOrg, computeIntersections } from "@parcelpilot/db";
+import { auditEvents, briefRun, calculations, decisionPolicyVersionId, feasibilityRuns, recordJevRun, layerSnapshotIdsFor, loadApprovedRules, projects, scenarios, sourceStates, withOrg, computeIntersections } from "@parcelpilot/db";
 import { DECISION_POLICY_V1, ScenarioInputs, type EvidenceBundle, type PolicyFlags, type Coverage, type EvidenceFlags, type Finding, type ParcelFacts as EngineFacts, type PolicyResult } from "@parcelpilot/contracts";
 import { evaluate, RULES_ENGINE_VERSION } from "@parcelpilot/rules-engine";
-import { askJev, buildPreparedState, checkCitations, finalStatus, resolveDecisionMode, servableDecisionMode, type PreparedStateInput } from "@parcelpilot/zoning-core";
+import { askJev, BRIEFING_PROMPT_VERSION, buildPreparedState, checkCitations, DEFAULT_BRIEFING_EFFORT, DEFAULT_BRIEFING_MODEL, finalStatus, resolveDecisionMode, servableDecisionMode, type PreparedStateInput } from "@parcelpilot/zoning-core";
 import { attachEvidence, evidenceTokenBudget } from "@parcelpilot/retrieval";
 import { appDb, appSql, serviceSql } from "./db.ts";
 import type { FeasibilityRun } from "./dto.ts";
@@ -90,15 +93,47 @@ export async function runScenario(ctx: OrgContext, scenarioId: string): Promise<
     await tx.insert(auditEvents).values({ orgId: ctx.orgId, actorUserId: ctx.userId, action: "feasibility_run.locked", entityType: "feasibility_run", entityId: run!.id, afterHash: inputHash, payload: { final_status: policy.final_status, route: policy.route, reasons: policy.reasons } });
     return { run: run!, calcs };
   });
-  const bundle = await freezeEvidence(ctx, { runId: run.id, districts: summary.base_zoning, overlays: summary.overlays, analysisDate, scenario: inputs });
-  if (mode === "shadow") {
-    const knownUses = rules.filter((r) => r.kind === "allowed_use").flatMap((r) => Object.keys((r.params as { uses?: Record<string, string> }).uses ?? {}));
-    await shadowDecision(ctx, run.id, {
-      jurisdiction: JURISDICTION, parcel: { ...summary, stacked_condo_candidates: [] }, scenario: inputs, knownUses,
-      findings: engine.findings, coverage: engine.coverage, evidence, policyFlags: policy.policy_flags as PolicyFlags, bundle,
-    });
-  }
+  // The run is locked and returned now; evidence, the JEV shadow call and the brief run after the response is sent
+  // (MOO-839), in that order, each logging its own failure. Nothing in them can change the run.
+  const knownUses = rules.filter((r) => r.kind === "allowed_use").flatMap((r) => Object.keys((r.params as { uses?: Record<string, string> }).uses ?? {}));
+  after(async () => {
+    const bundle = await freezeEvidence(ctx, { runId: run.id, districts: summary.base_zoning, overlays: summary.overlays, analysisDate, scenario: inputs });
+    if (mode === "shadow") {
+      await shadowDecision(ctx, run.id, {
+        jurisdiction: JURISDICTION, parcel: { ...summary, stacked_condo_candidates: [] }, scenario: inputs, knownUses,
+        findings: engine.findings, coverage: engine.coverage, evidence, policyFlags: policy.policy_flags as PolicyFlags, bundle,
+      });
+    }
+    if (bundle) await writeBrief(ctx, run.id);
+  });
   return { kind: "run", run: runDto(run, calcs) };
+}
+
+// The brief (MOO-837/838): written, validated and repaired at most once, recorded either way. Opt-in with
+// BRIEFING_ENABLED=true, since every brief is a paid model call; without it, or without evidence, the memo shows the
+// template. A brief only reaches the memo if every validator passed it.
+async function writeBrief(ctx: OrgContext, runId: string): Promise<void> {
+  if (process.env["BRIEFING_ENABLED"] !== "true" || !process.env["ANTHROPIC_API_KEY"]) return;
+  try {
+    const system = readFileSync(promptPath(BRIEFING_PROMPT_VERSION), "utf8");
+    const result = await appSql().begin(async (tx) => {
+      await tx`select set_config('app.org_id', ${ctx.orgId}, true)`;
+      // ponytail: the transaction stays open across the model call (~50 s); split load / call / record if pool pressure shows
+      return briefRun(tx, runId, { orgId: ctx.orgId, model: process.env["BRIEFING_MODEL"] || DEFAULT_BRIEFING_MODEL, system, effort: DEFAULT_BRIEFING_EFFORT });
+    });
+    console.info("brief recorded", { runId, outcome: result.outcome, attempts: result.attempts });
+  } catch (e) {
+    console.error("brief could not be written", { runId, error: e instanceof Error ? e.message : String(e) });
+  }
+}
+
+// prompts/ lives at the repo root; the web server starts in apps/web (dev) or the repo root (scripts).
+function promptPath(version: string): string {
+  for (const up of ["", "..", "../.."]) {
+    const p = join(process.cwd(), up, "prompts", `${version}.md`);
+    if (existsSync(p)) return p;
+  }
+  throw new Error(`prompt ${version}.md not found from ${process.cwd()}`);
 }
 
 // After the run is locked: retrieve for every category in scope and freeze the bundle (MOO-835). Evidence never changes

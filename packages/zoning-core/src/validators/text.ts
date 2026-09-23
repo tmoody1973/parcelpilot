@@ -19,3 +19,7 @@ export function numbersInValue(v: unknown, out = new Set<string>()): Set<string>
   else if (v && typeof v === "object") Object.values(v).forEach((x) => numbersInValue(x, out));
   return out;
 }
+
+// Section, table and chapter references ("s. 295-403-2", "Table 295-603-1", "Chapter 295", "subchapter 6") are names,
+// not quantities, so they are removed before numbers are read.
+export const IDENTIFIERS = /\b\d{3}-\d{1,4}(?:-[0-9A-Za-z]+)*\b|\b(?:chapter|subchapter|section|sections|table|tables|s\.|ss\.|§)\s*\d+[0-9A-Za-z-]*/gi;

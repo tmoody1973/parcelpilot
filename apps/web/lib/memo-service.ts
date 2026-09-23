@@ -1,9 +1,9 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import { eq } from "drizzle-orm";
-import { projects, scenarios, withOrg } from "@parcelpilot/db";
+import { and, desc, eq } from "drizzle-orm";
+import { briefingRuns, projects, scenarios, withOrg } from "@parcelpilot/db";
 import type { MemoInput } from "@parcelpilot/contracts";
-import { renderMemo, validateMemo } from "@parcelpilot/zoning-core";
+import { memoBrief, renderMemo, validateMemo, type MemoBrief } from "@parcelpilot/zoning-core";
 import { appDb, serviceSql } from "./db.ts";
 import { getRun } from "./run-service.ts";
 import type { OrgContext } from "./tenant.ts";
@@ -11,16 +11,20 @@ import type { OrgContext } from "./tenant.ts";
 // Builds the memo input from a locked run (tenant tables under RLS) plus the parcel snapshot and source
 // documents it cites (jurisdiction-shared), renders the template, and runs the validators. The memo is a
 // pure function of immutable rows, so it is rendered on demand; `contract_hash` identifies the exact input.
-export type MemoResult = { html: string; contract_hash: string; validation: { passed: boolean; problems: string[] } };
+export type MemoResult = { html: string; contract_hash: string; validation: { passed: boolean; problems: string[] }; summary: "brief" | "template" };
 
 export async function renderRunMemo(ctx: OrgContext, runId: string): Promise<MemoResult | null> {
   const run = await getRun(ctx, runId);
   if (!run || !run.locked_at) return null;
   const sql = serviceSql();
 
-  const names = await withOrg(appDb(), ctx.orgId, async (tx) => {
+  const { names, brief: stored } = await withOrg(appDb(), ctx.orgId, async (tx) => {
     const [row] = await tx.select({ scenario: scenarios.name, project: projects.name }).from(scenarios).innerJoin(projects, eq(projects.id, scenarios.projectId)).where(eq(scenarios.id, run.scenario_id));
-    return row ?? { scenario: "Scenario", project: "Project" };
+    // The latest brief that passed every validator (MOO-838), if any. Its contract carries the frozen evidence the
+    // brief was written from, so its citations link to exactly those excerpts.
+    const [b] = await tx.select({ output: briefingRuns.validatedOutput, contract: briefingRuns.contract }).from(briefingRuns)
+      .where(and(eq(briefingRuns.feasibilityRunId, runId), eq(briefingRuns.outcome, "validated"))).orderBy(desc(briefingRuns.createdAt)).limit(1);
+    return { names: row ?? { scenario: "Scenario", project: "Project" }, brief: b ? memoBrief(b.output, b.contract) : null };
   });
   const [snap] = await sql<{ taxkey: string; address: string; lot_area_sqft: number | null; lot_area_suspect: boolean; retrieved_at: string }[]>`
     select taxkey, address, lot_area_sqft::float8 as lot_area_sqft, lot_area_suspect, retrieved_at from parcel_snapshots where id = ${run.provenance.parcel_snapshot_id}`;
@@ -45,9 +49,21 @@ export async function renderRunMemo(ctx: OrgContext, runId: string): Promise<Mem
     sources: Object.fromEntries(docs.map((d) => [d.sha256, { title: d.title, published_marker: d.published_marker, status: d.status, official_url: d.official_url }])),
     project: { name: names.project },
   };
-  const html = renderMemo(input);
+  // Printed page numbers for the brief's evidence (the template cites printed pages; the contract holds PDF pages).
+  let brief: MemoBrief | null = null;
+  if (stored) {
+    const ids = stored.evidence.map((e) => e.source_id);
+    const printed = await sql<{ sid: string; printed_page: number | null }[]>`
+      select c.family_id || '@' || c.version as sid, p.printed_page from code_chunks c
+      join document_pages p on p.source_document_id = c.source_document_id and p.page_number = c.page_start
+      where (c.family_id || '@' || c.version) = any(${ids})`;
+    const byId = new Map(printed.map((r) => [r.sid, r.printed_page]));
+    brief = { ...stored, evidence: stored.evidence.map((e) => ({ ...e, printed_page: byId.get(e.source_id) ?? null })) };
+  }
+  // No validated brief (none yet, or none passed): the template, with a neutral note and nothing about why.
+  const html = brief ? renderMemo(input, { brief }) : renderMemo(input, { templateNote: true });
   const contract_hash = createHash("sha256").update(JSON.stringify(input)).digest("hex");
-  return { html, contract_hash, validation: validateMemo(html, input) };
+  return { html, contract_hash, validation: validateMemo(html, input, brief), summary: brief ? "brief" : "template" };
 }
 
 // The district the rules were loaded for is recorded in rule_version_set family slugs (e.g. "lb1-height-max").

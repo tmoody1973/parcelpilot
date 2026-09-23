@@ -6,10 +6,9 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import postgres from "postgres";
-import { BANNED_PHRASES, DECISION_POLICY_V1, GoldCase, RuleCategory, ZoningRule, briefingOutputSchemaFor, type BriefingContract, type BriefingOutput, type ParcelFacts, type PolicyInput } from "@parcelpilot/contracts";
-import { evaluate } from "@parcelpilot/rules-engine";
+import { BANNED_PHRASES, DECISION_POLICY_V1, GoldCase, RuleCategory, ZoningRule, briefingOutputSchemaFor, type BriefingContract, type BriefingOutput } from "@parcelpilot/contracts";
 import {
-  BRIEFING_MODELS, BRIEFING_PRICES, BRIEFING_PROMPT_VERSION, OPENROUTER_PRICES, briefingContractHash, buildBriefingContract, checkCitations, finalStatus,
+  BRIEFING_MODELS, BRIEFING_PRICES, BRIEFING_PROMPT_VERSION, OPENROUTER_PRICES, briefingContractHash, buildBriefingContract, goldDecision,
   validateBrief, writeBrief, writeBriefOpenRouter, writeValidatedBrief, type BriefingCall, type ValidatedBrief,
 } from "@parcelpilot/zoning-core";
 import { retrieve } from "../retrieve.ts";
@@ -42,24 +41,16 @@ const sql = postgres(process.env["DATABASE_SERVICE_URL"] ?? "postgres://parcelpi
 
 // The contract for one gold case: the same engine → citation gate → policy chain a live run uses, plus fresh evidence.
 async function contractFor(c: GoldCase): Promise<BriefingContract> {
-  const parcel: ParcelFacts = { lot_area_sqft: c.parcel.lot_area_sqft, lot_area_suspect: c.parcel.lot_area_suspect, base_zoning: c.parcel.base_zoning, planned_development: [], overlays: c.parcel.overlays, special_districts: c.parcel.special_districts, floodplain: c.parcel.floodplain, gis_ambiguity: c.parcel.gis_ambiguity, attributes: {} };
-  const policyParcel: PolicyInput["parcel"] = { overlays: c.parcel.overlays, special_districts: c.parcel.special_districts, planned_development: [], floodplain: c.parcel.floodplain, gis_ambiguity: c.parcel.gis_ambiguity, stacked_condo_candidates: c.parcel.stacked_condo_candidates };
-  const blocked = c.expected.pre_run_block;
-  const out = blocked ? { findings: [], coverage: { checked: [], manual_review: [], unknown: [...RuleCategory.options] } } : evaluate({ parcel, scenario: c.scenario, rules: RULES, categories_in_scope: [...RuleCategory.options], analysis_date: ANALYSIS_DATE });
-  const shas = [...new Set(RULES.flatMap((r) => [...r.citations, ...r.conditions.map((x) => x.citation)]).map((x) => x.document_id))];
-  const sources = Object.fromEntries(shas.map((sha) => [sha, { status: c.expected.evidence.active_code_version ? "active" as const : "superseded" as const, effective_start: null, effective_end: null }]));
-  const evidence = checkCitations({ findings: out.findings, sources, rules: Object.fromEntries(RULES.map((r) => [r.id, { status: r.status }])), analysis_date: ANALYSIS_DATE });
-  const policy = finalStatus({ findings: out.findings, coverage: out.coverage, evidence, parcel: policyParcel, ...(blocked ? { pre_run_block: blocked } : {}), decision_mode: "rules_only" });
-  if (policy.final_status !== c.expected.final_status) throw new Error(`${c.id}: policy gave ${policy.final_status}, gold expects ${c.expected.final_status}`);
+  const { findings, coverage, policy } = goldDecision(c, RULES, ANALYSIS_DATE);
   const runIds: string[] = [];
   for (const [category, q] of subquestionsFor({ districts: c.parcel.base_zoning, categories: RuleCategory.options, scenario: c.scenario })) {
     runIds.push((await retrieve(sql, { jurisdictionId: "milwaukee-wi", subquestion: q, category, districts: c.parcel.base_zoning, overlays: c.parcel.overlays, analysisDate: date }))!.run_id!);
   }
   const bundle = await assembleBundle(sql, { retrievalRunIds: runIds, tokenBudget: evidenceTokenBudget(), analysisDate: date });
   return buildBriefingContract({
-    run: { id: `gold-${c.id}`, locked_at: "gold-case", final_status: policy.final_status, route: policy.route, risk: policy.risk, reasons: policy.reasons, triggers: policy.triggers, coverage: out.coverage },
+    run: { id: `gold-${c.id}`, locked_at: "gold-case", final_status: policy.final_status, route: policy.route, risk: policy.risk, reasons: policy.reasons, triggers: policy.triggers, coverage },
     parcel: { taxkey: c.parcel.taxkey ?? "", address: c.parcel.address ?? null, lot_area_sqft: c.parcel.lot_area_sqft, base_zoning: c.parcel.base_zoning, retrieved_at: c.parcel.retrieved_at ?? null },
-    scenario: c.scenario, findings: out.findings.map((f) => ({ finding: f, calculation_id: f.calculation_ids[0] ?? null })), bundle, jev: null,
+    scenario: c.scenario, findings: findings.map((f) => ({ finding: f, calculation_id: f.calculation_ids[0] ?? null })), bundle, jev: null,
   }, DECISION_POLICY_V1);
 }
 
