@@ -2,8 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { GoldCase, ZoningRule, type MemoInput } from "@parcelpilot/contracts";
-import { goldDecision } from "../gold-decision.ts";
+import { GoldCase, ZoningRule } from "@parcelpilot/contracts";
+import { goldDecision, goldMemoInput } from "../gold-decision.ts";
 import { renderMemo } from "./render.ts";
 import { validateMemo } from "./validate.ts";
 import type { MemoBrief } from "./brief-sections.ts";
@@ -19,20 +19,7 @@ const cases = readdirSync(join(contracts, "gold")).filter((f) => f.endsWith(".js
   .map((f) => GoldCase.parse(JSON.parse(readFileSync(join(contracts, "gold", f), "utf8"))));
 const briefs = new Map((JSON.parse(readFileSync(join(import.meta.dirname, "__fixtures__", "gold-briefs.json"), "utf8")).cases as { case_id: string; brief: MemoBrief }[]).map((x) => [x.case_id, x.brief]));
 
-function memoInput(c: GoldCase): MemoInput {
-  const d = goldDecision(c, RULES, ANALYSIS_DATE);
-  const docs = new Set(d.findings.flatMap((f) => f.citations.map((x) => x.document_id)));
-  return {
-    version: "memo_input.v1",
-    run: { id: `gold-${c.id}`, created_at: "2026-09-21T20:00:00.000Z", locked_at: "2026-09-21T20:00:00.000Z", analysis_date: ANALYSIS_DATE, decision_mode: "rules_only", rules_engine_version: "gold" },
-    decision: d.policy, coverage: d.coverage, evidence: d.evidence, findings: d.findings,
-    scenario: { name: c.title, inputs: c.scenario },
-    parcel: { taxkey: c.parcel.taxkey, address: c.parcel.address, lot_area_sqft: c.parcel.lot_area_sqft, lot_area_suspect: c.parcel.lot_area_suspect, base_zoning: c.parcel.base_zoning, overlays: c.parcel.overlays, special_districts: c.parcel.special_districts, planned_development: [], floodplain: c.parcel.floodplain, gis_ambiguity: c.parcel.gis_ambiguity, retrieved_at: null, snapshot_id: `gold-${c.id}` },
-    provenance: { gis_layer_snapshot_ids: [], rule_version_set: {}, input_hash: "gold" },
-    sources: Object.fromEntries([...docs].map((sha) => [sha, { title: "Milwaukee Code of Ordinances, Chapter 295", published_marker: null, status: "active", official_url: null }])),
-    project: { name: c.parcel.address },
-  };
-}
+const memoInput = (c: GoldCase) => goldMemoInput(c, goldDecision(c, RULES, ANALYSIS_DATE), ANALYSIS_DATE);
 
 test("the fixture has a validated brief for every gold case", () => {
   assert.equal(cases.length, 15);

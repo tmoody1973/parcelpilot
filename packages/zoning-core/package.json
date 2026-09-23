@@ -17,7 +17,7 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "node --conditions=development --test \"src/**/*.test.ts\"",
-    "test:gold": "node --conditions=development --test src/gold.test.ts"
+    "test:gold": "node --conditions=development --test src/gold.test.ts src/decision-gold.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

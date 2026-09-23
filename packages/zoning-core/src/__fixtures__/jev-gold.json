@@ -1,0 +1,110 @@
+{
+ "recorded": "2026-09-23",
+ "cases": {
+  "G01": {
+   "status": "ok",
+   "route": "revise_scenario",
+   "confidence": 0.91,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G02": {
+   "status": "ok",
+   "route": "engage_zoning_professional",
+   "confidence": 0.27,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G03": {
+   "status": "ok",
+   "route": "revise_scenario",
+   "confidence": 0.81,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G04": {
+   "status": "ok",
+   "route": "collect_missing_information",
+   "confidence": 0.28,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G05": {
+   "status": "ok",
+   "route": "engage_zoning_professional",
+   "confidence": 0.98,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G06": {
+   "status": "ok",
+   "route": "engage_zoning_professional",
+   "confidence": 0.74,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G07": {
+   "status": "ok",
+   "route": "revise_scenario",
+   "confidence": 0.68,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G08": {
+   "status": "ok",
+   "route": "revise_scenario",
+   "confidence": 0.85,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G09": {
+   "status": "ok",
+   "route": "collect_missing_information",
+   "confidence": 1,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G10": {
+   "status": "ok",
+   "route": "engage_zoning_professional",
+   "confidence": 0.83,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G11": {
+   "status": "ok",
+   "route": "contact_city",
+   "confidence": 0.87,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G12": {
+   "status": "ok",
+   "route": "contact_city",
+   "confidence": 0.5,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G13": {
+   "status": "ok",
+   "route": "contact_city",
+   "confidence": 0.96,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G14": {
+   "status": "ok",
+   "route": "contact_city",
+   "confidence": 0.97,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G15": {
+   "status": "ok",
+   "route": "insufficient_evidence",
+   "confidence": 0.96,
+   "risk_bucket": "medium",
+   "error": null
+  }
+ }
+}

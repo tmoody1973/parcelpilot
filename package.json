@@ -35,6 +35,7 @@
     "evidence:bundle": "node --conditions=development packages/retrieval/src/cli/bundle.ts",
     "briefing:eval": "node --conditions=development packages/retrieval/src/cli/briefing-eval.ts",
     "briefing:run": "node --conditions=development packages/retrieval/src/cli/briefing-run.ts",
+    "decision:gold": "node --conditions=development packages/retrieval/src/cli/decision-gold.ts",
     "briefing:fixtures": "node --conditions=development packages/retrieval/src/cli/gold-brief-fixtures.ts"
   },
   "devDependencies": {
