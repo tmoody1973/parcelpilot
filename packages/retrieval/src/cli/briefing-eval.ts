@@ -57,6 +57,17 @@ async function contractFor(c: GoldCase): Promise<BriefingContract> {
   }, DECISION_POLICY_V1);
 }
 
+// Retrieval embeds each question over the network; one dropped connection must not end a 15-case run.
+async function withRetry<T>(what: string, fn: () => Promise<T>, tries = 3): Promise<T> {
+  for (let i = 1; ; i++) {
+    try { return await fn(); } catch (e) {
+      if (i >= tries) throw e;
+      console.log(`  ${what}: attempt ${i} failed (${e instanceof Error ? e.message : String(e)}); retrying in ${2 * i} s`);
+      await new Promise((r) => setTimeout(r, 2000 * i));
+    }
+  }
+}
+
 // Pre-validator checks on one brief (05 §9 briefing metrics, approximated).
 function check(contract: BriefingContract, hash: string, o: BriefingOutput) {
   const sentences = [...o.executive_summary, ...o.status_explanation, ...o.verified_findings.flatMap((v) => v.sentences), ...o.open_questions, ...o.suggested_actions.map((a) => a.rationale), ...o.questions_for_experts.map((q) => q.question)];
@@ -101,7 +112,7 @@ if (rescore) {
   models.splice(0, models.length, ...[...new Set(saved.map((x) => x.model))]);
   const contracts = new Map<string, { contract: BriefingContract; hash: string }>();
   try {
-    for (const c of cases) { const contract = await contractFor(c); contracts.set(c.id, { contract, hash: briefingContractHash(contract) }); }
+    for (const c of cases) { const contract = await withRetry(`contract ${c.id}`, () => contractFor(c)); contracts.set(c.id, { contract, hash: briefingContractHash(contract) }); }
   } finally { await sql.end(); }
   let mismatched = 0;
   for (const x of saved) {
@@ -120,7 +131,7 @@ if (rescore) {
 }
 try {
   for (const c of cases) {
-    const contract = await contractFor(c);
+    const contract = await withRetry(`contract ${c.id}`, () => contractFor(c));
     const hash = briefingContractHash(contract);
     for (const model of models) {
       if (spent >= maxUsd) throw new Error(`spend cap reached: $${spent.toFixed(2)} of $${maxUsd}; stopping before ${c.id} on ${model}`);

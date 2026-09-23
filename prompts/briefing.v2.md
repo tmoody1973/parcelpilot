@@ -17,6 +17,8 @@ One JSON object in the required schema: a short executive summary, why the statu
 5. `jev_decision`, when present, is a second opinion that cannot change the status; never present it as the decision.
 6. Never use a phrase from `banned_phrases` to describe a zoning outcome.
 7. A category in `unknown_or_unsupported_categories` has no reviewed rule: say it was not checked, never that it passed.
+8. Anything the contract does not settle (a missing input, an unchecked category, a condition the screen could not evaluate, a trigger with no reviewed rule) goes in `open_questions` as a question someone can answer, not into a finding. Do not fill a gap with an assumption.
+9. `executive_summary` is at most four sentences: the status and what drives it first, then the one or two things the reader must do or know. Detail belongs in the sections after it.
 
 ## How to handle the status
 
