@@ -5,6 +5,8 @@ import {
   type BriefValidation, type BriefingCall, type BriefingRunRecord, type ValidatorRun,
 } from "@parcelpilot/zoning-core";
 
+import { decisionPolicyVersionId } from "./decision-policy.ts";
+
 // Briefing I/O (MOO-837). Both functions run in an org-scoped transaction, so RLS decides what a caller can read.
 type Q = postgres.TransactionSql;
 
@@ -72,6 +74,9 @@ export async function briefRun(tx: Q, runId: string, i: {
 }): Promise<{ outcome: "validated" | "fallback"; briefingRunIds: string[]; attempts: number }> {
   const record = await loadBriefingRecord(tx, runId);
   if (!record) throw new Error(`run ${runId} is not visible to its own org`);
+  // The allowed-next-actions table (decision 013) comes from the policy the database holds: the code's copy is used
+  // only if it matches that row exactly, as run-service requires for runs.
+  await decisionPolicyVersionId(tx, DECISION_POLICY_V1);
   const contract = buildBriefingContract(record, DECISION_POLICY_V1);
   const contractHash = briefingContractHash(contract);
   const schema = briefingOutputSchemaFor(contract, contractHash);
