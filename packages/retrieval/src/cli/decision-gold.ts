@@ -4,7 +4,7 @@
 //   pnpm decision:gold [--cases G01,G02] [--max-usd 3] [--no-brief] [--citation-support]
 // Needs TYPESAFE_API_KEY (JEV) and ANTHROPIC_API_KEY (briefs). Writes docs/eval/shadow-<date>.md and the recorded JEV
 // fixture the CI gate reads (packages/zoning-core/src/__fixtures__/jev-gold.json).
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import postgres from "postgres";
 import { DECISION_POLICY_V1, GoldCase, ZoningRule, type JevRoute, type PolicyFlags } from "@parcelpilot/contracts";
@@ -114,8 +114,13 @@ function report(rows: (ShadowRow & { memo: string })[]) {
     ...rows.map((r) => `| ${r.case_id} | ${r.rules_route} | ${r.jev_status === "ok" ? `${r.jev_route} (${r.jev_confidence?.toFixed(2)})` : `failed: ${r.jev_error ?? "?"}`} | ${r.expert_route} | ${r.jev_status === "ok" ? `${r.jev_route === r.rules_route ? "yes" : "no"} / ${r.jev_route === r.expert_route ? "yes" : "no"}` : "—"} | ${r.brief_outcome ?? "none"} | ${r.memo} |`),
     "",
   ];
-  writeFileSync(join(root, "docs", "eval", `shadow-${date}.md`), lines.join("\n"));
-  writeFileSync(join(root, "packages", "zoning-core", "src", "__fixtures__", "jev-gold.json"), JSON.stringify({ recorded: date, cases: fixture }, null, 1) + "\n");
+  // A --cases run is partial: its answers are merged into the recorded fixture (other cases kept) and its report gets
+  // its own name, so a small run never replaces the full-set report or the CI gate's recordings.
+  const reportName = only ? `shadow-${date}-partial.md` : `shadow-${date}.md`;
+  writeFileSync(join(root, "docs", "eval", reportName), lines.join("\n"));
+  const fixturePath = join(root, "packages", "zoning-core", "src", "__fixtures__", "jev-gold.json");
+  const previous = only && existsSync(fixturePath) ? (JSON.parse(readFileSync(fixturePath, "utf8")).cases as typeof fixture) : {};
+  writeFileSync(fixturePath, JSON.stringify({ recorded: date, cases: { ...previous, ...fixture } }, null, 1) + "\n");
   console.log(lines.slice(4, 15).join("\n"));
-  console.log(`\nreport: docs/eval/shadow-${date}.md  fixture: packages/zoning-core/src/__fixtures__/jev-gold.json`);
+  console.log(`\nreport: docs/eval/${reportName}  fixture: packages/zoning-core/src/__fixtures__/jev-gold.json (${Object.keys(fixture).length} case(s) ${only ? "merged" : "written"})`);
 }
