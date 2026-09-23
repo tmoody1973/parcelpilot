@@ -136,7 +136,7 @@ try {
     for (const model of models) {
       if (spent >= maxUsd) throw new Error(`spend cap reached: $${spent.toFixed(2)} of $${maxUsd}; stopping before ${c.id} on ${model}`);
       const call = OPENROUTER_PRICES[model]
-        ? await writeBriefOpenRouter({ contract, contractHash: hash, system, model, apiKey: process.env["OPENROUTER_API_KEY"], allowRetention: allowRetention.includes(model) })
+        ? await writeBriefOpenRouter({ contract, contractHash: hash, system, model, apiKey: process.env["OPENROUTER_API_KEY"], allowRetention: allowRetention.includes(model), ...(effort ? { effort } : {}) })
         : await writeBrief({ contract, contractHash: hash, system, model, ...(effort ? { effort } : {}) });
       spent += call.costUsd ?? 0;
       const checks = call.status === "ok" ? check(contract, hash, call.output) : null;

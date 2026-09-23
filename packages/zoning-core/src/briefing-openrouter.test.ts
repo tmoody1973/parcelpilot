@@ -69,3 +69,12 @@ test("a time limit that expires while the answer is still arriving is reported a
   assert.equal(r.status, "failed");
   if (r.status === "failed") assert.match(r.error, /timeout .*while receiving/);
 });
+
+test("a stated effort is sent as OpenRouter's reasoning.effort; none is sent by default", async () => {
+  const withEffort = stub(200, reply(out));
+  await writeBriefOpenRouter({ contract, contractHash: "a".repeat(64), system: "s", model: "openai/gpt-6-sol", apiKey: "k", fetchImpl: withEffort.fetchImpl, effort: "medium" });
+  assert.deepEqual(withEffort.calls[0]!["reasoning"], { effort: "medium" });
+  const plain = stub(200, reply(out));
+  await writeBriefOpenRouter({ contract, contractHash: "a".repeat(64), system: "s", model: "openai/gpt-6-sol", apiKey: "k", fetchImpl: plain.fetchImpl });
+  assert.equal(plain.calls[0]!["reasoning"], undefined);
+});

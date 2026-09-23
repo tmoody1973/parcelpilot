@@ -43,6 +43,7 @@ export async function writeBriefOpenRouter(i: {
   // Zero data retention is required unless a caller opts out for one named model (eval only; Tarik, 2026-09-22 for
   // GPT-6 Luna, whose endpoints are all OpenAI-hosted without ZDR). Training on the data is refused either way.
   allowRetention?: boolean;
+  effort?: "low" | "medium" | "high"; // OpenRouter's normalized reasoning effort; omitted means the model's own default
 }): Promise<BriefingCall> {
   const started = performance.now();
   const elapsed = () => Math.round(performance.now() - started);
@@ -62,6 +63,7 @@ export async function writeBriefOpenRouter(i: {
         messages: [{ role: "system", content: i.system }, { role: "user", content: `contract_hash: ${i.contractHash}\n\ncontract:\n${JSON.stringify(i.contract)}` }],
         response_format: { type: "json_schema", json_schema: { name: "briefing_output_v1", strict: true, schema: BRIEFING_OUTPUT_STRICT_SCHEMA } },
         max_tokens: 16000,
+        ...(i.effort ? { reasoning: { effort: i.effort } } : {}),
         provider: { require_parameters: true, data_collection: "deny", ...(i.allowRetention ? {} : { zdr: true }) },
       }),
     });
