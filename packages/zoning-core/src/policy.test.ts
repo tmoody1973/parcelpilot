@@ -115,3 +115,25 @@ test("all 15 gold cases: final_status, route, reasons, flags, triggers reproduce
     assert.deepEqual(r.triggers, g.expected.triggers, `${g.id} triggers`);
   }
 });
+
+test("property: in shadow mode no JEV answer changes the result (1,000 states × random decisions)", () => {
+  const rnd = lcg(836);
+  const pick = <T,>(xs: readonly T[]): T => xs[Math.floor(rnd() * xs.length)]!;
+  const STATUSES: FindingStatus[] = ["pass", "fail", "unknown", "verify", "insufficient_evidence"];
+  const CRITS: Criticality[] = ["critical", "high", "medium", "low"];
+  const ROUTES = ["proceed_to_concept_design", "revise_scenario", "contact_city", "engage_zoning_professional", "collect_missing_information", "insufficient_evidence"] as const;
+  for (let i = 0; i < 1000; i++) {
+    const input = state({
+      findings: CATS.filter(() => rnd() < 0.8).map((c) => finding(c, pick(STATUSES), pick(CRITS))),
+      evidence: { ...evidenceOk, citation_validator_passed: rnd() > 0.1, conflicting_sources: rnd() < 0.1 },
+      parcel: { ...parcelClean, overlays: rnd() < 0.15 ? ["X"] : [], gis_ambiguity: rnd() < 0.1 },
+    });
+    // every tenth decision is the most permissive one JEV could give
+    const decision = i % 10 === 0
+      ? { version: "jev_decision.v1" as const, route: "proceed_to_concept_design" as const, risk: "low" as const, confidence: 0.99, manual_review_required: 0 }
+      : { version: "jev_decision.v1" as const, route: pick(ROUTES), risk: pick(["low", "medium", "high"] as const), confidence: rnd(), manual_review_required: rnd() };
+    const rulesOnly = finalStatus({ ...input, decision_mode: "rules_only" });
+    assert.deepEqual(finalStatus({ ...input, decision_mode: "shadow" }, decision), rulesOnly, `state ${i}: shadow result differs from rules_only`);
+    assert.deepEqual(finalStatus({ ...input, decision_mode: "rules_only" }, decision), rulesOnly, `state ${i}: a decision passed in rules_only mode changed the result`);
+  }
+});

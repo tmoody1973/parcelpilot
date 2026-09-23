@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type postgres from "postgres";
-import { EvidenceBundle } from "@parcelpilot/contracts";
+import { canonicalJson, EvidenceBundle } from "@parcelpilot/contracts";
 import { retrieve } from "./retrieve.ts";
 import { assembleBundle } from "./bundle.ts";
 
@@ -36,12 +36,7 @@ export function subquestionsFor(input: { districts: string[]; categories: readon
   ];
 }
 
-// JSON with object keys sorted at every depth, so a hash never depends on insertion order.
-export function canonicalJson(v: unknown): string {
-  if (Array.isArray(v)) return `[${v.map(canonicalJson).join(",")}]`;
-  if (v && typeof v === "object") return `{${Object.keys(v).sort().filter((k) => (v as Record<string, unknown>)[k] !== undefined).map((k) => `${JSON.stringify(k)}:${canonicalJson((v as Record<string, unknown>)[k])}`).join(",")}}`;
-  return JSON.stringify(v);
-}
+export { canonicalJson }; // moved to contracts (shared with the JEV state and briefing hashes); re-exported for existing callers
 export const bundleHash = (b: EvidenceBundle) => createHash("sha256").update(canonicalJson(b)).digest("hex");
 
 export type RunEvidenceInput = {

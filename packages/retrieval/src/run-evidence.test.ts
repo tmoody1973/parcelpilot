@@ -70,6 +70,7 @@ test("the token budget comes from config and refuses nonsense", () => {
 test("canonical JSON ignores key order at every depth", () => {
   assert.equal(canonicalJson({ b: 1, a: { d: [1, { y: 2, x: 1 }], c: null } }), canonicalJson({ a: { c: null, d: [1, { x: 1, y: 2 }] }, b: 1 }));
   assert.notEqual(canonicalJson([1, 2]), canonicalJson([2, 1]), "array order still matters");
+  assert.equal(canonicalJson([1, undefined, { a: undefined }]), JSON.stringify([1, undefined, { a: undefined }]), "undefined array elements become null, as in JSON.stringify");
 });
 
 test("a locked run gets a frozen bundle under its own org; replay gives the same hash; the run is untouched", () => rolledBack(async (tx) => {

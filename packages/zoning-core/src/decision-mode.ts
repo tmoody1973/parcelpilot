@@ -19,3 +19,12 @@ export async function resolveDecisionMode(opts: {
   if (fromEnv.success) return { mode: fromEnv.data, source: "env" };
   return { mode: DEFAULT_DECISION_MODE, source: "default" };
 }
+
+// The modes a run may use in M5 (MOO-836). `jev` would let JEV influence a status and needs the M6 gates (PRD §9.4);
+// the structured-output baseline is an evaluation comparator that never serves users. A configuration asking for either
+// is an error, not a silent downgrade, so a wrong deploy fails loudly instead of running in a mode nobody chose.
+export function servableDecisionMode(resolved: ResolvedDecisionMode): "rules_only" | "shadow" {
+  if (resolved.mode === "jev") throw new Error(`decision mode jev (from ${resolved.source}) is refused: JEV may influence a status only after the M6 gates pass (PRD §9.4)`);
+  if (resolved.mode === "structured_output_baseline") throw new Error(`decision mode structured_output_baseline (from ${resolved.source}) is refused: the baseline is an evaluation comparator and never serves users`);
+  return resolved.mode;
+}
