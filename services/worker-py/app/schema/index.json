@@ -32,5 +32,7 @@
   "ValidationEffect": "ValidationEffect.schema.json",
   "ValidatorName": "ValidatorName.schema.json",
   "PreparedState": "PreparedState.schema.json",
-  "JevResponse": "JevResponse.schema.json"
+  "JevResponse": "JevResponse.schema.json",
+  "BriefingContract": "BriefingContract.schema.json",
+  "BriefingOutput": "BriefingOutput.schema.json"
 }

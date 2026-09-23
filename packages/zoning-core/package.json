@@ -20,12 +20,13 @@
     "test:gold": "node --conditions=development --test src/gold.test.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
     "@parcelpilot/contracts": "workspace:*",
     "@parcelpilot/rules-engine": "workspace:*",
     "zod": "^4.1.0"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
-    "@types/node": "^22.10.0"
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
   }
 }

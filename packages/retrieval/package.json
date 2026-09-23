@@ -19,9 +19,11 @@
     "test": "node --conditions=development --test \"src/**/*.test.ts\""
   },
   "dependencies": {
+    "@parcelpilot/contracts": "workspace:*",
     "@parcelpilot/db": "workspace:*",
-    "postgres": "^3.4.0",
-    "@parcelpilot/contracts": "workspace:*"
+    "@parcelpilot/rules-engine": "workspace:*",
+    "@parcelpilot/zoning-core": "workspace:*",
+    "postgres": "^3.4.0"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

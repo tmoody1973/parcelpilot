@@ -24,3 +24,7 @@ apps/web/playwright-report/
 **/test-results/
 **/playwright-report/
 .playwright-mcp/
+
+# Briefing eval contracts, stored by hash for rescoring (~70 KB each; rebuildable)
+docs/eval/.contracts/
+docs/eval/briefings-*-combined.jsonl

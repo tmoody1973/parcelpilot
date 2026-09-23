@@ -1,0 +1,402 @@
+{
+  "$id": "parcelpilot/BriefingOutput.v1",
+  "title": "BriefingOutput",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "contract_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "status_echo": {
+      "type": "string",
+      "enum": [
+        "proceed_to_concept_design",
+        "revise_scenario",
+        "verify_before_committing",
+        "insufficient_evidence"
+      ]
+    },
+    "executive_summary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 400
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "fact",
+              "code",
+              "finding",
+              "advice",
+              "framing"
+            ]
+          },
+          "source_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "numbers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                },
+                "calculation_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value",
+                "calculation_id"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "text",
+          "kind",
+          "source_ids"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "status_explanation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 400
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "fact",
+              "code",
+              "finding",
+              "advice",
+              "framing"
+            ]
+          },
+          "source_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "numbers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                },
+                "calculation_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value",
+                "calculation_id"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "text",
+          "kind",
+          "source_ids"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "verified_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "finding_id": {
+            "type": "string"
+          },
+          "sentences": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "maxLength": 400
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "fact",
+                    "code",
+                    "finding",
+                    "advice",
+                    "framing"
+                  ]
+                },
+                "source_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "numbers": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "type": "string"
+                      },
+                      "calculation_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "value",
+                      "calculation_id"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "text",
+                "kind",
+                "source_ids"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "finding_id",
+          "sentences"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 400
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "fact",
+              "code",
+              "finding",
+              "advice",
+              "framing"
+            ]
+          },
+          "source_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "numbers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                },
+                "calculation_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value",
+                "calculation_id"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "text",
+          "kind",
+          "source_ids"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "suggested_actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action_id": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "maxLength": 400
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "fact",
+                  "code",
+                  "finding",
+                  "advice",
+                  "framing"
+                ]
+              },
+              "source_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "numbers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": "string"
+                    },
+                    "calculation_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "calculation_id"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "text",
+              "kind",
+              "source_ids"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "action_id",
+          "rationale"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "questions_for_experts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "recipient": {
+            "type": "string",
+            "enum": [
+              "city",
+              "architect",
+              "zoning_professional",
+              "lender_or_partner"
+            ]
+          },
+          "question": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "maxLength": 400
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "fact",
+                  "code",
+                  "finding",
+                  "advice",
+                  "framing"
+                ]
+              },
+              "source_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "numbers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": "string"
+                    },
+                    "calculation_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "calculation_id"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "text",
+              "kind",
+              "source_ids"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "recipient",
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "disclaimer": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "contract_hash",
+    "status_echo",
+    "executive_summary",
+    "status_explanation",
+    "verified_findings",
+    "open_questions",
+    "suggested_actions",
+    "questions_for_experts",
+    "disclaimer"
+  ],
+  "additionalProperties": false
+}
