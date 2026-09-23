@@ -13,6 +13,7 @@ export const BRIEFING_SCHEMA_VERSION = "briefing_output.v1";
 const PRICES: Record<string, { input: number; output: number }> = {
   "claude-fable-5-1": { input: 10, output: 50 },
   "claude-sonnet-5": { input: 2, output: 10 },
+  "claude-opus-5-5": { input: 4, output: 20 }, // launched 2026-09-22; thinking always on, effort defaults to medium
 };
 export const BRIEFING_MODELS = Object.keys(PRICES);
 
