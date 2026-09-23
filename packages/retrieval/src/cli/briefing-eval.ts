@@ -82,11 +82,11 @@ let spent = 0;
 const costOf = (r: ValidatedBrief) => r.attempts.reduce((a, x) => a + (x.call.costUsd ?? 0), 0);
 const latencyOf = (r: ValidatedBrief) => r.attempts.reduce((a, x) => a + x.call.latencyMs, 0);
 
-type SavedAttempt = { status: "ok" | "failed"; model_version: string | null; error: string | null; usage: { input_tokens: number; output_tokens: number } | null; latency_ms: number; cost_usd: number | null; output: unknown };
+type SavedAttempt = { status: "ok" | "failed"; model_version: string | null; error: string | null; usage: { input_tokens: number; output_tokens: number } | null; latency_ms: number; cost_usd: number | null; output: unknown; raw?: string | null };
 type Saved = SavedAttempt & { case: string; model: string; run?: number; contract_hash: string; attempts?: SavedAttempt[]; contract?: BriefingContract };
 const callFrom = (x: SavedAttempt, model: string): BriefingCall => x.status === "ok" && x.output
   ? { status: "ok", output: x.output as BriefingOutput, raw: JSON.stringify(x.output), model: x.model_version ?? model, usage: x.usage ?? { input_tokens: 0, output_tokens: 0 }, latencyMs: x.latency_ms, costUsd: x.cost_usd ?? 0 }
-  : { status: "failed", error: x.error ?? "unknown", raw: x.output ? JSON.stringify(x.output) : null, model: x.model_version, usage: x.usage, latencyMs: x.latency_ms, costUsd: x.cost_usd };
+  : { status: "failed", error: x.error ?? "unknown", raw: x.raw ?? (x.output ? JSON.stringify(x.output) : null), model: x.model_version, usage: x.usage, latencyMs: x.latency_ms, costUsd: x.cost_usd };
 
 if (rescore) {
   // Saved briefs are re-validated against the exact contract each was written from (saved, stored by hash, or rebuilt;
@@ -121,7 +121,8 @@ if (rescore) {
     if (!contract) { unreproduced++; continue; }
     const attempts = (x.attempts ?? [x]).map((a) => {
       const call = callFrom(a, x.model);
-      const answer = call.status === "ok" ? call.output : undefined;
+      // as in production: an answer that came back but did not parse is still validated (as a schema failure)
+      const answer = call.status === "ok" ? call.output : (() => { try { return call.raw ? JSON.parse(call.raw) : undefined; } catch { return undefined; } })();
       return { call, validation: answer === undefined ? null : validateBrief(contract, x.contract_hash, answer) };
     });
     const final = attempts.at(-1)!;
@@ -214,7 +215,7 @@ function write() {
   writeFileSync(join(root, "docs", "eval", `briefing-model-${suffix}.md`), lines.join("\n"));
   const attemptJson = (a: ValidatedBrief["attempts"][number]) => ({
     status: a.call.status, model_version: a.call.model, error: a.call.status === "failed" ? a.call.error : null, usage: a.call.usage, latency_ms: a.call.latencyMs, cost_usd: a.call.costUsd,
-    output: a.call.status === "ok" ? a.call.output : null, outcome: a.validation?.outcome ?? null,
+    output: a.call.status === "ok" ? a.call.output : null, raw: a.call.status === "failed" ? a.call.raw : null, outcome: a.validation?.outcome ?? null,
     validators: a.validation?.runs.map((r) => ({ validator: r.validator, result: r.result, effect: r.effect, removed: r.removed_sentence_ids, detail: r.detail })) ?? null,
   });
   writeFileSync(join(root, "docs", "eval", `briefings-${suffix}.jsonl`), rows.map((r) => JSON.stringify({

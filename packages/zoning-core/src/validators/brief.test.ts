@@ -181,3 +181,35 @@ test("unknown_as_pass refinement: saying an unchecked category was not checked i
   claimed.status_explanation = [S("Height failed, but parking meets the standard.", "finding", ["fam-1@1"])];
   assert.equal(run(validateBrief(contract, hash, claimed), "unknown_as_pass").effect, "brief_failed");
 });
+
+test("review follow-ups: a fail finding emptied by earlier removals is uncovered; a pass claim in any sentence kind fails; questions do not", () => {
+  const emptied = valid();
+  emptied.verified_findings[1] = { finding_id: "f2", sentences: [S("The height is over the limit.", "fact")] }; // uncited fact: removed by uncited_claim
+  assert.deepEqual(run(validateBrief(contract, hash, emptied), "finding_coverage").detail["uncovered_fails"], ["f2"]);
+  const framed = valid();
+  framed.executive_summary = [...framed.executive_summary, S("Parking meets the standard.", "framing")];
+  assert.equal(run(validateBrief(contract, hash, framed), "unknown_as_pass").effect, "brief_failed");
+  const asked = valid();
+  asked.open_questions = [S("Does parking meet the standard for this use?", "advice")];
+  assert.equal(run(validateBrief(contract, hash, asked), "unknown_as_pass").result, "pass");
+});
+
+test("unknown_as_pass: requirements and questions about an unchecked category are not claims; real claims still fail", () => {
+  const notClaims = [
+    S("Off-street parking in commercial districts must meet s. 295-403-2, which is not in the reviewed excerpts.", "code", ["fam-1@1"]),
+    S("Parking in commercial districts must meet the requirements of s. 295-403-2 and the design standards of s. 295-403-3.", "code", ["fam-1@1"]),
+    S("Do the 12 proposed parking spaces meet the requirements of s. 295-403-2? This was not checked.", "framing"),
+    S("Can the 12 parking spaces fit on the lot? Check this once the parking requirements are confirmed.", "advice"),
+    S("Off-street parking in commercial districts must be provided under s. 295-403-2 and meet the design standards of s. 295-403-3.", "code", ["fam-1@1"]),
+  ];
+  for (const sentence of notClaims) {
+    const b = valid();
+    b.open_questions = [sentence];
+    assert.equal(run(validateBrief(contract, hash, b), "unknown_as_pass").result, "pass", sentence.text);
+  }
+  for (const text of ["Parking meets the standard and must still be reviewed by the city.", "Parking meets the standard.", "Height failed, but parking passed.", "The parking spaces satisfy s. 295-403-2."]) { // no number here: numeric_alignment would remove a sentence with one first
+    const b = valid();
+    b.open_questions = [S(text, "framing")];
+    assert.equal(run(validateBrief(contract, hash, b), "unknown_as_pass").effect, "brief_failed", text);
+  }
+});

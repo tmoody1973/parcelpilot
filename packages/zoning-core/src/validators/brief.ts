@@ -59,7 +59,16 @@ function numbersInSentence(text: string): Array<{ n: string; measured: boolean }
 // the category and says it passed or meets a standard fails the brief; "parking was not checked" does not.
 const PASS_CLAIM = /\b(pass(es|ed)?|meets?|met|compl(y|ies|ied)|within|satisf(y|ies|ied)|conforms?|clears?|fits?)\b/i;
 const NOT_CHECKED = /\b(not|no|unchecked|unknown|unresolved|unreviewed|without)\b/i;
-const clauses = (t: string) => t.split(/[.;:]|,\s*(?:and|but|while|so)\s+|\s+(?:but|while)\s+/i);
+// A requirement ("parking must meet s. 295-403-2") states a rule, not a result.
+const OBLIGATION = /\b(must|shall|should|may|can|could|needs? to|has to|have to|required to|is to|are to)\b.*\b(meet|comply|satisfy|conform|clear|fit|pass)/i; // modal first, then the verb
+// Claims, one per clause. Section references are masked first so the period in "s. 295-403-2" does not split a
+// sentence, and questions are dropped: "Do the parking spaces meet the standard?" claims nothing.
+function claimClauses(t: string): string[] {
+  const masked = t.replace(IDENTIFIERS, "§REF");
+  return (masked.match(/[^.?!;]+[.?!;]?/g) ?? [])
+    .filter((sentence) => !sentence.trim().endsWith("?"))
+    .flatMap((sentence) => sentence.split(/,\s*(?:and|but|while|so)\s+|\s+(?:but|while)\s+/i));
+}
 const CATEGORY_WORDS: Record<string, RegExp> = {
   use: /\buses?\b/i, height: /\bheight\b/i, setback_front: /\bfront setback\b/i, setback_side: /\bside setback\b/i, setback_rear: /\brear setback\b/i,
   density: /\bdensity\b|\blot area per (dwelling )?unit\b/i, parking: /\bparking\b/i, lot_coverage: /\blot coverage\b/i,
@@ -120,7 +129,8 @@ const STEPS: Step[] = [
     name: "finding_coverage", run: (c, _h, b) => {
       const known = c.verified_findings.map((f) => f.finding_id);
       const strangers = b.verified_findings.map((v) => v.finding_id).filter((id) => !known.some((k) => eq(k, id)));
-      const missingFails = c.verified_findings.filter((f) => f.status === "fail" && !b.verified_findings.some((v) => eq(v.finding_id, f.finding_id))).map((f) => f.finding_id);
+      // a fail finding is covered only if its entry still has a sentence after earlier validators removed any
+      const missingFails = c.verified_findings.filter((f) => f.status === "fail" && !b.verified_findings.some((v) => eq(v.finding_id, f.finding_id) && v.sentences.length > 0)).map((f) => f.finding_id);
       return { hard: strangers.length > 0 || missingFails.length > 0, detail: { unknown_finding_ids: strangers, uncovered_fails: missingFails } };
     },
   },
@@ -134,8 +144,10 @@ const STEPS: Step[] = [
   },
   {
     name: "unknown_as_pass", run: (c, _h, b) => {
-      const hits = sentencesOf(b).filter((x) => x.s.kind === "finding" && clauses(x.s.text).some((cl) =>
-        c.unknown_or_unsupported_categories.some((cat) => CATEGORY_WORDS[cat]?.test(cl)) && PASS_CLAIM.test(cl) && !NOT_CHECKED.test(cl)));
+      // Every kind is checked: the model picks the kind, so "Parking meets the standard." labelled as framing must not
+      // slip through. A question ("Does parking meet the standard?") is not a claim.
+      const hits = sentencesOf(b).filter((x) => claimClauses(x.s.text).some((cl) =>
+        c.unknown_or_unsupported_categories.some((cat) => CATEGORY_WORDS[cat]?.test(cl)) && PASS_CLAIM.test(cl) && !NOT_CHECKED.test(cl) && !OBLIGATION.test(cl)));
       return { hard: hits.length > 0, detail: { sentences: hits.map((x) => x.id) } };
     },
   },

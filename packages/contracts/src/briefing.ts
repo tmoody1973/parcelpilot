@@ -72,14 +72,14 @@ export const BRIEFING_SCHEMAS = { BriefingContract, BriefingOutput } as const;
 // is insufficient_evidence, write no `finding` sentence at all. Single-value enums stand in for exact values because
 // they are supported by every structured-output provider we use. The validators still run; this only makes the most
 // common violations impossible to generate. Every output this accepts also parses as BriefingOutput.
-const oneOf = (values: string[]) => (values.length ? z.enum(values as [string, ...string[]]) : z.never());
+const oneOf = (values: [string, ...string[]]) => z.enum(values); // callers handle the empty case: strict providers reject "not"
 export function briefingOutputSchemaFor(c: BriefingContract, contractHash: string) {
   const abstain = c.final_decision.status === "insufficient_evidence";
   const ids = c.evidence_bundle.map((e) => e.source_id);
   const sentence = z.object({
     text: z.string().max(400),
     kind: abstain ? z.enum(["fact", "code", "advice", "framing"]) : z.enum(["fact", "code", "finding", "advice", "framing"]),
-    source_ids: ids.length ? z.array(oneOf(ids)) : z.array(z.string()).max(0),
+    source_ids: ids.length ? z.array(oneOf(ids as [string, ...string[]])) : z.array(z.string()).max(0),
     numbers: z.array(z.object({ value: z.string(), calculation_id: z.string() })).optional(),
   });
   const actions = abstain ? c.allowed_next_actions.filter((a) => a === "collect_missing_information" || a === "contact_city") : c.allowed_next_actions;
@@ -89,9 +89,9 @@ export function briefingOutputSchemaFor(c: BriefingContract, contractHash: strin
     status_echo: z.enum([c.final_decision.status]),
     executive_summary: z.array(sentence),
     status_explanation: z.array(sentence),
-    verified_findings: findingIds.length ? z.array(z.object({ finding_id: oneOf(findingIds), sentences: z.array(sentence) })) : z.array(z.object({ finding_id: z.string(), sentences: z.array(sentence) })).max(0),
+    verified_findings: findingIds.length ? z.array(z.object({ finding_id: oneOf(findingIds as [string, ...string[]]), sentences: z.array(sentence) })) : z.array(z.object({ finding_id: z.string(), sentences: z.array(sentence) })).max(0),
     open_questions: z.array(sentence),
-    suggested_actions: z.array(z.object({ action_id: oneOf(actions), rationale: sentence })),
+    suggested_actions: actions.length ? z.array(z.object({ action_id: oneOf(actions as [string, ...string[]]), rationale: sentence })) : z.array(z.object({ action_id: z.string(), rationale: sentence })).max(0),
     questions_for_experts: z.array(z.object({ recipient: z.enum(["city", "architect", "zoning_professional", "lender_or_partner"]), question: sentence })),
     disclaimer: z.enum([c.required_disclaimer]),
   });
