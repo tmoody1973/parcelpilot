@@ -12,19 +12,22 @@ export type JevCall =
   | { status: "ok"; response: JevResponse; raw: unknown; latencyMs: number; costUsd: number }
   | { status: "failed"; error: string; raw: unknown; latencyMs: number };
 
-export async function askJev(state: PreparedState, opts: { apiKey: string | undefined; timeoutMs: number; model?: string; fetchImpl?: typeof fetch }): Promise<JevCall> {
+// One POST to the System One endpoint inside a single time budget, retrying 429/529 with backoff. Shared by the
+// decision questions (askJev) and the citation-support check (citation-support.ts). Parsing is the caller's.
+export type SystemOneCall = { status: "ok"; raw: unknown; latencyMs: number } | { status: "failed"; error: string; raw: unknown; latencyMs: number };
+export async function postSystemOne(body: unknown, opts: { apiKey: string | undefined; timeoutMs: number; fetchImpl?: typeof fetch }): Promise<SystemOneCall> {
   const started = performance.now();
   const elapsed = () => Math.round(performance.now() - started);
-  const failed = (error: string, raw: unknown = null): JevCall => ({ status: "failed", error, raw, latencyMs: elapsed() });
+  const failed = (error: string, raw: unknown = null): SystemOneCall => ({ status: "failed", error, raw, latencyMs: elapsed() });
   if (!opts.apiKey) return failed("TYPESAFE_API_KEY not set");
-  const body = JSON.stringify({ model: opts.model ?? "jev-latest", state, questions: JEV_QUESTIONS_V1 });
+  const payload = JSON.stringify(body);
   for (let attempt = 1; ; attempt++) {
     const remaining = opts.timeoutMs - elapsed();
     if (remaining <= 0) return failed(`timeout after ${opts.timeoutMs} ms`);
     let res: Response;
     try {
       res = await (opts.fetchImpl ?? fetch)(ENDPOINT, {
-        method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${opts.apiKey}` }, body, signal: AbortSignal.timeout(remaining),
+        method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${opts.apiKey}` }, body: payload, signal: AbortSignal.timeout(remaining),
       });
     } catch (e) {
       const name = (e as { name?: string }).name;
@@ -36,12 +39,18 @@ export async function askJev(state: PreparedState, opts: { apiKey: string | unde
     }
     const text = await res.text().catch(() => "");
     if (!res.ok) return failed(`HTTP ${res.status}: ${text.slice(0, 300)}`, { http_status: res.status, body: text.slice(0, 4000) }); // logged in raw_response
-    let raw: unknown;
-    try { raw = JSON.parse(text); } catch { return failed("response is not JSON", text.slice(0, 300)); }
-    const parsed = JevResponse.safeParse(raw);
-    if (!parsed.success) return failed(`schema-invalid response: ${parsed.error.issues.map((i) => i.path.join(".") + " " + i.message).join("; ").slice(0, 300)}`, raw);
-    return { status: "ok", response: parsed.data, raw, latencyMs: elapsed(), costUsd: parsed.data.usage.input_tokens * PRICE_PER_INPUT_TOKEN_USD };
+    try { return { status: "ok", raw: JSON.parse(text), latencyMs: elapsed() }; } catch { return failed("response is not JSON", text.slice(0, 300)); }
   }
+}
+
+export const systemOneCost = (inputTokens: number) => inputTokens * PRICE_PER_INPUT_TOKEN_USD;
+
+export async function askJev(state: PreparedState, opts: { apiKey: string | undefined; timeoutMs: number; model?: string; fetchImpl?: typeof fetch }): Promise<JevCall> {
+  const call = await postSystemOne({ model: opts.model ?? "jev-latest", state, questions: JEV_QUESTIONS_V1 }, opts);
+  if (call.status === "failed") return call;
+  const parsed = JevResponse.safeParse(call.raw);
+  if (!parsed.success) return { status: "failed", error: `schema-invalid response: ${parsed.error.issues.map((i) => i.path.join(".") + " " + i.message).join("; ").slice(0, 300)}`, raw: call.raw, latencyMs: call.latencyMs };
+  return { status: "ok", response: parsed.data, raw: call.raw, latencyMs: call.latencyMs, costUsd: systemOneCost(parsed.data.usage.input_tokens) };
 }
 
 // overall_risk is a Score on 0–2; bucket it with the policy's cut points, never interpolate (05 §4.6).

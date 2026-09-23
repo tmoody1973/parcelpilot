@@ -7,7 +7,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { auditEvents, briefRun, calculations, decisionPolicyVersionId, feasibilityRuns, recordJevRun, layerSnapshotIdsFor, loadApprovedRules, projects, scenarios, sourceStates, withOrg, computeIntersections } from "@parcelpilot/db";
 import { DECISION_POLICY_V1, ScenarioInputs, type EvidenceBundle, type PolicyFlags, type Coverage, type EvidenceFlags, type Finding, type ParcelFacts as EngineFacts, type PolicyResult } from "@parcelpilot/contracts";
 import { evaluate, RULES_ENGINE_VERSION } from "@parcelpilot/rules-engine";
-import { askJev, BRIEFING_PROMPT_VERSION, buildPreparedState, checkCitations, DEFAULT_BRIEFING_EFFORT, DEFAULT_BRIEFING_MODEL, finalStatus, resolveDecisionMode, servableDecisionMode, type PreparedStateInput } from "@parcelpilot/zoning-core";
+import { askJev, BRIEFING_PROMPT_VERSION, buildPreparedState, checkCitations, DEFAULT_BRIEFING_EFFORT, DEFAULT_BRIEFING_MODEL, finalStatus, resolveDecisionMode, servableDecisionMode, type PreparedStateInput, citationSupportEnabled } from "@parcelpilot/zoning-core";
 import { attachEvidence, evidenceTokenBudget } from "@parcelpilot/retrieval";
 import { appDb, appSql, serviceSql } from "./db.ts";
 import type { FeasibilityRun } from "./dto.ts";
@@ -119,7 +119,8 @@ async function writeBrief(ctx: OrgContext, runId: string): Promise<void> {
     const result = await appSql().begin(async (tx) => {
       await tx`select set_config('app.org_id', ${ctx.orgId}, true)`;
       // ponytail: the transaction stays open across the model call (~50 s); split load / call / record if pool pressure shows
-      return briefRun(tx, runId, { orgId: ctx.orgId, model: process.env["BRIEFING_MODEL"] || DEFAULT_BRIEFING_MODEL, system, effort: DEFAULT_BRIEFING_EFFORT });
+      return briefRun(tx, runId, { orgId: ctx.orgId, model: process.env["BRIEFING_MODEL"] || DEFAULT_BRIEFING_MODEL, system, effort: DEFAULT_BRIEFING_EFFORT,
+        ...(citationSupportEnabled() ? { citationSupport: { apiKey: process.env["TYPESAFE_API_KEY"], jurisdictionId: JURISDICTION } } : {}) });
     });
     console.info("brief recorded", { runId, outcome: result.outcome, attempts: result.attempts });
   } catch (e) {

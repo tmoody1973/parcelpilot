@@ -20,3 +20,4 @@ export * from "./memo/brief-sections.ts";
 export * from "./gold-decision.ts";
 export * from "./briefing-batch.ts";
 export * from "./shadow-metrics.ts";
+export * from "./validators/citation-support.ts";

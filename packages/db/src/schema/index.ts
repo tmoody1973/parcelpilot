@@ -311,7 +311,7 @@ const vector1536 = customType<{ data: number[] | null; driverData: string }>({ d
 const tsvector = customType<{ data: string; driverData: string }>({ dataType: () => "tsvector" });
 export const chunkKind = pgEnum("chunk_kind", ["operative_provision", "table_row", "table_header", "footnote", "definition", "exception", "purpose_statement", "procedure"]);
 export const codeSourceType = pgEnum("code_source_type", ["ordinance_text", "table_row", "footnote", "definition", "amendment", "map_legend"]);
-export const reviewTaskType = pgEnum("review_task_type", ["rule_candidate_review", "merge_review", "page_review", "footnote_review", "source_review", "gis_ambiguity"]);
+export const reviewTaskType = pgEnum("review_task_type", ["rule_candidate_review", "merge_review", "page_review", "footnote_review", "source_review", "gis_ambiguity", "citation_support_review"]); // citation_support_review: pointer-only (MOO-841, decision 017)
 
 export const documentPages = pgTable("document_pages", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),

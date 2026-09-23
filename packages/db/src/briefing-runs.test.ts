@@ -81,3 +81,76 @@ test("a failing first answer gets one repair; both attempts are recorded; org B 
     throw new Rollback();
   }).catch((e) => { if (!(e instanceof Rollback)) throw e; });
 });
+
+// MOO-841: the citation-support check through the recorded path. The brief cites the one bundle row in a `code`
+// sentence, so there is exactly one (sentence, excerpt) pair to ask about.
+async function withBundle(tx: postgres.TransactionSql, w: { org: string; run: string }) {
+  const item = { source_id: "fam-1@1", chunk_id: "c1", official_url: null, document_title: "Subchapter 6", document_sha256: "d".repeat(64), section: "295-605-2", page: 16, printed_page: 14,
+    anchors: [{ page: 16 }], verbatim_excerpt: "Table 295-605-2. Height, maximum (ft.). LB1: 45.", status: "active", category: "height", subquestion: "q", required_context_type: null,
+    selection_reason: "signed-off rule row", rank: 1, footnote_markers: [], token_count: 10 };
+  const bundle = { version: "evidence_bundle.v1", run_id: w.run, retrieval_run_ids: [], analysis_date: "2026-09-22", embedding_version_id: null, token_budget: 6000, tokens_used: 10, items: [item],
+    required_context: {}, flags: { active_version_confirmed: true, overlay_detected: false, coverage_gaps: [], dropped_for_budget: 0, refused_inactive: 0 } };
+  await tx`insert into run_evidence_bundles (org_id, feasibility_run_id, status, retrieval_run_ids, token_budget, bundle, bundle_sha256) values (${w.org}, ${w.run}, 'assembled', array[gen_random_uuid()], 6000, ${tx.json(bundle as never)}, ${"e".repeat(64)})`;
+}
+const CODE_SENTENCE = "Table 295-605-2 sets a minimum front setback for LB1.";
+const citingModel = (() => {
+  const m = fakeModel({ wrongFirst: false });
+  const write = (async (i: never) => {
+    const call = await (m.write as unknown as (x: never) => Promise<BriefingCall & { output: any; raw: string }>)(i);
+    const output = { ...call.output, executive_summary: [...call.output.executive_summary, { text: CODE_SENTENCE, kind: "code", source_ids: ["fam-1@1"] }] };
+    return { ...call, output, raw: JSON.stringify(output) };
+  }) as never;
+  return { write };
+})();
+// Counts every network request made while `fn` runs.
+async function countingFetch<T>(fn: () => Promise<T>, answer?: (body: any) => unknown): Promise<{ result: T; requests: number }> {
+  const real = globalThis.fetch;
+  let requests = 0;
+  globalThis.fetch = (async (_: unknown, init: { body: string }) => {
+    requests++;
+    return new Response(JSON.stringify(answer ? answer(JSON.parse(init.body)) : {}), { status: 200 });
+  }) as never;
+  try { return { result: await fn(), requests }; } finally { globalThis.fetch = real; }
+}
+
+test("citation support off (the default): no JEV request, no citation_support row", async () => {
+  await owner.begin(async (tx) => {
+    const w = await world(tx, "cs-off");
+    await withBundle(tx, w);
+    await tx`set local role app_role`;
+    await tx`select set_config('app.org_id', ${w.org}, true)`;
+    const { result: r, requests } = await countingFetch(() => briefRun(tx, w.run, { orgId: w.org, model: "fake-model-1", system: "s", write: citingModel.write }));
+    assert.equal(requests, 0, "request counter");
+    assert.equal(r.outcome, "validated");
+    const [{ n }] = await tx`select count(*)::int as n from validation_runs where briefing_run_id = ${r.briefingRunIds[0]!} and validator = 'citation_support'`;
+    assert.equal(n, 0);
+    throw new Rollback();
+  }).catch((e) => { if (!(e instanceof Rollback)) throw e; });
+});
+
+test("citation support on: one request, the unsupported sentence is removed, a pointer-only review task is written", async () => {
+  await owner.begin(async (tx) => {
+    const w = await world(tx, "cs-on");
+    await withBundle(tx, w);
+    await tx`set local role app_role`;
+    await tx`select set_config('app.org_id', ${w.org}, true)`;
+    const unsure = (body: { model: string; questions: Record<string, unknown> }) => ({
+      model: body.model, usage: { input_tokens: 500, output_tokens: 0 },
+      answers: Object.fromEntries(Object.keys(body.questions).map((id) => [id, { type: "choice", choice: "says_nothing", confidence: 0.55, probabilities: { says_nothing: 0.55, supports: 0.3, contradicts: 0.15 } }])),
+    });
+    const { result: r, requests } = await countingFetch(() => briefRun(tx, w.run, { orgId: w.org, model: "fake-model-1", system: "s", write: citingModel.write, citationSupport: { apiKey: "k" } }), unsure);
+    assert.equal(requests, 1, "all pairs in one request");
+    assert.equal(r.outcome, "validated");
+    const [brief] = await tx`select validated_output from briefing_runs where id = ${r.briefingRunIds[0]!}`;
+    assert.ok(!JSON.stringify(brief!["validated_output"]).includes(CODE_SENTENCE), "sentence removed from the stored brief");
+    const [cs] = await tx`select result, effect, removed_sentence_ids, detail from validation_runs where briefing_run_id = ${r.briefingRunIds[0]!} and validator = 'citation_support'`;
+    assert.deepEqual([cs!["result"], cs!["effect"], cs!["removed_sentence_ids"]], ["fail", "sentence_removed", ["executive_summary[1]"]]);
+    assert.equal((cs!["detail"] as { pairs: unknown[] }).pairs.length, 1, "per-pair answer logged");
+    assert.equal(r.reviewTaskIds.length, 1);
+    const [task] = await tx`select task_type, entity_type, entity_id, reason from review_tasks where id = ${r.reviewTaskIds[0]!}`;
+    assert.deepEqual([task!["task_type"], task!["entity_type"], task!["entity_id"]], ["citation_support_review", "briefing_run", r.briefingRunIds[0]]);
+    assert.equal(task!["reason"], "citation_support: executive_summary[1] says_nothing at 0.55");
+    assert.ok(!String(task!["reason"]).includes("setback"), "no sentence text in the shared table");
+    throw new Rollback();
+  }).catch((e) => { if (!(e instanceof Rollback)) throw e; });
+});

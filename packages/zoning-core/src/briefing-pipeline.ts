@@ -39,6 +39,8 @@ export async function writeValidatedBrief(i: {
   contract: BriefingContract; contractHash: string;
   write: (repair?: string[]) => Promise<BriefingCall>; // one model call, with or without repair notes
   maxRepairs?: number;
+  // The citation-support check (MOO-841), when its flag is on: runs once on a brief the eleven passed; no repair after it.
+  afterValidation?: (v: BriefValidation) => Promise<BriefValidation>;
 }): Promise<ValidatedBrief> {
   const attempts: BriefAttempt[] = [];
   let repair: string[] | undefined;
@@ -52,6 +54,10 @@ export async function writeValidatedBrief(i: {
     if (!validation || validation.outcome === "validated") break;
     repair = repairNotes(i.contract, validation.runs);
   }
-  const final = attempts.at(-1)!;
+  let final = attempts.at(-1)!;
+  if (i.afterValidation && final.validation?.outcome === "validated") {
+    final = { ...final, validation: await i.afterValidation(final.validation) };
+    attempts[attempts.length - 1] = final;
+  }
   return { attempts, final, outcome: final.validation?.outcome === "validated" ? "validated" : "fallback" };
 }
