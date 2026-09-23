@@ -68,7 +68,12 @@ export async function writeBriefOpenRouter(i: {
   } catch (e) {
     return failed(`OpenRouter request failed: ${e instanceof Error ? e.message : String(e)}`);
   }
-  const text = await res.text().catch(() => "");
+  // The time limit can expire while the body is still streaming in; report that as a timeout, not as bad JSON.
+  let text: string;
+  try { text = await res.text(); } catch (e) {
+    const name = (e as { name?: string }).name;
+    return failed(name === "TimeoutError" || name === "AbortError" ? `timeout after ${i.timeoutMs ?? 180_000} ms (while receiving the answer)` : `OpenRouter response could not be read: ${(e as Error).message}`);
+  }
   if (!res.ok) return failed(`OpenRouter HTTP ${res.status}: ${text.slice(0, 300)}`, text);
   let body: { model?: string; choices?: Array<{ message?: { content?: string | null }; finish_reason?: string }>; usage?: { prompt_tokens?: number; completion_tokens?: number } };
   try { body = JSON.parse(text); } catch { return failed("OpenRouter response is not JSON", text); }

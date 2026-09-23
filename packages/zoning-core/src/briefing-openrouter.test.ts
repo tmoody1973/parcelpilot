@@ -60,5 +60,12 @@ test("HTTP errors, truncation, non-JSON, schema-invalid output, no key and unkno
   const noKey = stub(200, reply(out));
   assert.equal((await writeBriefOpenRouter({ ...base, apiKey: undefined, fetchImpl: noKey.fetchImpl })).status, "failed");
   assert.equal(noKey.calls.length, 0);
-  assert.equal((await writeBriefOpenRouter({ ...base, model: "deepseek/deepseek-v4.1-flash", fetchImpl: noKey.fetchImpl })).status, "failed");
+  assert.equal((await writeBriefOpenRouter({ ...base, model: "x-ai/grok-4.7", fetchImpl: noKey.fetchImpl })).status, "failed");
+});
+
+test("a time limit that expires while the answer is still arriving is reported as a timeout", async () => {
+  const slowBody = (async () => new Response(new ReadableStream({ start(c) { setTimeout(() => c.error(Object.assign(new Error("aborted"), { name: "TimeoutError" })), 10); } }), { status: 200 })) as unknown as typeof fetch;
+  const r = await writeBriefOpenRouter({ contract, contractHash: "a".repeat(64), system: "s", model: "openai/gpt-6-luna", apiKey: "k", fetchImpl: slowBody });
+  assert.equal(r.status, "failed");
+  if (r.status === "failed") assert.match(r.error, /timeout .*while receiving/);
 });
