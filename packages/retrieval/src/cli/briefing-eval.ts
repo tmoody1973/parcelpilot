@@ -1,14 +1,17 @@
 // Briefing model evaluation (MOO-837; 05 §6, §9). For every gold case: the engine and policy produce the signed-off
 // answer (the recipe gold.test.ts proves), offline retrieval freezes the evidence, and one contract is built and hashed.
-// Each model then writes a brief from that same contract, scored by quick pre-validator checks. These checks are not
-// the MOO-838 validators; they are enough to compare models before the validators exist.
-// Usage: pnpm briefing:eval [--models claude-fable-5-1,claude-sonnet-5,openai/gpt-6-luna,google/gemini-3.8-flash] [--cases G01,G02] [--effort high] [--max-usd 15] [--prompt briefing.v2] [--tag name] [--allow-retention openai/gpt-6-luna] | --rescore a.jsonl,b.jsonl --tag combined
+// Each model then writes a brief from that same contract through the production path: the contract's own output
+// schema, the eleven 05 §7 validators and at most one repair (MOO-838).
+// Usage: pnpm briefing:eval [--models claude-fable-5-1,claude-sonnet-5,openai/gpt-6-luna,google/gemini-3.8-flash] [--cases G01,G02] [--effort high] [--max-usd 15] [--prompt briefing.v2] [--runs 3] [--tag name] [--allow-retention openai/gpt-6-luna] | --rescore a.jsonl,b.jsonl --tag combined
 import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import postgres from "postgres";
-import { BANNED_PHRASES, DECISION_POLICY_V1, GoldCase, RuleCategory, ZoningRule, findBannedPhrases, type BriefingContract, type BriefingOutput, type ParcelFacts, type PolicyInput } from "@parcelpilot/contracts";
+import { BANNED_PHRASES, DECISION_POLICY_V1, GoldCase, RuleCategory, ZoningRule, briefingOutputSchemaFor, type BriefingContract, type BriefingOutput, type ParcelFacts, type PolicyInput } from "@parcelpilot/contracts";
 import { evaluate } from "@parcelpilot/rules-engine";
-import { BRIEFING_MODELS, BRIEFING_PRICES, BRIEFING_PROMPT_VERSION, OPENROUTER_PRICES, writeBriefOpenRouter, briefingContractHash, buildBriefingContract, checkCitations, finalStatus, writeBrief, type BriefingCall } from "@parcelpilot/zoning-core";
+import {
+  BRIEFING_MODELS, BRIEFING_PRICES, BRIEFING_PROMPT_VERSION, OPENROUTER_PRICES, briefingContractHash, buildBriefingContract, checkCitations, finalStatus,
+  validateBrief, writeBrief, writeBriefOpenRouter, writeValidatedBrief, type BriefingCall, type ValidatedBrief,
+} from "@parcelpilot/zoning-core";
 import { retrieve } from "../retrieve.ts";
 import { assembleBundle } from "../bundle.ts";
 import { evidenceTokenBudget, subquestionsFor } from "../run-evidence.ts";
@@ -19,8 +22,9 @@ const models = (flag("--models") ?? BRIEFING_MODELS.join(",")).split(",");
 const only = flag("--cases")?.split(",");
 const effort = flag("--effort") as "low" | "medium" | "high" | undefined;
 const maxUsd = Number(flag("--max-usd") ?? 15);
+const runs = Math.max(1, Number(flag("--runs") ?? 1)); // repeat each case to measure consistency
 const allowRetention = (flag("--allow-retention") ?? "").split(",").filter(Boolean); // OpenRouter models run without zero data retention
-const rescore = flag("--rescore")?.split(","); // re-check saved briefs against rebuilt contracts; no model calls
+const rescore = flag("--rescore")?.split(","); // re-validate saved briefs against their contracts; no model calls
 const tag = flag("--tag"); // a second run on the same day writes its own files instead of replacing the first
 const suffix = tag ? `${new Date().toISOString().slice(0, 10)}-${tag}` : new Date().toISOString().slice(0, 10);
 const root = join(import.meta.dirname, "..", "..", "..", "..");
@@ -70,53 +74,29 @@ async function withRetry<T>(what: string, fn: () => Promise<T>, tries = 3): Prom
   }
 }
 
-// Pre-validator checks on one brief (05 §9 briefing metrics, approximated).
-function check(contract: BriefingContract, hash: string, o: BriefingOutput) {
-  const sentences = [...o.executive_summary, ...o.status_explanation, ...o.verified_findings.flatMap((v) => v.sentences), ...o.open_questions, ...o.suggested_actions.map((a) => a.rationale), ...o.questions_for_experts.map((q) => q.question)];
-  const ids = new Set(contract.evidence_bundle.map((e) => e.source_id));
-  const cited = sentences.flatMap((s) => s.source_ids);
-  const claims = sentences.filter((s) => s.kind === "fact" || s.kind === "code" || s.kind === "finding");
-  const mustCover = contract.verified_findings.filter((f) => f.status === "fail" || f.status === "verify").map((f) => f.finding_id);
-  const covered = new Set(o.verified_findings.map((v) => v.finding_id));
-  // Numbers compare without thousands separators: the contract may hold 29934 where a sentence writes 29,934.
-  const bare = (n: string) => n.replace(/,/g, "").replace(/\.$/, "");
-  const contractNumbers = new Set((JSON.stringify(contract).match(/\d[\d,.]*\d|\d/g) ?? []).map(bare));
-  const invented = sentences.flatMap((s) => s.text.match(/\d[\d,.]*\d|\d/g) ?? []).map(bare).filter((n) => !contractNumbers.has(n));
-  const banned = findBannedPhrases([...sentences.map((s) => s.text), o.disclaimer].join("\n"));
-  const abstains = contract.final_decision.status !== "insufficient_evidence"
-    || (o.suggested_actions.every((a) => a.action_id === "collect_missing_information" || a.action_id === "contact_city") && !sentences.some((s) => s.kind === "finding"));
-  const r = {
-    status_echo: o.status_echo === contract.final_decision.status,
-    hash_echo: o.contract_hash === hash,
-    disclaimer: o.disclaimer === contract.required_disclaimer,
-    citation_precision: cited.length ? cited.filter((id) => ids.has(id)).length / cited.length : 1,
-    uncited_claims: claims.filter((s) => s.source_ids.length === 0).length,
-    claims: claims.length,
-    finding_coverage: mustCover.length ? mustCover.filter((id) => covered.has(id)).length / mustCover.length : 1,
-    disallowed_actions: o.suggested_actions.filter((a) => !contract.allowed_next_actions.includes(a.action_id as never)).length,
-    banned_hits: banned.length,
-    invented_numbers: invented.length,
-    abstention: abstains,
-    sentences: sentences.length,
-  };
-  return { ...r, pass: r.status_echo && r.hash_echo && r.disclaimer && r.citation_precision === 1 && r.uncited_claims === 0 && r.finding_coverage === 1 && r.disallowed_actions === 0 && r.banned_hits === 0 && r.invented_numbers === 0 && r.abstention };
-}
-
-type Row = { model: string; case: string; call: BriefingCall; checks: ReturnType<typeof check> | null; hash: string; contract?: BriefingContract };
+// Every brief goes through what production runs (MOO-838): the contract's own output schema, the eleven validators,
+// and at most one repair. `--runs N` repeats each case to measure how often a case flips between validated and not.
+type Row = { model: string; case: string; run: number; hash: string; contract?: BriefingContract; result: ValidatedBrief };
 const rows: Row[] = [];
 let spent = 0;
-type Saved = { case: string; model: string; contract_hash: string; status: "ok" | "failed"; model_version: string | null; error: string | null; usage: { input_tokens: number; output_tokens: number } | null; latency_ms: number; cost_usd: number | null; output: BriefingOutput | null; contract?: BriefingContract };
+const costOf = (r: ValidatedBrief) => r.attempts.reduce((a, x) => a + (x.call.costUsd ?? 0), 0);
+const latencyOf = (r: ValidatedBrief) => r.attempts.reduce((a, x) => a + x.call.latencyMs, 0);
+
+type SavedAttempt = { status: "ok" | "failed"; model_version: string | null; error: string | null; usage: { input_tokens: number; output_tokens: number } | null; latency_ms: number; cost_usd: number | null; output: unknown };
+type Saved = SavedAttempt & { case: string; model: string; run?: number; contract_hash: string; attempts?: SavedAttempt[]; contract?: BriefingContract };
+const callFrom = (x: SavedAttempt, model: string): BriefingCall => x.status === "ok" && x.output
+  ? { status: "ok", output: x.output as BriefingOutput, raw: JSON.stringify(x.output), model: x.model_version ?? model, usage: x.usage ?? { input_tokens: 0, output_tokens: 0 }, latencyMs: x.latency_ms, costUsd: x.cost_usd ?? 0 }
+  : { status: "failed", error: x.error ?? "unknown", raw: x.output ? JSON.stringify(x.output) : null, model: x.model_version, usage: x.usage, latencyMs: x.latency_ms, costUsd: x.cost_usd };
+
 if (rescore) {
-  // Every saved brief is re-checked against the exact contract it was written from (saved, stored by hash, or
-  // rebuilt); a brief whose contract cannot be found is counted and left unscored rather than scored against another.
-  // A later file's brief for the same model and case replaces an earlier one (a retry after a provider outage).
+  // Saved briefs are re-validated against the exact contract each was written from (saved, stored by hash, or rebuilt;
+  // fresh retrieval is not bit-reproducible, so a case can have more than one contract version). A brief whose contract
+  // cannot be found is counted and left out rather than scored against another. A later file's brief for the same
+  // model, case and run replaces an earlier one (a retry after a provider outage).
   const saved = [...new Map(rescore.flatMap((p) => readFileSync(p, "utf8").trim().split("\n").map((l) => JSON.parse(l) as Saved)
     // runs on a later prompt are named with it, so a model's v1 and v2 briefs are scored side by side, not merged
-    .map((x) => (/-v(\d+)-/.test(p) ? { ...x, model: `${x.model} (briefing.v${p.match(/-v(\d+)-/)![1]})` } : x))).map((x) => [`${x.model}|${x.case}`, x])).values()];
+    .map((x) => (/-v(\d+)-/.test(p) ? { ...x, model: `${x.model} (briefing.v${p.match(/-v(\d+)-/)![1]})` } : x))).map((x) => [`${x.model}|${x.case}|${x.run ?? 1}`, x])).values()];
   models.splice(0, models.length, ...[...new Set(saved.map((x) => x.model))]);
-  // Fresh retrieval is not bit-reproducible (embeddings of the same question can differ in the last digits, so
-  // near-tied evidence can swap), so a case may have been briefed from more than one contract. Use the contract saved
-  // with a brief when there is one; otherwise rebuild the case until every saved hash has been reproduced.
   const byHash = new Map<string, BriefingContract>();
   for (const x of saved) {
     if (x.contract) byHash.set(x.contract_hash, x.contract);
@@ -138,30 +118,38 @@ if (rescore) {
   for (const x of saved) {
     if (!cases.some((c) => c.id === x.case)) continue;
     const contract = byHash.get(x.contract_hash);
-    if (!contract) unreproduced++;
-    const call: BriefingCall = x.status === "ok" && x.output
-      ? { status: "ok", output: x.output, raw: "", model: x.model_version ?? x.model, usage: x.usage!, latencyMs: x.latency_ms, costUsd: x.cost_usd ?? 0 }
-      : { status: "failed", error: x.error ?? "unknown", raw: null, model: x.model_version, usage: x.usage, latencyMs: x.latency_ms, costUsd: x.cost_usd };
-    const checks = call.status === "ok" && contract ? check(contract, x.contract_hash, call.output) : null;
-    rows.push({ model: x.model, case: x.case, call, checks, hash: x.contract_hash, ...(contract ? { contract } : {}) });
+    if (!contract) { unreproduced++; continue; }
+    const attempts = (x.attempts ?? [x]).map((a) => {
+      const call = callFrom(a, x.model);
+      const answer = call.status === "ok" ? call.output : undefined;
+      return { call, validation: answer === undefined ? null : validateBrief(contract, x.contract_hash, answer) };
+    });
+    const final = attempts.at(-1)!;
+    rows.push({ model: x.model, case: x.case, run: x.run ?? 1, hash: x.contract_hash, contract, result: { attempts, final, outcome: final.validation?.outcome === "validated" ? "validated" : "fallback" } });
   }
-  console.log(`rescored ${rows.length} briefs from ${rescore.length} files; briefs whose contract could not be reproduced (left unscored): ${unreproduced}`);
+  console.log(`revalidated ${rows.length} briefs from ${rescore.length} files; left out because their contract could not be found: ${unreproduced}`);
   write();
   process.exit(0);
 }
+
 try {
   for (const c of cases) {
     const contract = await withRetry(`contract ${c.id}`, () => contractFor(c));
     const hash = briefingContractHash(contract);
-    for (const model of models) {
+    const schema = briefingOutputSchemaFor(contract, hash);
+    for (const model of models) for (let run = 1; run <= runs; run++) {
       if (spent >= maxUsd) throw new Error(`spend cap reached: $${spent.toFixed(2)} of $${maxUsd}; stopping before ${c.id} on ${model}`);
-      const call = OPENROUTER_PRICES[model]
-        ? await writeBriefOpenRouter({ contract, contractHash: hash, system, model, apiKey: process.env["OPENROUTER_API_KEY"], allowRetention: allowRetention.includes(model), ...(effort ? { effort } : {}) })
-        : await writeBrief({ contract, contractHash: hash, system, model, ...(effort ? { effort } : {}) });
-      spent += call.costUsd ?? 0;
-      const checks = call.status === "ok" ? check(contract, hash, call.output) : null;
-      rows.push({ model, case: c.id, call, checks, hash, contract }); // saved so a rescore never has to rebuild it
-      console.log(`${c.id} ${model.padEnd(18)} ${call.status.padEnd(6)} ${checks ? (checks.pass ? "PASS" : "fail") : "----"} ${String(call.latencyMs).padStart(6)} ms  in ${call.usage?.input_tokens ?? "-"} out ${call.usage?.output_tokens ?? "-"}  $${(call.costUsd ?? 0).toFixed(4)}${call.status === "failed" ? `  ${call.error.slice(0, 120)}` : ""}${checks && !checks.pass ? `  ${JSON.stringify(checks)}` : ""}`);
+      const result = await writeValidatedBrief({
+        contract, contractHash: hash,
+        write: (repair) => OPENROUTER_PRICES[model]
+          ? writeBriefOpenRouter({ contract, contractHash: hash, system, model, schema, apiKey: process.env["OPENROUTER_API_KEY"], allowRetention: allowRetention.includes(model), ...(repair ? { repair } : {}), ...(effort ? { effort } : {}) })
+          : writeBrief({ contract, contractHash: hash, system, model, schema, ...(repair ? { repair } : {}), ...(effort ? { effort } : {}) }),
+      });
+      spent += costOf(result);
+      rows.push({ model, case: c.id, run, hash, contract, result });
+      const hard = result.final.validation?.runs.filter((r) => r.effect === "brief_failed").map((r) => r.validator) ?? [];
+      const last = result.final.call;
+      console.log(`${c.id} r${run} ${model.padEnd(18)} ${result.outcome.padEnd(9)} attempts ${result.attempts.length} ${String(latencyOf(result)).padStart(6)} ms  $${costOf(result).toFixed(4)}${last.status === "failed" ? `  ${last.error.slice(0, 100)}` : ""}${hard.length ? `  failed: ${hard.join(", ")}` : ""}`);
     }
   }
 } finally {
@@ -174,27 +162,64 @@ function write() {
   const p95 = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.ceil(0.95 * s.length) - 1)] ?? 0; };
   const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
   const pct = (x: number) => `${(100 * x).toFixed(0)}%`;
+  const VALIDATORS = ["schema", "contract_hash", "status_lock", "citation_membership", "uncited_claim", "numeric_alignment", "action_allowlist", "banned_phrases", "finding_coverage", "abstention", "unknown_as_pass"];
   const summary = models.map((m) => {
     const r = rows.filter((x) => x.model === m);
-    const ok = r.filter((x) => x.checks);
-    const ch = ok.map((x) => x.checks!);
-    const claims = ch.reduce((a, c) => a + c.claims, 0);
-    return `| ${m} | ${r.length} | ${pct(ok.length / (r.length || 1))} | ${pct(ch.filter((c) => c.pass).length / (r.length || 1))} | ${pct(ch.filter((c) => c.status_echo).length / (r.length || 1))} | ${mean(ch.map((c) => c.citation_precision)).toFixed(3)} | ${claims ? pct(ch.reduce((a, c) => a + c.uncited_claims, 0) / claims) : "–"} | ${mean(ch.map((c) => c.finding_coverage)).toFixed(3)} | ${ch.reduce((a, c) => a + c.invented_numbers, 0)} | ${ch.reduce((a, c) => a + c.banned_hits, 0)} | ${ch.reduce((a, c) => a + c.disallowed_actions, 0)} | ${pct(ch.filter((c) => c.abstention).length / (ch.length || 1))} | ${(p95(r.map((x) => x.call.latencyMs)) / 1000).toFixed(1)} s | $${mean(r.map((x) => x.call.costUsd ?? 0)).toFixed(4)} | $${r.reduce((a, x) => a + (x.call.costUsd ?? 0), 0).toFixed(2)} |`;
+    const validated = r.filter((x) => x.result.outcome === "validated").length;
+    const repaired = r.filter((x) => x.result.attempts.length > 1).length;
+    const repairedOk = r.filter((x) => x.result.attempts.length > 1 && x.result.outcome === "validated").length;
+    const noAnswer = r.filter((x) => !x.result.final.validation).length;
+    return `| ${m} | ${r.length} | **${pct(validated / r.length)}** | ${repaired} (${repairedOk} fixed) | ${noAnswer} | ${(p95(r.map((x) => latencyOf(x.result))) / 1000).toFixed(1)} s | $${mean(r.map((x) => costOf(x.result))).toFixed(4)} | $${r.reduce((a, x) => a + costOf(x.result), 0).toFixed(2)} |`;
   });
+  // What each validator did to the final attempts: hard failures, and sentences or actions it removed.
+  const perValidator = models.map((m) => {
+    const finals = rows.filter((x) => x.model === m).map((x) => x.result.final.validation).filter((v): v is NonNullable<typeof v> => v !== null);
+    return `| ${m} | ${VALIDATORS.map((name) => {
+      const runsFor = finals.map((v) => v.runs.find((x) => x.validator === name)).filter(Boolean);
+      const hard = runsFor.filter((x) => x!.effect === "brief_failed").length;
+      const removed = runsFor.reduce((a, x) => a + (x!.effect === "sentence_removed" || x!.effect === "action_removed" ? x!.removed_sentence_ids.length : 0), 0);
+      return hard || removed ? `${hard ? `**${hard}**` : "0"}${removed ? ` / ${removed}` : ""}` : "·";
+    }).join(" | ")} |`;
+  });
+  const maxRun = Math.max(...rows.map((x) => x.run));
+  const flips = models.map((m) => {
+    const byCase = cases.map((c) => rows.filter((x) => x.model === m && x.case === c.id)).filter((xs) => xs.length);
+    const flipping = byCase.filter((xs) => new Set(xs.map((x) => x.result.outcome)).size > 1).map((xs) => xs[0]!.case);
+    return `| ${m} | ${byCase.length} | ${flipping.length}${flipping.length ? ` (${flipping.join(", ")})` : ""} |`;
+  });
+  const cell = (x: Row | undefined) => {
+    if (!x) return "";
+    const v = x.result.final.validation;
+    if (!v) return `– ${x.result.final.call.status === "failed" ? x.result.final.call.error.slice(0, 40) : ""}`;
+    const hard = v.runs.filter((r) => r.effect === "brief_failed").map((r) => r.validator);
+    return `${x.result.outcome === "validated" ? "✓" : `✗ ${hard.join(", ")}`}${x.result.attempts.length > 1 ? " (repaired)" : ""}`;
+  };
   const lines = [
     `# Briefing model evaluation — ${date}`, "",
-    `Prompt \`${promptVersion}\`, schema \`briefing_output.v1\`, effort ${effort ?? "model default"}, ${cases.length} gold case(s), one contract per case shared by every model. Measured by \`pnpm briefing:eval\`. Checks are pre-validator approximations of 05 §9, not the MOO-838 validators; a brief "passes" only if every check does. No brief from this run is shown to users.`, "",
-    "| Model | Briefs | Schema-valid | All checks pass | Status echoed | Citation precision | Uncited claims | Fail/verify coverage | Invented numbers | Banned phrases | Disallowed actions | Abstention correct | p95 latency | Cost per brief | Cost this run |",
-    "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+    `Prompt \`${promptVersion}\`, schema \`briefing_output.v1\` with each contract's own output schema, effort ${effort ?? "model default"}, ${cases.length} gold case(s)${maxRun > 1 ? `, ${maxRun} runs per case` : ""}. Every brief ran the production path: the eleven 05 §7 validators (with decision 015's refinements) and at most one repair; "validated" means a user would see the model's brief, anything else means the templated brief. Measured by \`pnpm briefing:eval\`.`, "",
+    "| Model | Briefs | Validated | Repaired (fixed) | No answer | p95 latency (incl. repair) | Cost per brief (incl. repair) | Cost this run |",
+    "|---|---|---|---|---|---|---|---|",
     ...summary, "",
-    "Per case (✓ all checks pass, ✗ a check failed, – no schema-valid answer):", "",
-    `| Case | ${models.join(" | ")} |`, `|---|${models.map(() => "---").join("|")}|`,
-    ...cases.filter((c) => rows.some((r) => r.case === c.id)).map((c) => `| ${c.id} | ${models.map((m) => { const r = rows.find((x) => x.case === c.id && x.model === m); return !r ? "" : !r.checks ? `– ${r.call.status === "failed" ? r.call.error.slice(0, 40) : ""}` : r.checks.pass ? "✓" : `✗ ${Object.entries(r.checks).filter(([k, v]) => k !== "pass" && (v === false || (typeof v === "number" && ((k.endsWith("precision") || k.endsWith("coverage")) ? v < 1 : ["uncited_claims", "disallowed_actions", "banned_hits", "invented_numbers"].includes(k) && v > 0)))).map(([k]) => k).join(", ")}`; }).join(" | ")} |`),
-    "", `Banned phrases checked: ${BANNED_PHRASES.join(", ")}. Prices per million input / output tokens: ${Object.entries(BRIEFING_PRICES).map(([m, p]) => `${m} $${p.input} / $${p.output}`).join(", ")} (thinking billed as output); via OpenRouter (strict structured outputs, no training on data, zero data retention except ${allowRetention.length ? allowRetention.join(", ") : "none"}) ${Object.entries(OPENROUTER_PRICES).map(([m, p]) => `${m} $${p.input} / $${p.output}`).join(", ")} (list prices; open-weight hosts vary). Every brief, its contract hash and its checks are in \`briefings-${date}.jsonl\`.`, "",
+    "What each validator did to the final attempts: **hard failures** (brief fell back) / sentences or actions removed.", "",
+    `| Model | ${VALIDATORS.join(" | ")} |`, `|---|${VALIDATORS.map(() => "---").join("|")}|`, ...perValidator, "",
+    ...(maxRun > 1 ? ["Consistency across runs: cases whose outcome differed between runs.", "", "| Model | Cases | Cases that flipped |", "|---|---|---|", ...flips, ""] : []),
+    "Per case (✓ validated, ✗ fell back, with the validators that failed it; – no answer):", "",
+    `| Case | ${models.flatMap((m) => (maxRun > 1 ? Array.from({ length: maxRun }, (_, i) => `${m} r${i + 1}`) : [m])).join(" | ")} |`,
+    `|---|${models.flatMap(() => Array.from({ length: maxRun }, () => "---")).join("|")}|`,
+    ...cases.filter((c) => rows.some((r) => r.case === c.id)).map((c) => `| ${c.id} | ${models.flatMap((m) => Array.from({ length: maxRun }, (_, i) => cell(rows.find((x) => x.case === c.id && x.model === m && x.run === i + 1)))).join(" | ")} |`),
+    "", `Banned phrases checked: ${BANNED_PHRASES.join(", ")}. Prices per million input / output tokens: ${Object.entries(BRIEFING_PRICES).map(([m, p]) => `${m} $${p.input} / $${p.output}`).join(", ")} (thinking billed as output); via OpenRouter (strict structured outputs, no training on data, zero data retention except ${allowRetention.length ? allowRetention.join(", ") : "none"}) ${Object.entries(OPENROUTER_PRICES).map(([m, p]) => `${m} $${p.input} / $${p.output}`).join(", ")} (list prices; open-weight hosts vary). Every attempt, its validator results and the final brief are in \`briefings-${suffix}.jsonl\`; contracts are stored by hash in \`docs/eval/.contracts\` (not committed).`, "",
   ];
   mkdirSync(join(root, "docs", "eval", ".contracts"), { recursive: true });
   for (const r of rows) if (r.contract && !existsSync(contractPath(r.hash))) writeFileSync(contractPath(r.hash), JSON.stringify(r.contract));
   writeFileSync(join(root, "docs", "eval", `briefing-model-${suffix}.md`), lines.join("\n"));
-  writeFileSync(join(root, "docs", "eval", `briefings-${suffix}.jsonl`), rows.map((r) => JSON.stringify({ case: r.case, model: r.model, contract_hash: r.hash, status: r.call.status, model_version: r.call.model, error: r.call.status === "failed" ? r.call.error : null, usage: r.call.usage, latency_ms: r.call.latencyMs, cost_usd: r.call.costUsd, checks: r.checks, output: r.call.status === "ok" ? r.call.output : null })).join("\n") + "\n");
+  const attemptJson = (a: ValidatedBrief["attempts"][number]) => ({
+    status: a.call.status, model_version: a.call.model, error: a.call.status === "failed" ? a.call.error : null, usage: a.call.usage, latency_ms: a.call.latencyMs, cost_usd: a.call.costUsd,
+    output: a.call.status === "ok" ? a.call.output : null, outcome: a.validation?.outcome ?? null,
+    validators: a.validation?.runs.map((r) => ({ validator: r.validator, result: r.result, effect: r.effect, removed: r.removed_sentence_ids, detail: r.detail })) ?? null,
+  });
+  writeFileSync(join(root, "docs", "eval", `briefings-${suffix}.jsonl`), rows.map((r) => JSON.stringify({
+    case: r.case, model: r.model, run: r.run, contract_hash: r.hash,
+    ...attemptJson(r.result.final), outcome: r.result.outcome, attempts: r.result.attempts.map(attemptJson), validated_brief: r.result.final.validation?.brief ?? null,
+  })).join("\n") + "\n");
   console.log(`\nreport: docs/eval/briefing-model-${suffix}.md  spent $${spent.toFixed(2)}`);
 }

@@ -18,8 +18,23 @@ export type BriefingRunRecord = {
 };
 
 const OPS: Record<string, string> = { "<=": "≤", ">=": "≥", "==": "=", in: "in" };
+const num = (v: number | string) => (typeof v === "number" ? v.toLocaleString("en-US") : v);
 const show = (v: { value: number | string; unit?: string | undefined } | undefined, op?: string) =>
-  v ? `${op ? `${OPS[op] ?? op} ` : ""}${typeof v.value === "number" ? v.value.toLocaleString("en-US") : v.value}${v.unit ? ` ${v.unit}` : ""}` : null;
+  v ? `${op ? `${OPS[op] ?? op} ` : ""}${num(v.value)}${v.unit ? ` ${v.unit}` : ""}` : null;
+// The memo's own words for the use table's labels (memo/copy.ts), so both briefs describe them the same way.
+const USE_LABEL: Record<string, string> = {
+  Y: `listed "Y" (an allowed use)`,
+  L: `listed "L" (a limited use: specific standards apply)`,
+  S: `listed "S" (a special use: a board permit is required)`,
+  N: `listed "N" (not an allowed use)`,
+};
+// Display strings a reader cannot misread (MOO-838). Density compares the lot area the units need with the lot area
+// the parcel has, so "proposed ≤ allowed" would read as "allowed ≤ 7,000 sq ft"; a use label is not a quantity.
+function display(f: Finding): { proposed: string | null; allowed: string | null } {
+  if (f.category === "density" && f.proposed && f.allowed) return { proposed: `${num(f.proposed.value)} sq ft of lot area required`, allowed: `${num(f.allowed.value)} sq ft of lot area available` };
+  if (f.category === "use" && f.allowed && typeof f.allowed.value === "string") return { proposed: f.proposed ? String(f.proposed.value) : null, allowed: USE_LABEL[f.allowed.value] ?? `listed "${f.allowed.value}"` };
+  return { proposed: show(f.proposed), allowed: show(f.allowed, f.allowed?.operator) };
+}
 
 // A finding's excerpts: the chunks its own citations point at, else the signed-off rule rows retrieval pinned for it.
 function sourceIdsFor(f: Finding, items: EvidenceBundle["items"]): string[] {
@@ -58,7 +73,7 @@ export function buildBriefingContract(r: BriefingRunRecord, policy: DecisionPoli
     scenario: Object.fromEntries(Object.entries(r.scenario).filter(([, v]) => v !== undefined)),
     verified_findings: r.findings.map(({ finding: f, calculation_id }, n) => ({
       finding_id: `f${n + 1}`, category: f.category, status: f.status,
-      proposed: show(f.proposed), allowed: show(f.allowed, f.allowed?.operator), calculation_id, source_ids: sourceIdsFor(f, items),
+      ...display(f), calculation_id, source_ids: sourceIdsFor(f, items),
     })),
     manual_review_triggers: r.run.triggers.map((t, n) => ({ trigger_id: `t${n + 1}`, kind: t.split(":")[0]!, code: t.split(":").slice(1).join(":"), source_ids: [] })),
     unknown_or_unsupported_categories: r.run.coverage.unknown,

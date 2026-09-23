@@ -91,4 +91,11 @@ export const ValidatorName = z.enum([
   "action_allowlist", "banned_phrases", "finding_coverage", "abstention", "unknown_as_pass", "citation_support",
 ]);
 
+export type ModelProvider = z.infer<typeof ModelProvider>;
+export type ModelCallStatus = z.infer<typeof ModelCallStatus>;
+export type BriefingOutcome = z.infer<typeof BriefingOutcome>;
+export type ValidationResult = z.infer<typeof ValidationResult>;
+export type ValidationEffect = z.infer<typeof ValidationEffect>;
+export type ValidatorName = z.infer<typeof ValidatorName>;
+
 export const DECISIONING_SCHEMAS = { DecisionPolicy, ActionId, ModelProvider, ModelCallStatus, BriefingOutcome, ValidationResult, ValidationEffect, ValidatorName } as const;

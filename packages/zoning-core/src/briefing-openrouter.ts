@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { BriefingOutput, type BriefingContract } from "@parcelpilot/contracts";
-import type { BriefingCall } from "./briefing-client.ts";
+import { briefingUserMessage, type BriefingCall } from "./briefing-client.ts";
 
 // Non-Claude briefing candidates through OpenRouter (MOO-837 evaluation; Tarik, 2026-09-22). Same prompt, same contract,
 // same schema and the same result shape as the Claude path, so the eval scores every model identically. Requests are
@@ -44,6 +44,8 @@ export async function writeBriefOpenRouter(i: {
   // GPT-6 Luna, whose endpoints are all OpenAI-hosted without ZDR). Training on the data is refused either way.
   allowRetention?: boolean;
   effort?: "low" | "medium" | "high"; // OpenRouter's normalized reasoning effort; omitted means the model's own default
+  schema?: z.ZodType; // briefingOutputSchemaFor(contract, hash); defaults to the general BriefingOutput
+  repair?: string[];
 }): Promise<BriefingCall> {
   const started = performance.now();
   const elapsed = () => Math.round(performance.now() - started);
@@ -60,8 +62,8 @@ export async function writeBriefOpenRouter(i: {
       signal: AbortSignal.timeout(i.timeoutMs ?? 180_000),
       body: JSON.stringify({
         model: i.model,
-        messages: [{ role: "system", content: i.system }, { role: "user", content: `contract_hash: ${i.contractHash}\n\ncontract:\n${JSON.stringify(i.contract)}` }],
-        response_format: { type: "json_schema", json_schema: { name: "briefing_output_v1", strict: true, schema: BRIEFING_OUTPUT_STRICT_SCHEMA } },
+        messages: [{ role: "system", content: i.system }, { role: "user", content: briefingUserMessage(i.contract, i.contractHash, i.repair) }],
+        response_format: { type: "json_schema", json_schema: { name: "briefing_output_v1", strict: true, schema: i.schema ? strictSchema(z.toJSONSchema(i.schema) as Json) : BRIEFING_OUTPUT_STRICT_SCHEMA } },
         max_tokens: 16000,
         ...(i.effort ? { reasoning: { effort: i.effort } } : {}),
         provider: { require_parameters: true, data_collection: "deny", ...(i.allowRetention ? {} : { zdr: true }) },
