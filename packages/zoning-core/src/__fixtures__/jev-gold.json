@@ -3,7 +3,7 @@
  "cases": {
   "G01": {
    "status": "ok",
-   "route": "revise_scenario",
+   "route": "proceed_to_concept_design",
    "confidence": 0.91,
    "risk_bucket": "high",
    "error": null
