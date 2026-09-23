@@ -25,12 +25,15 @@ try {
   if (!orgId) throw new Error("no gold org: run `pnpm decision:gold` first");
   const briefs = await app.begin(async (tx) => {
     await tx`select set_config('app.org_id', ${orgId}, true)`;
-    const runs = await goldComparisons(tx);
-    return Promise.all(runs.map(async (r) => {
-      const [b] = await tx<{ validated_output: unknown; contract: unknown }[]>`
-        select validated_output, contract from briefing_runs where feasibility_run_id = ${r.run_id} and outcome = 'validated' order by created_at desc limit 1`;
-      return { case_id: r.case_id, b };
-    }));
+    // The latest validated brief per gold case, across all of that case's runs (not only its latest run).
+    const cases = (await goldComparisons(tx)).map((r) => r.case_id);
+    const latest = await tx<{ case_id: string; validated_output: unknown; contract: unknown }[]>`
+      select distinct on (r.gold_case_id) r.gold_case_id as case_id, b.validated_output, b.contract
+      from briefing_runs b join feasibility_runs r on r.id = b.feasibility_run_id
+      where r.gold_case_id is not null and b.outcome = 'validated'
+      order by r.gold_case_id, b.created_at desc`;
+    const byCase = new Map(latest.map((x) => [x.case_id, x]));
+    return cases.map((case_id) => ({ case_id, b: byCase.get(case_id) }));
   });
   for (const { case_id, b } of briefs) {
     if (!b) { console.log(`${case_id}: no validated brief, skipped`); continue; }

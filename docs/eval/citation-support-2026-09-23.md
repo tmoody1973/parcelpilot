@@ -130,4 +130,18 @@ Measured by `pnpm citation-support:eval` (MOO-841, decision 017): the latest val
 
 Across all 24 removals: 12 finding, 7 fact, 5 code. Of the 5 code removals, two are the parking false removals above. The other three are compound sentences that pair a supported clause with a note about the evidence (for example "…s. 295-403-2, which is not in this screen's evidence").
 
-**Reading.** On a clear case the check catches an excerpt that is unrelated to its claim (the planted pair: says_nothing at 1.00). On real briefs it mostly removes true sentences, whose grounding is the contract rather than the ordinance, and turning it on would send 8 of 15 briefs to the template. It stays off (decision 017).
+**Reading.** On a clear case the check catches an excerpt that is unrelated to its claim (the planted pair: says_nothing at 1.00). The formal hand check covers five of the 24 removals, and none of the five was false. The other 19 were read through but not checked one by one; most follow the same pattern of true sentences grounded in the contract, but that is an observation, not a verified count. Turning the check on would send 8 of 15 briefs to the template. It stays off (decision 017).
+
+## Re-run after the brief-selection fix (same day, same 15 briefs, same 297 pairs)
+
+The evaluator now takes the latest *validated* brief of each case across all its runs, not only the latest run's. All 15 cases had one on their latest run, so the same briefs were checked. JEV's answers still differed:
+
+| | |
+|---|---|
+| Sentences removed | 25 |
+| Of those, sent to review (a not-support answer below 0.8) | 21 |
+| Briefs that would fall back to the template | 7 (G03, G04, G05, G06, G10, G11, G14) |
+| p95 latency per brief | 336 ms |
+| Cost, all briefs | $0.00264 ($0.000176 per brief) |
+
+The difference is JEV's low-confidence answers varying between runs, not a change in the briefs: G01 kept its "Two checks failed" sentence this time. Repeat consistency is an M6 metric; this is a first data point. The hand check above refers to the first run.
