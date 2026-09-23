@@ -2,14 +2,14 @@
 // answer (the recipe gold.test.ts proves), offline retrieval freezes the evidence, and one contract is built and hashed.
 // Each model then writes a brief from that same contract through the production path: the contract's own output
 // schema, the eleven 05 §7 validators and at most one repair (MOO-838).
-// Usage: pnpm briefing:eval [--models claude-fable-5-1,claude-sonnet-5,openai/gpt-6-luna,google/gemini-3.8-flash] [--cases G01,G02] [--effort high] [--max-usd 15] [--prompt briefing.v2] [--runs 3] [--tag name] [--allow-retention openai/gpt-6-luna] | --rescore a.jsonl,b.jsonl --tag combined
+// Usage: pnpm briefing:eval [--models claude-fable-5-1,claude-sonnet-5,openai/gpt-6-luna,google/gemini-3.8-flash] [--cases G01,G02] [--effort high] [--max-usd 15] [--prompt briefing.v2] [--runs 3] [--tag name] [--allow-retention openai/gpt-6-luna] [--batch] | --rescore a.jsonl,b.jsonl --tag combined
 import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import postgres from "postgres";
 import { BANNED_PHRASES, DECISION_POLICY_V1, GoldCase, RuleCategory, ZoningRule, briefingOutputSchemaFor, type BriefingContract, type BriefingOutput } from "@parcelpilot/contracts";
 import {
   BRIEFING_MODELS, BRIEFING_PRICES, BRIEFING_PROMPT_VERSION, OPENROUTER_PRICES, briefingContractHash, buildBriefingContract, goldDecision,
-  validateBrief, writeBrief, writeBriefOpenRouter, writeValidatedBrief, type BriefingCall, type ValidatedBrief,
+  briefingBatcher, validateBrief, writeBrief, writeBriefOpenRouter, writeValidatedBrief, type BriefingCall, type ValidatedBrief,
 } from "@parcelpilot/zoning-core";
 import { retrieve } from "../retrieve.ts";
 import { assembleBundle } from "../bundle.ts";
@@ -24,6 +24,7 @@ const maxUsd = Number(flag("--max-usd") ?? 15);
 const runs = Math.max(1, Number(flag("--runs") ?? 1)); // repeat each case to measure consistency
 const allowRetention = (flag("--allow-retention") ?? "").split(",").filter(Boolean); // OpenRouter models run without zero data retention
 const rescore = flag("--rescore")?.split(","); // re-validate saved briefs against their contracts; no model calls
+const batch = args.includes("--batch"); // Message Batches API: half price, answers in minutes to hours (Claude models only)
 const tag = flag("--tag"); // a second run on the same day writes its own files instead of replacing the first
 const suffix = tag ? `${new Date().toISOString().slice(0, 10)}-${tag}` : new Date().toISOString().slice(0, 10);
 const root = join(import.meta.dirname, "..", "..", "..", "..");
@@ -124,8 +125,34 @@ if (rescore) {
   process.exit(0);
 }
 
+const report = (c: GoldCase, model: string, run: number, result: ValidatedBrief) => {
+  const hard = result.final.validation?.runs.filter((r) => r.effect === "brief_failed").map((r) => r.validator) ?? [];
+  const last = result.final.call;
+  console.log(`${c.id} r${run} ${model.padEnd(18)} ${result.outcome.padEnd(9)} attempts ${result.attempts.length} ${String(latencyOf(result)).padStart(6)} ms  $${costOf(result).toFixed(4)}${last.status === "failed" ? `  ${last.error.slice(0, 100)}` : ""}${hard.length ? `  failed: ${hard.join(", ")}` : ""}`);
+};
+
 try {
-  for (const c of cases) {
+  if (batch) {
+    const notClaude = models.filter((m) => !BRIEFING_PRICES[m]);
+    if (notClaude.length) throw new Error(`--batch is for Claude models only; drop ${notClaude.join(", ")}`);
+    // Every contract first, then every brief at once, so first attempts share one batch and repairs the next.
+    const built = [];
+    for (const c of cases) {
+      const contract = await withRetry(`contract ${c.id}`, () => contractFor(c));
+      const hash = briefingContractHash(contract);
+      built.push({ c, contract, hash, schema: briefingOutputSchemaFor(contract, hash) });
+    }
+    const batcher = briefingBatcher({
+      log: (m) => console.log(m),
+      approve: (n, worst) => { if (spent + worst > maxUsd) throw new Error(`spend cap: ${n} request(s) could cost up to $${worst.toFixed(2)} on top of $${spent.toFixed(2)}, over $${maxUsd}`); spent += worst; },
+    });
+    await Promise.all(built.flatMap(({ c, contract, hash, schema }) => models.flatMap((model) => Array.from({ length: runs }, async (_, i) => {
+      const result = await writeValidatedBrief({ contract, contractHash: hash, write: (repair) => batcher.write({ contract, contractHash: hash, system, model, schema, ...(repair ? { repair } : {}), ...(effort ? { effort } : {}) }) });
+      rows.push({ model, case: c.id, run: i + 1, hash, contract, result });
+      report(c, model, i + 1, result);
+    }))));
+    spent = rows.reduce((sum, r) => sum + costOf(r.result), 0); // actual, replacing the worst-case reservations
+  } else for (const c of cases) {
     const contract = await withRetry(`contract ${c.id}`, () => contractFor(c));
     const hash = briefingContractHash(contract);
     const schema = briefingOutputSchemaFor(contract, hash);
@@ -139,9 +166,7 @@ try {
       });
       spent += costOf(result);
       rows.push({ model, case: c.id, run, hash, contract, result });
-      const hard = result.final.validation?.runs.filter((r) => r.effect === "brief_failed").map((r) => r.validator) ?? [];
-      const last = result.final.call;
-      console.log(`${c.id} r${run} ${model.padEnd(18)} ${result.outcome.padEnd(9)} attempts ${result.attempts.length} ${String(latencyOf(result)).padStart(6)} ms  $${costOf(result).toFixed(4)}${last.status === "failed" ? `  ${last.error.slice(0, 100)}` : ""}${hard.length ? `  failed: ${hard.join(", ")}` : ""}`);
+      report(c, model, run, result);
     }
   }
 } finally {
@@ -188,7 +213,7 @@ function write() {
   };
   const lines = [
     `# Briefing model evaluation — ${date}`, "",
-    `Prompt \`${promptVersion}\`, schema \`briefing_output.v1\` with each contract's own output schema, effort ${effort ?? "model default"}, ${cases.length} gold case(s)${maxRun > 1 ? `, ${maxRun} runs per case` : ""}. Every brief ran the production path: the eleven 05 §7 validators (with decision 015's refinements) and at most one repair; "validated" means a user would see the model's brief, anything else means the templated brief. Measured by \`pnpm briefing:eval\`.`, "",
+    `Prompt \`${promptVersion}\`, schema \`briefing_output.v1\` with each contract's own output schema, effort ${effort ?? "model default"}${batch ? ", Message Batches API (half price; latency is time to batch completion)" : ""}, ${cases.length} gold case(s)${maxRun > 1 ? `, ${maxRun} runs per case` : ""}. Every brief ran the production path: the eleven 05 §7 validators (with decision 015's refinements) and at most one repair; "validated" means a user would see the model's brief, anything else means the templated brief. Measured by \`pnpm briefing:eval\`.`, "",
     "| Model | Briefs | Validated | Repaired (fixed) | No answer | p95 latency (incl. repair) | Cost per brief (incl. repair) | Cost this run |",
     "|---|---|---|---|---|---|---|---|",
     ...summary, "",

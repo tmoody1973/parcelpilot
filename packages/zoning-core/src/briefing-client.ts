@@ -38,31 +38,52 @@ export function briefingUserMessage(contract: BriefingContract, contractHash: st
   return `${base}\n\nAn earlier draft of this brief was rejected by automated checks. Write the brief again from the contract, fixing each of these:\n${repair.map((r) => `- ${r}`).join("\n")}`;
 }
 
-export async function writeBrief(i: {
+export type BriefRequest = {
   contract: BriefingContract; contractHash: string; system: string; model: string;
-  effort?: "low" | "medium" | "high" | "xhigh" | "max"; timeoutMs?: number; client?: Anthropic;
+  effort?: "low" | "medium" | "high" | "xhigh" | "max";
   schema?: z.ZodType; // briefingOutputSchemaFor(contract, hash); defaults to the general BriefingOutput
   repair?: string[]; // problems the previous attempt was rejected for
-}): Promise<BriefingCall> {
+};
+
+// One request body for the live call and the batch (briefing-batch.ts), so a batched brief is the same request.
+export function briefingParams(i: BriefRequest) {
+  const { parse, ...format } = zodOutputFormat((i.schema ?? BriefingOutput) as typeof BriefingOutput);
+  return {
+    parse,
+    params: {
+      model: i.model,
+      max_tokens: 16000,
+      system: i.system,
+      messages: [{ role: "user" as const, content: briefingUserMessage(i.contract, i.contractHash, i.repair) }],
+      output_config: { format, ...(i.effort ? { effort: i.effort } : {}) },
+    },
+  };
+}
+
+// A finished response → the call record. `discount` is 0.5 for the Batch API.
+export function briefingCallFrom(m: Anthropic.Message, parse: (text: string) => unknown, requested: string, latencyMs: number, discount = 1): BriefingCall {
+  const raw = m.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("");
+  const usage = { input_tokens: m.usage.input_tokens, output_tokens: m.usage.output_tokens };
+  const price = cost(requested, usage);
+  const base = { raw, model: m.model, usage, latencyMs, costUsd: price === null ? null : price * discount };
+  if (m.stop_reason === "refusal") return { status: "failed", error: `refusal${m.stop_details?.category ? `:${m.stop_details.category}` : ""}`, ...base };
+  if (m.stop_reason === "max_tokens") return { status: "failed", error: "max_tokens: output cut off", ...base };
+  try {
+    return { status: "ok", output: parse(raw) as BriefingOutput, ...base, costUsd: base.costUsd ?? 0 };
+  } catch {
+    return { status: "failed", error: "no parseable output", ...base };
+  }
+}
+
+export async function writeBrief(i: BriefRequest & { timeoutMs?: number; client?: Anthropic }): Promise<BriefingCall> {
   const started = performance.now();
   const elapsed = () => Math.round(performance.now() - started);
   if (!BRIEFING_PRICES[i.model]) return { status: "failed", error: `briefing model ${i.model} is not one of ${BRIEFING_MODELS.join(", ")}`, raw: null, model: null, usage: null, latencyMs: 0, costUsd: null };
   const client = i.client ?? new Anthropic();
   try {
-    const response = await client.messages.parse({
-      model: i.model,
-      max_tokens: 16000,
-      system: i.system,
-      messages: [{ role: "user", content: briefingUserMessage(i.contract, i.contractHash, i.repair) }],
-      output_config: { format: zodOutputFormat((i.schema ?? BriefingOutput) as typeof BriefingOutput), ...(i.effort ? { effort: i.effort } : {}) },
-    }, { timeout: i.timeoutMs ?? 120_000 });
-    const raw = response.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("");
-    const usage = { input_tokens: response.usage.input_tokens, output_tokens: response.usage.output_tokens };
-    const base = { raw, model: response.model, usage, latencyMs: elapsed(), costUsd: cost(i.model, usage) };
-    if (response.stop_reason === "refusal") return { status: "failed", error: `refusal${response.stop_details?.category ? `:${response.stop_details.category}` : ""}`, ...base };
-    if (response.stop_reason === "max_tokens") return { status: "failed", error: "max_tokens: output cut off", ...base };
-    if (!response.parsed_output) return { status: "failed", error: "no parseable output", ...base };
-    return { status: "ok", output: response.parsed_output, ...base, costUsd: base.costUsd ?? 0 };
+    const { params, parse } = briefingParams(i);
+    const response = await client.messages.parse({ ...params, output_config: { ...params.output_config, format: { ...params.output_config.format, parse } } }, { timeout: i.timeoutMs ?? 120_000 });
+    return briefingCallFrom(response, () => { if (!response.parsed_output) throw new Error("no parsed output"); return response.parsed_output; }, i.model, elapsed());
   } catch (e) {
     const error = e instanceof Anthropic.APIError ? `API ${e.status ?? "error"}: ${e.message}` : `briefing call failed: ${e instanceof Error ? e.message : String(e)}`;
     return { status: "failed", error: error.slice(0, 500), raw: null, model: null, usage: null, latencyMs: elapsed(), costUsd: null };
