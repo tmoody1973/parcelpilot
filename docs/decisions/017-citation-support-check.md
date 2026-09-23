@@ -25,7 +25,7 @@ Low-confidence removals become **pointer-only** review tasks. A task holds the b
 - **The hand check found no false claims.** Of five removals checked, none was false. Three were true sentences whose real source is the contract (parcel facts, findings, triggers), not the ordinance excerpt they cite. Two were near-verbatim support that JEV missed at low confidence (0.59, 0.34).
 - **Cheap and fast.** $0.00018 per brief; p95 322 ms; 0 failures.
 
-**What we chose and why.** Off. Turned on today it would hide correct briefs more than half the time and catch no false claims on the gold set. That is the same trade decision 012 turned down for the reranker. The code, the flag, the logging and the review-task path are in place, so it can be switched on as soon as a better-shaped version measures well.
+**What we chose and why.** Off. Turned on today it would send 8 of 15 briefs to the template, and none of the five removals hand-checked was a false claim (the other 19 were read through but not checked one by one). That is the same trade decision 012 turned down for the reranker. The code, the flag, the logging and the review-task path are in place, so it can be switched on as soon as a better-shaped version measures well.
 
 **What we gave up.** Until it is on, nothing checks that a cited excerpt says what its sentence claims. A number quoted from an off-topic excerpt (decision 015's known gap) is still not caught.
 
