@@ -2,7 +2,7 @@
 // answer (the recipe gold.test.ts proves), offline retrieval freezes the evidence, and one contract is built and hashed.
 // Each model then writes a brief from that same contract, scored by quick pre-validator checks. These checks are not
 // the MOO-838 validators; they are enough to compare models before the validators exist.
-// Usage: pnpm briefing:eval [--models claude-fable-5-1,claude-sonnet-5,openai/gpt-6-luna,google/gemini-3.8-flash] [--cases G01,G02] [--effort high] [--max-usd 15] [--tag name] [--allow-retention openai/gpt-6-luna]
+// Usage: pnpm briefing:eval [--models claude-fable-5-1,claude-sonnet-5,openai/gpt-6-luna,google/gemini-3.8-flash] [--cases G01,G02] [--effort high] [--max-usd 15] [--tag name] [--allow-retention openai/gpt-6-luna] | --rescore a.jsonl,b.jsonl --tag combined
 import { readdirSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import postgres from "postgres";
@@ -20,6 +20,7 @@ const only = flag("--cases")?.split(",");
 const effort = flag("--effort") as "low" | "medium" | "high" | undefined;
 const maxUsd = Number(flag("--max-usd") ?? 15);
 const allowRetention = (flag("--allow-retention") ?? "").split(",").filter(Boolean); // OpenRouter models run without zero data retention
+const rescore = flag("--rescore")?.split(","); // re-check saved briefs against rebuilt contracts; no model calls
 const tag = flag("--tag"); // a second run on the same day writes its own files instead of replacing the first
 const suffix = tag ? `${new Date().toISOString().slice(0, 10)}-${tag}` : new Date().toISOString().slice(0, 10);
 const root = join(import.meta.dirname, "..", "..", "..", "..");
@@ -63,8 +64,10 @@ function check(contract: BriefingContract, hash: string, o: BriefingOutput) {
   const claims = sentences.filter((s) => s.kind === "fact" || s.kind === "code" || s.kind === "finding");
   const mustCover = contract.verified_findings.filter((f) => f.status === "fail" || f.status === "verify").map((f) => f.finding_id);
   const covered = new Set(o.verified_findings.map((v) => v.finding_id));
-  const contractText = JSON.stringify(contract);
-  const invented = sentences.flatMap((s) => s.text.match(/\d[\d,.]*\d|\d/g) ?? []).filter((n) => !contractText.includes(n));
+  // Numbers compare without thousands separators: the contract may hold 29934 where a sentence writes 29,934.
+  const bare = (n: string) => n.replace(/,/g, "").replace(/\.$/, "");
+  const contractNumbers = new Set((JSON.stringify(contract).match(/\d[\d,.]*\d|\d/g) ?? []).map(bare));
+  const invented = sentences.flatMap((s) => s.text.match(/\d[\d,.]*\d|\d/g) ?? []).map(bare).filter((n) => !contractNumbers.has(n));
   const banned = findBannedPhrases([...sentences.map((s) => s.text), o.disclaimer].join("\n"));
   const abstains = contract.final_decision.status !== "insufficient_evidence"
     || (o.suggested_actions.every((a) => a.action_id === "collect_missing_information" || a.action_id === "contact_city") && !sentences.some((s) => s.kind === "finding"));
@@ -88,6 +91,32 @@ function check(contract: BriefingContract, hash: string, o: BriefingOutput) {
 type Row = { model: string; case: string; call: BriefingCall; checks: ReturnType<typeof check> | null; hash: string };
 const rows: Row[] = [];
 let spent = 0;
+type Saved = { case: string; model: string; contract_hash: string; status: "ok" | "failed"; model_version: string | null; error: string | null; usage: { input_tokens: number; output_tokens: number } | null; latency_ms: number; cost_usd: number | null; output: BriefingOutput | null };
+if (rescore) {
+  // Every saved brief is re-checked against its case's contract, rebuilt exactly as the run built it. A hash mismatch
+  // means the brief was written from different input, so it is counted and left unscored rather than scored.
+  // A later file's brief for the same model and case replaces an earlier one (a retry after a provider outage).
+  const saved = [...new Map(rescore.flatMap((p) => readFileSync(p, "utf8").trim().split("\n").map((l) => JSON.parse(l) as Saved)).map((x) => [`${x.model}|${x.case}`, x])).values()];
+  models.splice(0, models.length, ...[...new Set(saved.map((x) => x.model))]);
+  const contracts = new Map<string, { contract: BriefingContract; hash: string }>();
+  try {
+    for (const c of cases) { const contract = await contractFor(c); contracts.set(c.id, { contract, hash: briefingContractHash(contract) }); }
+  } finally { await sql.end(); }
+  let mismatched = 0;
+  for (const x of saved) {
+    const k = contracts.get(x.case);
+    if (!k) continue;
+    if (k.hash !== x.contract_hash) mismatched++;
+    const call: BriefingCall = x.status === "ok" && x.output
+      ? { status: "ok", output: x.output, raw: "", model: x.model_version ?? x.model, usage: x.usage!, latencyMs: x.latency_ms, costUsd: x.cost_usd ?? 0 }
+      : { status: "failed", error: x.error ?? "unknown", raw: null, model: x.model_version, usage: x.usage, latencyMs: x.latency_ms, costUsd: x.cost_usd };
+    const checks = call.status === "ok" && k.hash === x.contract_hash ? check(k.contract, k.hash, call.output) : null;
+    rows.push({ model: x.model, case: x.case, call, checks, hash: x.contract_hash });
+  }
+  console.log(`rescored ${rows.length} briefs from ${rescore.length} files; contract hash mismatches: ${mismatched}`);
+  write();
+  process.exit(0);
+}
 try {
   for (const c of cases) {
     const contract = await contractFor(c);
@@ -129,7 +158,7 @@ function write() {
     "Per case (✓ all checks pass, ✗ a check failed, – no schema-valid answer):", "",
     `| Case | ${models.join(" | ")} |`, `|---|${models.map(() => "---").join("|")}|`,
     ...cases.filter((c) => rows.some((r) => r.case === c.id)).map((c) => `| ${c.id} | ${models.map((m) => { const r = rows.find((x) => x.case === c.id && x.model === m); return !r ? "" : !r.checks ? `– ${r.call.status === "failed" ? r.call.error.slice(0, 40) : ""}` : r.checks.pass ? "✓" : `✗ ${Object.entries(r.checks).filter(([k, v]) => k !== "pass" && (v === false || (typeof v === "number" && ((k.endsWith("precision") || k.endsWith("coverage")) ? v < 1 : ["uncited_claims", "disallowed_actions", "banned_hits", "invented_numbers"].includes(k) && v > 0)))).map(([k]) => k).join(", ")}`; }).join(" | ")} |`),
-    "", `Banned phrases checked: ${BANNED_PHRASES.join(", ")}. Prices per million input / output tokens: claude-fable-5-1 $10 / $50, claude-sonnet-5 $2 / $10, claude-opus-5-5 $4 / $20 (thinking billed as output); via OpenRouter (strict structured outputs, no training on data, zero data retention except ${allowRetention.length ? allowRetention.join(", ") : "none"}) openai/gpt-6-luna $0.10 / $0.50, google/gemini-3.8-flash $0.75 / $3.75, openai/gpt-6-sol $2 / $10. Every brief, its contract hash and its checks are in \`briefings-${date}.jsonl\`.`, "",
+    "", `Banned phrases checked: ${BANNED_PHRASES.join(", ")}. Prices per million input / output tokens: claude-fable-5-1 $10 / $50, claude-sonnet-5 $2 / $10, claude-opus-5-5 $4 / $20 (thinking billed as output); via OpenRouter (strict structured outputs, no training on data, zero data retention except ${allowRetention.length ? allowRetention.join(", ") : "none"}) openai/gpt-6-luna $0.10 / $0.50, google/gemini-3.8-flash $0.75 / $3.75, openai/gpt-6-sol $2 / $10, moonshotai/kimi-k3 $3 / $15, deepseek/deepseek-v4.1-flash $0.10 / $0.50 (list prices; open-weight hosts vary). Every brief, its contract hash and its checks are in \`briefings-${date}.jsonl\`.`, "",
   ];
   mkdirSync(join(root, "docs", "eval"), { recursive: true });
   writeFileSync(join(root, "docs", "eval", `briefing-model-${suffix}.md`), lines.join("\n"));

@@ -12,6 +12,9 @@ export const OPENROUTER_PRICES: Record<string, { input: number; output: number }
   "openai/gpt-6-luna": { input: 0.1, output: 0.5 },
   "google/gemini-3.8-flash": { input: 0.75, output: 3.75 },
   "openai/gpt-6-sol": { input: 2, output: 10 }, // launched 2026-09-22; OpenAI-hosted, no zero-retention endpoint
+  // Open-weight models served by third-party hosts; list prices (hosts vary, OpenRouter routes to the cheapest eligible).
+  "moonshotai/kimi-k3": { input: 3, output: 15 },
+  "deepseek/deepseek-v4.1-flash": { input: 0.1, output: 0.5 },
 };
 
 // Strict mode (OpenAI-style) needs every property listed as required and no unsupported keywords. An optional property
