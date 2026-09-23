@@ -189,3 +189,22 @@ Sources: 06 M5, 05 §3–§9, decision 012. Tarik's calls: all eight; the briefi
 | MOO-839 | Memo from the validated brief — preliminary label, citations to pages, banned-word scan across the gold set | MOO-838 |
 | MOO-840 | Gold set through shadow + comparison dashboard — /review/decisions, CI fails on unsafe-permissive > 0 | 836, 839 |
 | MOO-841 | Citation-support check (JEV, flag off by default) — can only remove sentences | MOO-838 |
+
+## M6 (created 2026-09-23, in dependency order)
+Sources: 06 M6 (exit criteria = PRD §9.4 gates verbatim), 08 Q-06/Q-27/Q-28/Q-29/Q-30, decisions 016 and 017. Tarik's calls:
+- **Labels:** Tarik labels all 50 cases as interim reviewer. Reports say plainly that the gates are measured against product-owner labels, and Q-28 (reviewer agreement) stays unmeasurable with one labeler.
+- **Dashboard:** in-app, extending `/review/decisions` plus a committed report per run, not Grafana or Metabase.
+- **Baseline:** comparator 2 is `claude-sonnet-5`.
+
+Starting state: 15 gold cases, all `unreviewed`. JEV in shadow: unsafe-permissive 0, high-risk recall 13/13, route agreement 67% (the gate is 85%), p95 265 ms. The citation-support check is off.
+
+| # | Issue | Depends on |
+|---|---|---|
+| MOO-842 | Gold cases 16–50 drafted — every PRD case type, minimum count per category and route | — |
+| MOO-843 | Gold set review + freeze v1 — Tarik labels all 50, disagreements recorded, frozen by hash in CI | 842 |
+| MOO-844 | Structured-output baseline (comparator 2) — Sonnet 5, same four questions, provider=baseline | 843 |
+| MOO-845 | Stability + calibration — k repeats per frozen state; confidence bands vs the reviewer's labels | 843, 844 |
+| MOO-846 | Launch-gate report + dashboard — every §9.4 gate, three comparators | 844, 845 |
+| MOO-847 | Citation-support reshape + re-measure (decision 017 candidates) | 843 |
+| MOO-848 | Limitation language + pilot copy sign-off; Q-06 user test; Q-30 answered | — |
+| MOO-849 | Go/no-go (decision 018) + pilot-ready build: rules_only regression, staging, prod-readiness | 846, 847, 848 |
