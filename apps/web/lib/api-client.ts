@@ -2,6 +2,8 @@ import type { Envelope } from "./http.ts";
 import type { FeasibilityRun, GeocodeSuggestion, Project, ProjectDetail, ResolveResult, Scenario, ScenarioInputs } from "./dto.ts";
 import type { ApproveResult, AuditRef, ReviewTask, SourceSummary, TaskDetail } from "./review-dto.ts";
 import type { ResolveInputBody } from "./validation.ts";
+import type { GoldComparison } from "@parcelpilot/db";
+import type { ShadowMetrics } from "@parcelpilot/zoning-core";
 
 // Browser-side wrapper over the route handlers. Unwraps the { ok, data, error } envelope and throws on failure.
 
@@ -48,5 +50,6 @@ export const api = {
   rejectTask: (id: string, reason: string) => postJson(`/api/review/tasks/${id}/reject`, { reason }).then((r) => unwrap<ReviewTask>(r)),
   editTask: (id: string, reason: string, patch: Record<string, unknown>) => postJson(`/api/review/tasks/${id}/edit`, { reason, patch }).then((r) => unwrap<ReviewTask>(r)),
   listSources: () => fetch("/api/review/sources").then((r) => unwrap<SourceSummary[]>(r)),
+  listGoldDecisions: () => fetch("/api/review/decisions").then((r) => unwrap<{ rows: GoldComparison[]; metrics: ShadowMetrics }>(r)),
   transitionSource: (id: string, action: "activate" | "supersede" | "withdraw", body: { successor_id?: string; reason?: string }) => postJson(`/api/review/sources/${id}/${action}`, body).then((r) => unwrap<{ id: string; status: string; effective_end: string | null; audit: AuditRef }>(r)),
 };

@@ -19,3 +19,4 @@ export * from "./briefing-pipeline.ts";
 export * from "./memo/brief-sections.ts";
 export * from "./gold-decision.ts";
 export * from "./briefing-batch.ts";
+export * from "./shadow-metrics.ts";
