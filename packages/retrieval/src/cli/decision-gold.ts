@@ -7,7 +7,7 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import postgres from "postgres";
-import { DECISION_POLICY_V1, GoldCase, ZoningRule, type JevRoute, type PolicyFlags } from "@parcelpilot/contracts";
+import { DECISION_POLICY_V1, GoldCase, ZoningRule, inScoredSet, type JevRoute, type PolicyFlags } from "@parcelpilot/contracts";
 import { briefRun, goldComparisons, goldOrgId, goldSnapshot, lockGoldRun, recordJevRun } from "@parcelpilot/db";
 import { RULES_ENGINE_VERSION } from "@parcelpilot/rules-engine";
 import {
@@ -31,7 +31,7 @@ const contracts = join(root, "packages", "contracts");
 const RULES = readdirSync(join(contracts, "rules")).filter((f) => f.endsWith(".json"))
   .flatMap((f) => (JSON.parse(readFileSync(join(contracts, "rules", f), "utf8")).rules as unknown[]).map((r) => ZoningRule.parse(r)));
 const cases = readdirSync(join(contracts, "gold")).filter((f) => f.endsWith(".json")).sort()
-  .map((f) => GoldCase.parse(JSON.parse(readFileSync(join(contracts, "gold", f), "utf8")))).filter((c) => !only || only.includes(c.id));
+  .map((f) => GoldCase.parse(JSON.parse(readFileSync(join(contracts, "gold", f), "utf8")))).filter((c) => (!only || only.includes(c.id)) && inScoredSet(c)); // rejected cases are not scored
 const knownUses = RULES.filter((r) => r.kind === "allowed_use").flatMap((r) => Object.keys((r.params as { uses?: Record<string, string> }).uses ?? {}));
 
 const service = postgres(process.env["DATABASE_SERVICE_URL"] ?? "postgres://parcelpilot_service:parcelpilot-service@localhost:5432/parcelpilot", { max: 2 });

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { GoldCase, ZoningRule, type DecisionLayerOutput, type JevRisk, type JevRoute, type PolicyFlags } from "@parcelpilot/contracts";
+import { GoldCase, ZoningRule, expertLabel, inScoredSet, type DecisionLayerOutput, type JevRisk, type JevRoute, type PolicyFlags } from "@parcelpilot/contracts";
 import { goldDecision, goldMemoInput } from "./gold-decision.ts";
 import { buildPreparedState } from "./prepared-state.ts";
 import { finalStatus } from "./policy.ts";
@@ -28,13 +28,13 @@ const briefs = new Map((JSON.parse(readFileSync(join(import.meta.dirname, "memo"
 // recorded after the gold set is reviewed and frozen (MOO-843); until then they are listed, never silently passed.
 const FIRST_RECORDED = Array.from({ length: 15 }, (_, i) => `G${String(i + 1).padStart(2, "0")}`);
 // The gate needs only JEV's answer; the per-case memo check also needs the saved brief.
-const recorded = cases.filter((c) => jev[c.id]);
+const recorded = cases.filter((c) => jev[c.id] && inScoredSet(c)); // rejected cases are not scored
 const unrecorded = cases.filter((c) => !jev[c.id]).map((c) => c.id);
 const rows: ShadowRow[] = recorded.map((c) => {
   const d = goldDecision(c, RULES, ANALYSIS_DATE);
   const r = jev[c.id];
   return {
-    case_id: c.id, rules_route: d.policy.route as JevRoute, expert_route: c.expected.route as JevRoute, expert_status: c.expected.final_status,
+    case_id: c.id, rules_route: d.policy.route as JevRoute, expert_route: expertLabel(c).route as JevRoute, expert_status: expertLabel(c).final_status,
     jev_status: r?.status ?? null, jev_route: r?.route ?? null, jev_confidence: r?.confidence ?? null,
     jev_latency_ms: null, jev_cost_usd: null, brief_outcome: null, brief_cost_usd: null,
   };

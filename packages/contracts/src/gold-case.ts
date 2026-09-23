@@ -76,8 +76,19 @@ export const GoldCase = z.object({
     drafted_by: z.string(),
     drafted_at: z.string(),
     reviewer: z.string().nullable(),
+    reviewed_at: z.string().nullable().optional(),
     notes: z.string(),
+    // The reviewer's answer when it differs from the drafted one (08 Q-29): kept next to `expected`, never over it.
+    // `expected` stays what the engine must reproduce (gold.test); the launch gates score against this label.
+    label: z.object({ final_status: FinalStatus, route: JevRoute, reason: z.string().min(1) }).optional(),
+    reason: z.string().optional(), // a rejection's reason, or the reviewer's note on an approval
   }),
 });
+
+// The expert answer the M6 gates score against: the reviewer's label where they changed it, else the drafted one.
+export const expertLabel = (c: GoldCase): { final_status: GoldCase["expected"]["final_status"]; route: GoldCase["expected"]["route"] } =>
+  c.review.label ? { final_status: c.review.label.final_status, route: c.review.label.route } : { final_status: c.expected.final_status, route: c.expected.route };
+// A rejected case stays in the repo for the record but is not part of the scored set.
+export const inScoredSet = (c: GoldCase) => c.review.status !== "rejected";
 export type GoldCase = z.infer<typeof GoldCase>;
 export { CoverageBucket };
