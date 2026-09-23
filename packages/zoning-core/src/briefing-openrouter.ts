@@ -4,7 +4,8 @@ import type { BriefingCall } from "./briefing-client.ts";
 
 // Non-Claude briefing candidates through OpenRouter (MOO-837 evaluation; Tarik, 2026-09-22). Same prompt, same contract,
 // same schema and the same result shape as the Claude path, so the eval scores every model identically. Requests are
-// routed only to providers that support strict structured outputs and neither retain nor train on the data.
+// routed only to providers that support strict structured outputs, never train on the data, and keep zero data
+// retention unless the caller opts one model out (allowRetention).
 
 // USD per million tokens, from openrouter.ai/api/v1/models on 2026-09-22.
 export const OPENROUTER_PRICES: Record<string, { input: number; output: number }> = {
@@ -34,6 +35,9 @@ export const BRIEFING_OUTPUT_STRICT_SCHEMA = strictSchema(z.toJSONSchema(Briefin
 export async function writeBriefOpenRouter(i: {
   contract: BriefingContract; contractHash: string; system: string; model: string;
   apiKey?: string | undefined; timeoutMs?: number; fetchImpl?: typeof fetch;
+  // Zero data retention is required unless a caller opts out for one named model (eval only; Tarik, 2026-09-22 for
+  // GPT-6 Luna, whose endpoints are all OpenAI-hosted without ZDR). Training on the data is refused either way.
+  allowRetention?: boolean;
 }): Promise<BriefingCall> {
   const started = performance.now();
   const elapsed = () => Math.round(performance.now() - started);
@@ -53,7 +57,7 @@ export async function writeBriefOpenRouter(i: {
         messages: [{ role: "system", content: i.system }, { role: "user", content: `contract_hash: ${i.contractHash}\n\ncontract:\n${JSON.stringify(i.contract)}` }],
         response_format: { type: "json_schema", json_schema: { name: "briefing_output_v1", strict: true, schema: BRIEFING_OUTPUT_STRICT_SCHEMA } },
         max_tokens: 16000,
-        provider: { require_parameters: true, data_collection: "deny", zdr: true },
+        provider: { require_parameters: true, data_collection: "deny", ...(i.allowRetention ? {} : { zdr: true }) },
       }),
     });
   } catch (e) {

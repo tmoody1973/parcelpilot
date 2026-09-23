@@ -34,6 +34,9 @@ test("one request with the strict schema and no-retention routing; nulls strippe
   const body = s.calls[0]!;
   assert.deepEqual([body["model"], body["response_format"].type, body["response_format"].json_schema.strict, body["provider"]], ["openai/gpt-6-luna", "json_schema", true, { require_parameters: true, data_collection: "deny", zdr: true }]);
   assert.equal(body["messages"][0].content, "sys");
+  const relaxed = stub(200, reply(out));
+  await writeBriefOpenRouter({ contract, contractHash: "a".repeat(64), system: "sys", model: "openai/gpt-6-luna", apiKey: "k", fetchImpl: relaxed.fetchImpl, allowRetention: true });
+  assert.deepEqual(relaxed.calls[0]!["provider"], { require_parameters: true, data_collection: "deny" }, "opting out drops only zdr; no-training stays");
   if (r.status === "ok") {
     assert.equal(r.model, "openai/gpt-6-luna-20260922", "the served model is recorded verbatim");
     assert.equal(r.output.executive_summary[0]!.numbers, undefined, "a null optional field is dropped before parsing");

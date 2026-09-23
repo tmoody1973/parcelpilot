@@ -2,7 +2,7 @@
 // answer (the recipe gold.test.ts proves), offline retrieval freezes the evidence, and one contract is built and hashed.
 // Each model then writes a brief from that same contract, scored by quick pre-validator checks. These checks are not
 // the MOO-838 validators; they are enough to compare models before the validators exist.
-// Usage: pnpm briefing:eval [--models claude-fable-5-1,claude-sonnet-5,openai/gpt-6-luna,google/gemini-3.8-flash] [--cases G01,G02] [--effort high] [--max-usd 15] [--tag name]
+// Usage: pnpm briefing:eval [--models claude-fable-5-1,claude-sonnet-5,openai/gpt-6-luna,google/gemini-3.8-flash] [--cases G01,G02] [--effort high] [--max-usd 15] [--tag name] [--allow-retention openai/gpt-6-luna]
 import { readdirSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import postgres from "postgres";
@@ -19,6 +19,7 @@ const models = (flag("--models") ?? BRIEFING_MODELS.join(",")).split(",");
 const only = flag("--cases")?.split(",");
 const effort = flag("--effort") as "low" | "medium" | "high" | undefined;
 const maxUsd = Number(flag("--max-usd") ?? 15);
+const allowRetention = (flag("--allow-retention") ?? "").split(",").filter(Boolean); // OpenRouter models run without zero data retention
 const tag = flag("--tag"); // a second run on the same day writes its own files instead of replacing the first
 const suffix = tag ? `${new Date().toISOString().slice(0, 10)}-${tag}` : new Date().toISOString().slice(0, 10);
 const root = join(import.meta.dirname, "..", "..", "..", "..");
@@ -94,7 +95,7 @@ try {
     for (const model of models) {
       if (spent >= maxUsd) throw new Error(`spend cap reached: $${spent.toFixed(2)} of $${maxUsd}; stopping before ${c.id} on ${model}`);
       const call = OPENROUTER_PRICES[model]
-        ? await writeBriefOpenRouter({ contract, contractHash: hash, system, model, apiKey: process.env["OPENROUTER_API_KEY"] })
+        ? await writeBriefOpenRouter({ contract, contractHash: hash, system, model, apiKey: process.env["OPENROUTER_API_KEY"], allowRetention: allowRetention.includes(model) })
         : await writeBrief({ contract, contractHash: hash, system, model, ...(effort ? { effort } : {}) });
       spent += call.costUsd ?? 0;
       const checks = call.status === "ok" ? check(contract, hash, call.output) : null;
@@ -128,7 +129,7 @@ function write() {
     "Per case (✓ all checks pass, ✗ a check failed, – no schema-valid answer):", "",
     `| Case | ${models.join(" | ")} |`, `|---|${models.map(() => "---").join("|")}|`,
     ...cases.filter((c) => rows.some((r) => r.case === c.id)).map((c) => `| ${c.id} | ${models.map((m) => { const r = rows.find((x) => x.case === c.id && x.model === m); return !r ? "" : !r.checks ? `– ${r.call.status === "failed" ? r.call.error.slice(0, 40) : ""}` : r.checks.pass ? "✓" : `✗ ${Object.entries(r.checks).filter(([k, v]) => k !== "pass" && (v === false || (typeof v === "number" && ((k.endsWith("precision") || k.endsWith("coverage")) ? v < 1 : ["uncited_claims", "disallowed_actions", "banned_hits", "invented_numbers"].includes(k) && v > 0)))).map(([k]) => k).join(", ")}`; }).join(" | ")} |`),
-    "", `Banned phrases checked: ${BANNED_PHRASES.join(", ")}. Prices per million input / output tokens: claude-fable-5-1 $10 / $50, claude-sonnet-5 $2 / $10 (thinking billed as output); via OpenRouter (strict structured outputs, no data retention) openai/gpt-6-luna $0.10 / $0.50, google/gemini-3.8-flash $0.75 / $3.75. Every brief, its contract hash and its checks are in \`briefings-${date}.jsonl\`.`, "",
+    "", `Banned phrases checked: ${BANNED_PHRASES.join(", ")}. Prices per million input / output tokens: claude-fable-5-1 $10 / $50, claude-sonnet-5 $2 / $10 (thinking billed as output); via OpenRouter (strict structured outputs, no training on data, zero data retention except ${allowRetention.length ? allowRetention.join(", ") : "none"}) openai/gpt-6-luna $0.10 / $0.50, google/gemini-3.8-flash $0.75 / $3.75. Every brief, its contract hash and its checks are in \`briefings-${date}.jsonl\`.`, "",
   ];
   mkdirSync(join(root, "docs", "eval"), { recursive: true });
   writeFileSync(join(root, "docs", "eval", `briefing-model-${suffix}.md`), lines.join("\n"));
