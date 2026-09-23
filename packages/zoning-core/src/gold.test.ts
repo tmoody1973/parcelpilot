@@ -17,10 +17,10 @@ const rulesDir = join(import.meta.dirname, "..", "..", "contracts", "rules");
 const RULES: Rule[] = readdirSync(rulesDir).filter((f) => f.endsWith(".json")).flatMap((f) => (JSON.parse(readFileSync(join(rulesDir, f), "utf8")).rules as unknown[]).map((r) => ZoningRule.parse(r)));
 const cases = readdirSync(goldDir).filter((f) => f.endsWith(".json")).sort().map((f) => GoldCase.parse(JSON.parse(readFileSync(join(goldDir, f), "utf8"))));
 
-test("the gold set has 15 cases and the rule data covers their districts", () => {
-  assert.equal(cases.length, 15);
+test("the gold set has at least 50 cases and the rule data covers their districts", () => {
+  assert.ok(cases.length >= 50, `${cases.length} cases`);
   const districts = new Set(RULES.map((r) => r.district_code));
-  for (const c of cases) for (const d of c.parcel.base_zoning) if (c.parcel.source === "real" || c.district === d) assert.ok(districts.has(d) || d === "RT4", `${c.id}: no rules for ${d}`);
+  for (const c of cases) for (const d of c.parcel.base_zoning) if (c.parcel.source === "real" || c.district === d) assert.ok(districts.has(d) || d === "RT4" || d === "RS6", `${c.id}: no rules for ${d}`);
 });
 
 for (const c of cases) {
@@ -67,3 +67,14 @@ for (const c of cases) {
     assert.deepEqual(r.policy_flags, e.policy_flags, `${c.id} policy_flags`);
   });
 }
+
+// MOO-842: minimum coverage, so no route or category rests on one or two examples. Side and rear setbacks cannot fail
+// under the seeded rules (their minimum is 0, "none required"), so they carry no fail minimum.
+test("the gold set covers every route and every category that can fail", () => {
+  const count = (f: (c: GoldCase) => boolean) => cases.filter(f).length;
+  const routes = ["proceed_to_concept_design", "revise_scenario", "contact_city", "engage_zoning_professional", "collect_missing_information", "insufficient_evidence"] as const;
+  for (const r of routes) assert.ok(count((c) => c.expected.route === r) >= 3, `route ${r}: ${count((c) => c.expected.route === r)}`);
+  assert.ok(count((c) => c.expected.route === "proceed_to_concept_design") >= 12, "at least 12 proceed cases, so precision is measurable");
+  for (const cat of ["use", "height", "setback_front", "density"] as const) assert.ok(count((c) => c.expected.findings[cat]?.status === "fail") >= 3, `${cat} fails: ${count((c) => c.expected.findings[cat]?.status === "fail")}`);
+  assert.ok(count((c) => c.parcel.source === "real") >= 30, "most cases sit on real parcels");
+});

@@ -1,0 +1,180 @@
+{
+  "id": "G35",
+  "version": 1,
+  "title": "LB1 missing input: unit count omitted",
+  "district": "LB1",
+  "parcel": {
+    "source": "real",
+    "taxkey": "2510127000",
+    "address": "7528 W Appleton Av",
+    "lot_area_sqft": 4800,
+    "base_zoning": [
+      "LB1"
+    ],
+    "lot_area_suspect": false,
+    "overlays": [],
+    "special_districts": [],
+    "floodplain": [],
+    "gis_ambiguity": false,
+    "stacked_condo_candidates": [],
+    "source_layer": "parcels_mprop/MapServer/2",
+    "retrieved_at": "2026-09-23"
+  },
+  "scenario": {
+    "use": "multifamily",
+    "stories": 3,
+    "height_ft": 35,
+    "footprint_sqft": 4000,
+    "setback_front_ft": 0,
+    "setback_side_ft": 0,
+    "setback_rear_ft": 15,
+    "parking_spaces": 4,
+    "ground_floor_use": "retail",
+    "ground_floor_commercial_sqft": 2500
+  },
+  "expected": {
+    "findings": {
+      "use": {
+        "status": "pass",
+        "criticality": "critical",
+        "proposed": {
+          "value": "multifamily"
+        },
+        "allowed": {
+          "value": "Y",
+          "operator": "in"
+        },
+        "note": "proposed: multifamily | allowed: Y (Table 295-603-1)"
+      },
+      "height": {
+        "status": "pass",
+        "criticality": "critical",
+        "proposed": {
+          "value": 35,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 45,
+          "unit": "ft",
+          "operator": "<="
+        },
+        "note": "proposed: 35 ft | allowed: <= 45 ft"
+      },
+      "setback_front": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": {
+          "value": 0,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 70,
+          "unit": "ft",
+          "operator": "<="
+        },
+        "note": "proposed: 0 ft | allowed: max 70 ft"
+      },
+      "setback_side": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": {
+          "value": 0,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 0,
+          "unit": "ft",
+          "operator": ">="
+        },
+        "note": "proposed: 0 ft | allowed: none required"
+      },
+      "setback_rear": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": {
+          "value": 15,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 0,
+          "unit": "ft",
+          "operator": ">="
+        },
+        "note": "proposed: 15 ft | allowed: none required"
+      },
+      "density": {
+        "status": "insufficient_evidence",
+        "criticality": "high",
+        "reason": "missing_input:units"
+      }
+    },
+    "coverage": {
+      "checked": [
+        "use",
+        "height",
+        "setback_front",
+        "setback_side",
+        "setback_rear"
+      ],
+      "manual_review": [
+        "density"
+      ],
+      "unknown": [
+        "parking",
+        "lot_coverage"
+      ]
+    },
+    "evidence": {
+      "citation_validator_passed": true,
+      "active_code_version": true
+    },
+    "policy_flags": {
+      "deterministic_critical_fail": false,
+      "special_district_detected": false,
+      "missing_required_input": true,
+      "gis_ambiguity": false
+    },
+    "final_status": "insufficient_evidence",
+    "route": "collect_missing_information",
+    "triggers": [],
+    "reasons": [
+      "O2:missing_required_input"
+    ]
+  },
+  "citations": [
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 16,
+      "printed_page": 824,
+      "section": "295-605-2",
+      "table": "Table 295-605-2",
+      "note": "Principal building design standards: height max, lot area per dwelling unit, setbacks by district"
+    },
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 2,
+      "printed_page": 812,
+      "section": "295-603-1",
+      "table": "Table 295-603-1",
+      "note": "Use table row 'Multi-family dwelling' = Y in LB1 and LB2"
+    },
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 3,
+      "printed_page": 813,
+      "section": "295-603-1",
+      "table": "Table 295-603-1",
+      "note": "Use table row 'Retail establishment, general' = L (limited use) in LB1 and LB2"
+    }
+  ],
+  "review": {
+    "status": "unreviewed",
+    "drafted_by": "claude-opus-5-5 (draft for reviewer correction, MOO-842)",
+    "drafted_at": "2026-09-23",
+    "reviewer": null,
+    "notes": ""
+  }
+}

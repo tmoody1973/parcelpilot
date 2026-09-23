@@ -1,0 +1,140 @@
+{
+  "id": "G46",
+  "version": 1,
+  "title": "LB2 parcel straddles LB2 and RS6 (synthetic sliver)",
+  "district": "LB2",
+  "parcel": {
+    "source": "synthetic",
+    "taxkey": "1180272000",
+    "address": "6835 N 76th St",
+    "lot_area_sqft": 29118,
+    "base_zoning": [
+      "LB2",
+      "RS6"
+    ],
+    "lot_area_suspect": false,
+    "overlays": [],
+    "special_districts": [],
+    "floodplain": [],
+    "gis_ambiguity": true,
+    "stacked_condo_candidates": [],
+    "source_layer": "parcels_mprop/MapServer/2",
+    "retrieved_at": "2026-09-23"
+  },
+  "scenario": {
+    "use": "multifamily",
+    "units": 20,
+    "stories": 4,
+    "height_ft": 44,
+    "footprint_sqft": 4000,
+    "setback_front_ft": 0,
+    "setback_side_ft": 0,
+    "setback_rear_ft": 15,
+    "parking_spaces": 20,
+    "ground_floor_use": "retail",
+    "ground_floor_commercial_sqft": 2500
+  },
+  "expected": {
+    "findings": {
+      "use": {
+        "status": "verify",
+        "criticality": "critical",
+        "reason": "multiple_districts"
+      },
+      "height": {
+        "status": "verify",
+        "criticality": "critical",
+        "reason": "multiple_districts"
+      },
+      "setback_front": {
+        "status": "verify",
+        "criticality": "high",
+        "reason": "multiple_districts"
+      },
+      "setback_side": {
+        "status": "verify",
+        "criticality": "high",
+        "reason": "multiple_districts"
+      },
+      "setback_rear": {
+        "status": "verify",
+        "criticality": "high",
+        "reason": "multiple_districts"
+      },
+      "density": {
+        "status": "verify",
+        "criticality": "high",
+        "reason": "multiple_districts"
+      }
+    },
+    "coverage": {
+      "checked": [],
+      "manual_review": [
+        "use",
+        "height",
+        "setback_front",
+        "setback_side",
+        "setback_rear",
+        "density",
+        "parking",
+        "lot_coverage"
+      ],
+      "unknown": []
+    },
+    "evidence": {
+      "citation_validator_passed": true,
+      "active_code_version": true
+    },
+    "policy_flags": {
+      "deterministic_critical_fail": false,
+      "special_district_detected": false,
+      "missing_required_input": false,
+      "gis_ambiguity": true
+    },
+    "final_status": "verify_before_committing",
+    "route": "contact_city",
+    "triggers": [
+      "gis_ambiguity:multiple_base_districts"
+    ],
+    "reasons": [
+      "O4:special_district_or_ambiguity",
+      "O4:finding_verify"
+    ]
+  },
+  "citations": [
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 16,
+      "printed_page": 824,
+      "section": "295-605-2",
+      "table": "Table 295-605-2",
+      "note": "Principal building design standards: height max, lot area per dwelling unit, setbacks by district"
+    },
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 2,
+      "printed_page": 812,
+      "section": "295-603-1",
+      "table": "Table 295-603-1",
+      "note": "Use table row 'Multi-family dwelling' = Y in LB1 and LB2"
+    },
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 3,
+      "printed_page": 813,
+      "section": "295-603-1",
+      "table": "Table 295-603-1",
+      "note": "Use table row 'Retail establishment, general' = L (limited use) in LB1 and LB2"
+    }
+  ],
+  "review": {
+    "status": "unreviewed",
+    "drafted_by": "claude-opus-5-5 (draft for reviewer correction, MOO-842)",
+    "drafted_at": "2026-09-23",
+    "reviewer": null,
+    "notes": "Synthetic: the real parcel sits in one LB2 polygon; a sliver of RS6 is invented, as G14 does for LB1."
+  }
+}

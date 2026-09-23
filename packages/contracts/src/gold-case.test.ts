@@ -9,8 +9,8 @@ const dir = join(import.meta.dirname, "..", "gold");
 const files = readdirSync(dir).filter((f) => f.endsWith(".json")).sort();
 const cases = files.map((f) => ({ f, c: GoldCase.parse(JSON.parse(readFileSync(join(dir, f), "utf8"))) }));
 
-test("fifteen gold cases parse against the schema", () => {
-  assert.equal(cases.length, 15);
+test("every gold case (at least 50) parses against the schema", () => {
+  assert.ok(cases.length >= 50, `${cases.length} cases`);
   assert.deepEqual(cases.map((x) => x.c.id), files.map((f) => f.replace(".json", "")));
 });
 

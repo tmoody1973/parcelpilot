@@ -1,0 +1,173 @@
+{
+  "id": "G28",
+  "version": 1,
+  "title": "LB2 use not allowed: adult retail (front setback still needs verifying)",
+  "district": "LB2",
+  "parcel": {
+    "source": "real",
+    "taxkey": "1719837000",
+    "address": "3606 W Silver Spring Dr",
+    "lot_area_sqft": 11093,
+    "base_zoning": [
+      "LB2"
+    ],
+    "lot_area_suspect": false,
+    "overlays": [],
+    "special_districts": [],
+    "floodplain": [],
+    "gis_ambiguity": false,
+    "stacked_condo_candidates": [],
+    "source_layer": "parcels_mprop/MapServer/2",
+    "retrieved_at": "2026-09-23"
+  },
+  "scenario": {
+    "use": "adult_retail",
+    "units": 0,
+    "stories": 2,
+    "height_ft": 24,
+    "footprint_sqft": 4000,
+    "setback_front_ft": 0,
+    "setback_side_ft": 0,
+    "setback_rear_ft": 15,
+    "parking_spaces": 4,
+    "ground_floor_use": "none",
+    "ground_floor_commercial_sqft": 0
+  },
+  "expected": {
+    "findings": {
+      "use": {
+        "status": "fail",
+        "criticality": "critical",
+        "proposed": {
+          "value": "adult_retail"
+        },
+        "allowed": {
+          "value": "N",
+          "operator": "in"
+        },
+        "note": "proposed: adult_retail | allowed: N (Table 295-603-1)"
+      },
+      "height": {
+        "status": "pass",
+        "criticality": "critical",
+        "proposed": {
+          "value": 24,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 60,
+          "unit": "ft",
+          "operator": "<="
+        },
+        "note": "proposed: 24 ft | allowed: <= 60 ft"
+      },
+      "setback_front": {
+        "status": "verify",
+        "criticality": "high",
+        "reason": "condition_unevaluable:average_front_setback"
+      },
+      "setback_side": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": {
+          "value": 0,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 0,
+          "unit": "ft",
+          "operator": ">="
+        },
+        "note": "proposed: 0 ft | allowed: none required"
+      },
+      "setback_rear": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": {
+          "value": 15,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 0,
+          "unit": "ft",
+          "operator": ">="
+        },
+        "note": "proposed: 15 ft | allowed: none required"
+      },
+      "density": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": {
+          "value": 0,
+          "unit": "sq ft"
+        },
+        "allowed": {
+          "value": 11093,
+          "unit": "sq ft",
+          "operator": "<="
+        },
+        "note": "proposed: 0 units x 800 = 0 sq ft | allowed: <= lot area 11093 sq ft"
+      }
+    },
+    "coverage": {
+      "checked": [
+        "use",
+        "height",
+        "setback_side",
+        "setback_rear",
+        "density"
+      ],
+      "manual_review": [
+        "setback_front"
+      ],
+      "unknown": [
+        "parking",
+        "lot_coverage"
+      ]
+    },
+    "evidence": {
+      "citation_validator_passed": true,
+      "active_code_version": true
+    },
+    "policy_flags": {
+      "deterministic_critical_fail": true,
+      "special_district_detected": false,
+      "missing_required_input": false,
+      "gis_ambiguity": false
+    },
+    "final_status": "verify_before_committing",
+    "route": "engage_zoning_professional",
+    "triggers": [],
+    "reasons": [
+      "O3:critical_or_high_fail",
+      "O4:finding_verify"
+    ]
+  },
+  "citations": [
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 16,
+      "printed_page": 824,
+      "section": "295-605-2",
+      "table": "Table 295-605-2",
+      "note": "Principal building design standards: height max, lot area per dwelling unit, setbacks by district"
+    },
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 3,
+      "printed_page": 813,
+      "section": "295-603-1",
+      "table": "Table 295-603-1",
+      "note": "Use table row 'Adult retail establishment' = N in LB1 and LB2"
+    }
+  ],
+  "review": {
+    "status": "unreviewed",
+    "drafted_by": "claude-opus-5-5 (draft for reviewer correction, MOO-842)",
+    "drafted_at": "2026-09-23",
+    "reviewer": null,
+    "notes": ""
+  }
+}
