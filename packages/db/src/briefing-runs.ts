@@ -1,7 +1,7 @@
 import type postgres from "postgres";
 import { DECISION_POLICY_V1, RuleCategory, briefingOutputSchemaFor, type BriefingContract, type Coverage, type EvidenceBundle, type Finding, type JevRisk, type JevRoute, type ScenarioInputs } from "@parcelpilot/contracts";
 import {
-  BRIEFING_PROMPT_VERSION, BRIEFING_SCHEMA_VERSION, briefingContractHash, buildBriefingContract, writeBrief, writeValidatedBrief,
+  BRIEFING_PROMPT_VERSION, BRIEFING_SCHEMA_VERSION, briefingContractHash, buildBriefingContract, checkCitationSupport, writeBrief, writeValidatedBrief,
   type BriefValidation, type BriefingCall, type BriefingRunRecord, type ValidatorRun,
 } from "@parcelpilot/zoning-core";
 
@@ -71,7 +71,9 @@ export async function briefRun(tx: Q, runId: string, i: {
   orgId: string; model: string; system: string; promptVersion?: string;
   effort?: "low" | "medium" | "high" | "xhigh" | "max";
   write?: typeof writeBrief; // injectable for tests
-}): Promise<{ outcome: "validated" | "fallback"; briefingRunIds: string[]; attempts: number }> {
+  // The citation-support check (MOO-841): on only when given (CITATION_SUPPORT_CHECK=true at the caller).
+  citationSupport?: { apiKey: string | undefined; fetchImpl?: typeof fetch; jurisdictionId?: string };
+}): Promise<{ outcome: "validated" | "fallback"; briefingRunIds: string[]; attempts: number; reviewTaskIds: string[] }> {
   const record = await loadBriefingRecord(tx, runId);
   if (!record) throw new Error(`run ${runId} is not visible to its own org`);
   // The allowed-next-actions table (decision 013) comes from the policy the database holds: the code's copy is used
@@ -84,10 +86,25 @@ export async function briefRun(tx: Q, runId: string, i: {
   const result = await writeValidatedBrief({
     contract, contractHash,
     write: (repair) => write({ contract, contractHash, system: i.system, model: i.model, schema, ...(repair ? { repair } : {}), ...(i.effort ? { effort: i.effort } : {}) }),
+    ...(i.citationSupport ? { afterValidation: (v: BriefValidation) => checkCitationSupport(contract, contractHash, v, i.citationSupport!) } : {}),
   });
   const briefingRunIds: string[] = [];
   for (const a of result.attempts) {
     briefingRunIds.push(await recordBriefingRun(tx, { orgId: i.orgId, runId, contract, contractHash, call: a.call, requestedModel: i.model, validation: a.validation, ...(i.promptVersion ? { promptVersion: i.promptVersion } : {}) }));
   }
-  return { outcome: result.outcome, briefingRunIds, attempts: result.attempts.length };
+  // Low-confidence removals are sampled by a reviewer. review_tasks is shared across orgs, so a task is a pointer only:
+  // the brief's record id and the sentence id, verdict and confidence. Never the sentence text (decision 017).
+  const reviewTaskIds: string[] = [];
+  const support = result.final.validation?.runs.find((r) => r.validator === "citation_support");
+  const pairs = (support?.detail["pairs"] ?? []) as { sentence_id: string; choice: string; confidence: number }[];
+  for (const id of (support?.detail["review_sentence_ids"] ?? []) as string[]) {
+    const worst = pairs.filter((p) => p.sentence_id === id).sort((a, b) => a.confidence - b.confidence)[0];
+    const [task] = await tx<{ id: string }[]>`
+      insert into review_tasks (jurisdiction_id, task_type, entity_type, entity_id, priority, reason)
+      values (${i.citationSupport?.jurisdictionId ?? "milwaukee-wi"}, 'citation_support_review', 'briefing_run', ${briefingRunIds.at(-1)!}, 'medium',
+        ${`citation_support: ${id} ${worst?.choice ?? "?"} at ${worst?.confidence.toFixed(2) ?? "?"}`})
+      returning id`;
+    reviewTaskIds.push(task!.id);
+  }
+  return { outcome: result.outcome, briefingRunIds, attempts: result.attempts.length, reviewTaskIds };
 }

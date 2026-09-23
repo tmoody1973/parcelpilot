@@ -1,7 +1,7 @@
 // The gold set through shadow mode (MOO-840; 05 §9, decision 016). For every gold case, in order: lock a real run from
 // the shared gold recipe (goldDecision), freeze its evidence, ask JEV in shadow and record the answer, write the brief
 // (all 15 in one Message Batch), render and check the memo. Then read the comparisons back and report.
-//   pnpm decision:gold [--cases G01,G02] [--max-usd 3] [--no-brief]
+//   pnpm decision:gold [--cases G01,G02] [--max-usd 3] [--no-brief] [--citation-support]
 // Needs TYPESAFE_API_KEY (JEV) and ANTHROPIC_API_KEY (briefs). Writes docs/eval/shadow-<date>.md and the recorded JEV
 // fixture the CI gate reads (packages/zoning-core/src/__fixtures__/jev-gold.json).
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -21,6 +21,7 @@ const flag = (n: string) => { const i = args.indexOf(n); return i >= 0 ? args[i 
 const only = flag("--cases")?.split(",");
 const maxUsd = Number(flag("--max-usd") ?? 3);
 const withBrief = !args.includes("--no-brief");
+const citationSupport = args.includes("--citation-support"); // the twelfth check (MOO-841); needs TYPESAFE_API_KEY
 
 const JURISDICTION = "milwaukee-wi";
 const ANALYSIS_DATE = "2026-09-21"; // the date the gold cases were drafted (gold.test.ts)
@@ -68,7 +69,7 @@ try {
     const system = readFileSync(join(root, "prompts", `${BRIEFING_PROMPT_VERSION}.md`), "utf8");
     let reserved = 0;
     const batcher = briefingBatcher({ log: (m) => console.log(m), approve: (n, worst) => { if (reserved + worst > maxUsd) throw new Error(`spend cap: ${n} brief(s) could cost up to $${worst.toFixed(2)}, over $${maxUsd}`); reserved += worst; } });
-    await Promise.all(done.map((d) => inOrg((tx) => briefRun(tx, d.runId, { orgId, model: DEFAULT_BRIEFING_MODEL, system, effort: DEFAULT_BRIEFING_EFFORT, write: (i) => batcher.write(i) }))));
+    await Promise.all(done.map((d) => inOrg((tx) => briefRun(tx, d.runId, { orgId, model: DEFAULT_BRIEFING_MODEL, system, effort: DEFAULT_BRIEFING_EFFORT, write: (i) => batcher.write(i), ...(citationSupport ? { citationSupport: { apiKey: process.env["TYPESAFE_API_KEY"], jurisdictionId: JURISDICTION } } : {}) }))));
   }
 
   // Read everything back from the database with the same query the reviewer page uses, then render each memo from its

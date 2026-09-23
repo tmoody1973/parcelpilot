@@ -101,6 +101,7 @@ export async function listTasks(sql: Q, filter: { jurisdictionId: string; id?: s
     left join source_documents ntd on ntd.id = nt.source_document_id
     left join source_documents sd on t.entity_type = 'source_document' and sd.id = t.entity_id
     where t.jurisdiction_id = ${filter.jurisdictionId}
+      and t.task_type <> 'citation_support_review' -- pointer-only tenant tasks stay out of the shared queue (decision 017)
       ${filter.id ? sql`and t.id = ${filter.id}` : sql``}
       ${filter.status ? sql`and t.status = ${filter.status}` : sql``}
       ${filter.taskType ? sql`and t.task_type = ${filter.taskType}` : sql``}
