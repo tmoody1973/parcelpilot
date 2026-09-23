@@ -8,7 +8,7 @@ import { join } from "node:path";
 import postgres from "postgres";
 import { BANNED_PHRASES, DECISION_POLICY_V1, GoldCase, RuleCategory, ZoningRule, findBannedPhrases, type BriefingContract, type BriefingOutput, type ParcelFacts, type PolicyInput } from "@parcelpilot/contracts";
 import { evaluate } from "@parcelpilot/rules-engine";
-import { BRIEFING_MODELS, BRIEFING_PROMPT_VERSION, OPENROUTER_PRICES, writeBriefOpenRouter, briefingContractHash, buildBriefingContract, checkCitations, finalStatus, writeBrief, type BriefingCall } from "@parcelpilot/zoning-core";
+import { BRIEFING_MODELS, BRIEFING_PRICES, BRIEFING_PROMPT_VERSION, OPENROUTER_PRICES, writeBriefOpenRouter, briefingContractHash, buildBriefingContract, checkCitations, finalStatus, writeBrief, type BriefingCall } from "@parcelpilot/zoning-core";
 import { retrieve } from "../retrieve.ts";
 import { assembleBundle } from "../bundle.ts";
 import { evidenceTokenBudget, subquestionsFor } from "../run-evidence.ts";
@@ -190,7 +190,7 @@ function write() {
     "Per case (✓ all checks pass, ✗ a check failed, – no schema-valid answer):", "",
     `| Case | ${models.join(" | ")} |`, `|---|${models.map(() => "---").join("|")}|`,
     ...cases.filter((c) => rows.some((r) => r.case === c.id)).map((c) => `| ${c.id} | ${models.map((m) => { const r = rows.find((x) => x.case === c.id && x.model === m); return !r ? "" : !r.checks ? `– ${r.call.status === "failed" ? r.call.error.slice(0, 40) : ""}` : r.checks.pass ? "✓" : `✗ ${Object.entries(r.checks).filter(([k, v]) => k !== "pass" && (v === false || (typeof v === "number" && ((k.endsWith("precision") || k.endsWith("coverage")) ? v < 1 : ["uncited_claims", "disallowed_actions", "banned_hits", "invented_numbers"].includes(k) && v > 0)))).map(([k]) => k).join(", ")}`; }).join(" | ")} |`),
-    "", `Banned phrases checked: ${BANNED_PHRASES.join(", ")}. Prices per million input / output tokens: claude-fable-5-1 $10 / $50, claude-sonnet-5 $2 / $10, claude-opus-5-5 $4 / $20 (thinking billed as output); via OpenRouter (strict structured outputs, no training on data, zero data retention except ${allowRetention.length ? allowRetention.join(", ") : "none"}) openai/gpt-6-luna $0.10 / $0.50, google/gemini-3.8-flash $0.75 / $3.75, openai/gpt-6-sol $2 / $10, moonshotai/kimi-k3 $3 / $15, deepseek/deepseek-v4.1-flash $0.10 / $0.50 (list prices; open-weight hosts vary). Every brief, its contract hash and its checks are in \`briefings-${date}.jsonl\`.`, "",
+    "", `Banned phrases checked: ${BANNED_PHRASES.join(", ")}. Prices per million input / output tokens: ${Object.entries(BRIEFING_PRICES).map(([m, p]) => `${m} $${p.input} / $${p.output}`).join(", ")} (thinking billed as output); via OpenRouter (strict structured outputs, no training on data, zero data retention except ${allowRetention.length ? allowRetention.join(", ") : "none"}) ${Object.entries(OPENROUTER_PRICES).map(([m, p]) => `${m} $${p.input} / $${p.output}`).join(", ")} (list prices; open-weight hosts vary). Every brief, its contract hash and its checks are in \`briefings-${date}.jsonl\`.`, "",
   ];
   mkdirSync(join(root, "docs", "eval", ".contracts"), { recursive: true });
   for (const r of rows) if (r.contract && !existsSync(contractPath(r.hash))) writeFileSync(contractPath(r.hash), JSON.stringify(r.contract));

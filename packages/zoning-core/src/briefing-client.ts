@@ -13,12 +13,12 @@ export const DEFAULT_BRIEFING_MODEL = "claude-opus-5-5";
 export const DEFAULT_BRIEFING_EFFORT = "medium" as const;
 export const BRIEFING_SCHEMA_VERSION = "briefing_output.v1";
 // USD per million tokens (claude-api skill model table, cached 2026-06-24). Thinking is billed as output.
-const PRICES: Record<string, { input: number; output: number }> = {
+export const BRIEFING_PRICES: Record<string, { input: number; output: number }> = {
   "claude-fable-5-1": { input: 10, output: 50 },
   "claude-sonnet-5": { input: 2, output: 10 },
   "claude-opus-5-5": { input: 4, output: 20 }, // launched 2026-09-22; thinking always on, effort defaults to medium
 };
-export const BRIEFING_MODELS = Object.keys(PRICES);
+export const BRIEFING_MODELS = Object.keys(BRIEFING_PRICES);
 
 export type BriefingUsage = { input_tokens: number; output_tokens: number };
 export type BriefingCall =
@@ -26,7 +26,7 @@ export type BriefingCall =
   | { status: "failed"; error: string; raw: string | null; model: string | null; usage: BriefingUsage | null; latencyMs: number; costUsd: number | null };
 
 const cost = (model: string, u: BriefingUsage) => {
-  const p = PRICES[model];
+  const p = BRIEFING_PRICES[model];
   return p ? (u.input_tokens * p.input + u.output_tokens * p.output) / 1_000_000 : null;
 };
 
@@ -36,7 +36,7 @@ export async function writeBrief(i: {
 }): Promise<BriefingCall> {
   const started = performance.now();
   const elapsed = () => Math.round(performance.now() - started);
-  if (!PRICES[i.model]) return { status: "failed", error: `briefing model ${i.model} is not one of ${BRIEFING_MODELS.join(", ")}`, raw: null, model: null, usage: null, latencyMs: 0, costUsd: null };
+  if (!BRIEFING_PRICES[i.model]) return { status: "failed", error: `briefing model ${i.model} is not one of ${BRIEFING_MODELS.join(", ")}`, raw: null, model: null, usage: null, latencyMs: 0, costUsd: null };
   const client = i.client ?? new Anthropic();
   try {
     const response = await client.messages.parse({

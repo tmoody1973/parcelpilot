@@ -14,7 +14,7 @@ export async function loadBriefingRecord(tx: Q, runId: string): Promise<Briefing
     select taxkey, address, lot_area_sqft::float8 as lot_area_sqft, retrieved_at::text from parcel_snapshots where id = ${run.parcel_snapshot_id}`;
   // The run's own districts, as retrieval filtered on them when the run locked.
   const [districts] = await tx<{ d: string[] | null }[]>`select filters->'districts' as d from retrieval_runs where feasibility_run_id = ${runId} order by created_at limit 1`;
-  const calcs = await tx<{ id: string; finding: Finding }[]>`select id, calculation_detail->'finding' as finding from calculations where feasibility_run_id = ${runId}`;
+  const calcs = await tx<{ id: string; finding: Finding }[]>`select id, calculation_detail->'finding' as finding from calculations where feasibility_run_id = ${runId} order by created_at, id`;
   const [bundle] = await tx<{ bundle: EvidenceBundle }[]>`select bundle from run_evidence_bundles where feasibility_run_id = ${runId} and status = 'assembled'`;
   const [jev] = await tx<{ route: JevRoute; confidence: number; bucket: "low" | "medium" | "high" }[]>`
     select recommended_route as route, route_confidence::float8 as confidence, answers->'overall_risk'->>'bucket' as bucket
