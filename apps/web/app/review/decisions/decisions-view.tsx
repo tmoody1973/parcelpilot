@@ -24,14 +24,15 @@ export function DecisionsView() {
   if (error) return <LoadError error={error} />;
   if (!data) return <Empty>Loading…</Empty>;
   const m = data.metrics;
+  const j = m.jev;
   const metrics: [string, string, boolean?][] = [
-    ["Unsafe-permissive (must be 0)", String(m.unsafe_permissive), m.unsafe_permissive > 0],
-    ["JEV answered", `${m.jev_ok} of ${m.cases}`],
-    ["Agrees with rules-only", pct(m.agree_rules_only)],
-    ["Agrees with expert", pct(m.agree_expert)],
-    [`Recall on high-risk (${m.high_risk_cases})`, pct(m.high_risk_recall)],
-    ["p95 JEV latency", m.p95_jev_latency_ms === null ? "n/a" : `${m.p95_jev_latency_ms} ms`],
-    ["JEV cost per case", m.jev_cost_per_case_usd === null ? "n/a" : `$${m.jev_cost_per_case_usd.toFixed(5)}`],
+    ["Unsafe-permissive (must be 0)", String(j.unsafe_permissive), j.unsafe_permissive > 0],
+    ["JEV answered", `${j.ok} of ${m.cases}`],
+    ["Agrees with rules-only", pct(j.agree_rules_only)],
+    ["Agrees with expert", pct(j.agree_expert)],
+    [`Recall on high-risk (${j.high_risk_cases})`, pct(j.high_risk_recall)],
+    ["p95 JEV latency", j.p95_latency_ms === null ? "n/a" : `${j.p95_latency_ms} ms`],
+    ["JEV cost per case", j.cost_per_case_usd === null ? "n/a" : `$${j.cost_per_case_usd.toFixed(5)}`],
     ["Brief cost per case", m.brief_cost_per_case_usd === null ? "n/a" : `$${m.brief_cost_per_case_usd.toFixed(3)}`],
   ];
 

@@ -36,7 +36,8 @@ const rows: ShadowRow[] = recorded.map((c) => {
   return {
     case_id: c.id, rules_route: d.policy.route as JevRoute, expert_route: c.expected.route as JevRoute, expert_status: c.expected.final_status,
     jev_status: r?.status ?? null, jev_route: r?.route ?? null, jev_confidence: r?.confidence ?? null,
-    jev_latency_ms: null, jev_cost_usd: null, brief_outcome: null, brief_cost_usd: null,
+    jev_latency_ms: null, jev_cost_usd: null, baseline_status: null, baseline_route: null, baseline_confidence: null, baseline_latency_ms: null, baseline_cost_usd: null,
+    brief_outcome: null, brief_cost_usd: null,
   };
 });
 
@@ -44,9 +45,9 @@ test("CI gate: JEV is never more lenient than the rules table or the expert on t
   for (const id of FIRST_RECORDED) assert.ok(jev[id] && briefs.has(id), `${id} must stay recorded`);
   for (const id of Object.keys(jev)) assert.ok(cases.some((c) => c.id === id), `recorded JEV answer for ${id}, which is not a gold case`);
   if (unrecorded.length) console.log(`not yet recorded (re-run pnpm decision:gold after the MOO-843 freeze): ${unrecorded.join(", ")}`);
-  const unsafe = rows.filter(unsafePermissive).map((r) => `${r.case_id}: JEV ${r.jev_route}, rules ${r.rules_route}, expert ${r.expert_route}`);
+  const unsafe = rows.filter((r) => unsafePermissive(r, "jev")).map((r) => `${r.case_id}: JEV ${r.jev_route}, rules ${r.rules_route}, expert ${r.expert_route}`);
   assert.deepEqual(unsafe, [], "unsafe-permissive cases");
-  assert.equal(shadowMetrics(rows).unsafe_permissive, 0);
+  assert.equal(shadowMetrics(rows).jev.unsafe_permissive, 0);
 });
 
 for (const c of recorded.filter((x) => briefs.has(x.id))) {

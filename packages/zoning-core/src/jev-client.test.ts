@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import type Anthropic from "@anthropic-ai/sdk";
 import { JEV_QUESTIONS_V1, type PreparedState } from "@parcelpilot/contracts";
-import { askJev } from "./jev-client.ts";
+import { askBaseline, askJev } from "./jev-client.ts";
+import type { BatchedMessage, BatchParams } from "./briefing-batch.ts";
 import { servableDecisionMode, resolveDecisionMode } from "./decision-mode.ts";
 
 const state = { version: "prepared_state.v1" } as unknown as PreparedState; // the client never inspects the state
@@ -90,4 +92,36 @@ test("only rules_only and shadow can serve a run; jev and the baseline are refus
   assert.equal(servableDecisionMode(await resolveDecisionMode({ env: { DECISION_MODE: "shadow" } })), "shadow");
   await assert.rejects(async () => servableDecisionMode(await resolveDecisionMode({ env: { DECISION_MODE: "jev" } })), /M6 gates/);
   await assert.rejects(async () => servableDecisionMode(await resolveDecisionMode({ env: { DECISION_MODE: "structured_output_baseline" } })), /never serves users/);
+});
+
+const baselineAnswers = { overall_risk: { score: 1.6, confidence: 0.7 }, manual_review_required: { noul: 0.9 }, recommended_route: { choice: "revise_scenario", confidence: 0.65 }, summary_safe_to_display: { noul: 0.8 } };
+const claudeMessage = (text: string, stop_reason = "end_turn") => ({ model: "claude-sonnet-5", stop_reason, stop_details: null, usage: { input_tokens: 3000, output_tokens: 500 }, content: [{ type: "text", text }] }) as unknown as Anthropic.Message;
+function sender(result: BatchedMessage) {
+  const sent: BatchParams[] = [];
+  return { sent, send: async (p: BatchParams) => { sent.push(p); return result; } };
+}
+
+test("the baseline asks Sonnet 5 the same four questions about the same state, parsed and priced at batch price", async () => {
+  const s = sender({ status: "ok", message: claudeMessage(JSON.stringify(baselineAnswers)), latencyMs: 60_000 });
+  const r = await askBaseline(state, { send: s.send });
+  assert.equal(s.sent.length, 1);
+  assert.equal(s.sent[0]!.model, "claude-sonnet-5");
+  assert.deepEqual(JSON.parse(s.sent[0]!.messages[0]!.content), { state, questions: JSON.parse(JSON.stringify(JEV_QUESTIONS_V1)) });
+  assert.equal(r.status, "ok");
+  if (r.status === "ok") {
+    assert.equal(r.response.model, "claude-sonnet-5");
+    assert.deepEqual(r.response.answers, baselineAnswers);
+    assert.ok(Math.abs(r.costUsd - 0.5 * (3000 * 2 + 500 * 10) / 1_000_000) < 1e-12);
+    assert.equal(r.latencyMs, 60_000);
+  }
+});
+
+test("a baseline answer off the schema, cut off, or never returned is a failed call", async () => {
+  const offSchema = await askBaseline(state, { send: sender({ status: "ok", message: claudeMessage(JSON.stringify({ ...baselineAnswers, recommended_route: { choice: "build_it", confidence: 1 } })), latencyMs: 5 }).send });
+  assert.equal(offSchema.status, "failed");
+  if (offSchema.status === "failed") { assert.match(offSchema.error, /no parseable output/); assert.ok(offSchema.raw, "the raw message is kept for the log"); }
+  const cut = await askBaseline(state, { send: sender({ status: "ok", message: claudeMessage("{", "max_tokens"), latencyMs: 5 }).send });
+  assert.match(cut.status === "failed" ? cut.error : "", /max_tokens/);
+  const lost = await askBaseline(state, { send: sender({ status: "failed", error: "batch: no result returned", latencyMs: 5 }).send });
+  assert.deepEqual([lost.status, lost.status === "failed" ? lost.error : "", lost.raw], ["failed", "batch: no result returned", null]);
 });

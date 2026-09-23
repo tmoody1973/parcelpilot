@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import postgres from "postgres";
 import { DECISION_POLICY_V1, type PreparedState } from "@parcelpilot/contracts";
-import { preparedStateHash, type JevCall } from "@parcelpilot/zoning-core";
+import { preparedStateHash, type BaselineCall, type JevCall } from "@parcelpilot/zoning-core";
 import { recordJevRun } from "./jev-runs.ts";
 
 // MOO-836: the shadow log row, written as app_role under the run's org. Rolled back.
@@ -35,8 +35,8 @@ test("a shadow call is logged under the run's org, never as used by policy; a fa
       values (${org}, ${project}, ${scenario}, ${snap}, '{}', 'h', '{}', '{}', 'shadow', 'succeeded', 'revise_scenario', 'revise_scenario', now()) returning id`;
     await tx`set local role app_role`;
     await tx`select set_config('app.org_id', ${org}, true)`;
-    await recordJevRun(tx, { orgId: org, runId: run, decisionMode: "shadow", state, call: ok, policy: DECISION_POLICY_V1 });
-    await recordJevRun(tx, { orgId: org, runId: run, decisionMode: "shadow", state, call: { status: "failed", error: "timeout after 2000 ms", raw: null, latencyMs: 2001 }, policy: DECISION_POLICY_V1 });
+    await recordJevRun(tx, { orgId: org, runId: run, provider: "jev", decisionMode: "shadow", state, call: ok, policy: DECISION_POLICY_V1 });
+    await recordJevRun(tx, { orgId: org, runId: run, provider: "jev", decisionMode: "shadow", state, call: { status: "failed", error: "timeout after 2000 ms", raw: null, latencyMs: 2001 }, policy: DECISION_POLICY_V1 });
     const rows = await tx`select status, model_version, recommended_route, route_confidence::float as c, answers->'overall_risk'->>'bucket' as bucket, input_state_hash, question_set_version, used_by_policy, error, input_tokens, cost_estimate_usd::float as cost from jev_runs where feasibility_run_id = ${run} order by status`; // enum order: ok, failed
     assert.deepEqual(rows.map((r) => [r["status"], r["model_version"], r["recommended_route"], r["bucket"], r["used_by_policy"], r["error"]]), [
       ["ok", "jev-1.13.0", "revise_scenario", "high", false, null],
@@ -45,7 +45,18 @@ test("a shadow call is logged under the run's org, never as used by policy; a fa
     assert.equal(rows[0]!["input_state_hash"], preparedStateHash(state));
     assert.equal(rows[0]!["question_set_version"], "jev_questions.v1");
     assert.deepEqual([rows[0]!["c"], rows[0]!["input_tokens"], rows[0]!["cost"]], [0.75, 2000, 0.000084]);
-    const [cmp] = await tx`select rules_only_route, jev_route, jev_agrees_rules_only, jev_unsafe_permissive from decision_comparisons where feasibility_run_id = ${run}`;
+    const baseline: BaselineCall = {
+      status: "ok", latencyMs: 60_000, costUsd: 0.0055, raw: { model: "claude-sonnet-5" },
+      response: { model: "claude-sonnet-5", usage: { input_tokens: 3000, output_tokens: 500 }, answers: {
+        overall_risk: { score: 0.7, confidence: 0.6 }, manual_review_required: { noul: 0.4 },
+        recommended_route: { choice: "engage_zoning_professional", confidence: 0.6 }, summary_safe_to_display: { noul: 0.7 },
+      } },
+    };
+    await recordJevRun(tx, { orgId: org, runId: run, provider: "baseline", decisionMode: "structured_output_baseline", state, call: baseline, policy: DECISION_POLICY_V1 });
+    const [b] = await tx`select decision_mode, question_set_version, model_version, answers->'overall_risk'->>'bucket' as bucket, used_by_policy from jev_runs where feasibility_run_id = ${run} and provider = 'baseline'`;
+    assert.deepEqual([b!["decision_mode"], b!["question_set_version"], b!["model_version"], b!["bucket"], b!["used_by_policy"]], ["structured_output_baseline", "baseline.v1", "claude-sonnet-5", "medium", false]);
+    const [cmp] = await tx`select rules_only_route, jev_route, jev_agrees_rules_only, jev_unsafe_permissive, baseline_route from decision_comparisons where feasibility_run_id = ${run}`;
+    assert.equal(cmp!["baseline_route"], "engage_zoning_professional");
     assert.deepEqual([cmp!["rules_only_route"], cmp!["jev_agrees_rules_only"], cmp!["jev_unsafe_permissive"]], ["revise_scenario", cmp!["jev_route"] === "revise_scenario", false]);
     throw new Rollback();
   }).catch((e) => { if (!(e instanceof Rollback)) throw e; });
