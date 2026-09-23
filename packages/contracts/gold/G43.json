@@ -1,0 +1,184 @@
+{
+  "id": "G43",
+  "version": 1,
+  "title": "LB2 inside a redevelopment plan area (real)",
+  "district": "LB2",
+  "parcel": {
+    "source": "real",
+    "taxkey": "1900941100",
+    "address": "5332 W Villard Av",
+    "lot_area_sqft": 7800,
+    "base_zoning": [
+      "LB2"
+    ],
+    "lot_area_suspect": false,
+    "overlays": [],
+    "special_districts": [
+      "redevelopment_plan"
+    ],
+    "floodplain": [],
+    "gis_ambiguity": false,
+    "stacked_condo_candidates": [],
+    "source_layer": "parcels_mprop/MapServer/2",
+    "retrieved_at": "2026-09-23"
+  },
+  "scenario": {
+    "use": "multifamily",
+    "units": 8,
+    "stories": 3,
+    "height_ft": 36,
+    "footprint_sqft": 4000,
+    "setback_front_ft": 0,
+    "setback_side_ft": 0,
+    "setback_rear_ft": 15,
+    "parking_spaces": 8,
+    "ground_floor_use": "retail",
+    "ground_floor_commercial_sqft": 2500
+  },
+  "expected": {
+    "findings": {
+      "use": {
+        "status": "pass",
+        "criticality": "critical",
+        "proposed": {
+          "value": "multifamily"
+        },
+        "allowed": {
+          "value": "Y",
+          "operator": "in"
+        },
+        "note": "proposed: multifamily | allowed: Y (Table 295-603-1)"
+      },
+      "height": {
+        "status": "pass",
+        "criticality": "critical",
+        "proposed": {
+          "value": 36,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 60,
+          "unit": "ft",
+          "operator": "<="
+        },
+        "note": "proposed: 36 ft | allowed: <= 60 ft"
+      },
+      "setback_front": {
+        "status": "verify",
+        "criticality": "high",
+        "reason": "condition_unevaluable:average_front_setback"
+      },
+      "setback_side": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": {
+          "value": 0,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 0,
+          "unit": "ft",
+          "operator": ">="
+        },
+        "note": "proposed: 0 ft | allowed: none required"
+      },
+      "setback_rear": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": {
+          "value": 15,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 0,
+          "unit": "ft",
+          "operator": ">="
+        },
+        "note": "proposed: 15 ft | allowed: none required"
+      },
+      "density": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": {
+          "value": 6400,
+          "unit": "sq ft"
+        },
+        "allowed": {
+          "value": 7800,
+          "unit": "sq ft",
+          "operator": "<="
+        },
+        "note": "proposed: 8 units x 800 = 6400 sq ft | allowed: <= lot area 7800 sq ft"
+      }
+    },
+    "coverage": {
+      "checked": [
+        "use",
+        "height",
+        "setback_side",
+        "setback_rear",
+        "density"
+      ],
+      "manual_review": [
+        "setback_front"
+      ],
+      "unknown": [
+        "parking",
+        "lot_coverage"
+      ]
+    },
+    "evidence": {
+      "citation_validator_passed": true,
+      "active_code_version": true
+    },
+    "policy_flags": {
+      "deterministic_critical_fail": false,
+      "special_district_detected": true,
+      "missing_required_input": false,
+      "gis_ambiguity": false
+    },
+    "final_status": "verify_before_committing",
+    "route": "contact_city",
+    "triggers": [
+      "special_district:redevelopment_plan"
+    ],
+    "reasons": [
+      "O4:special_district_or_ambiguity",
+      "O4:finding_verify"
+    ]
+  },
+  "citations": [
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 16,
+      "printed_page": 824,
+      "section": "295-605-2",
+      "table": "Table 295-605-2",
+      "note": "Principal building design standards: height max, lot area per dwelling unit, setbacks by district"
+    },
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 2,
+      "section": "295-603-1",
+      "table": "Table 295-603-1",
+      "note": "Use table row 'Multi-family dwelling' = Y in LB1/LB2/LB3/RB1/RB2"
+    },
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 3,
+      "section": "295-603-1",
+      "table": "Table 295-603-1",
+      "note": "Use table row 'Retail establishment, general' = L (limited use)"
+    }
+  ],
+  "review": {
+    "status": "unreviewed",
+    "drafted_by": "claude-opus-5-5 (draft for reviewer correction, MOO-842)",
+    "drafted_at": "2026-09-23",
+    "reviewer": null,
+    "notes": "Real: Redevelopment plans layer intersects this parcel (checked 2026-09-23)."
+  }
+}

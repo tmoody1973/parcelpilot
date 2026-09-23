@@ -1,0 +1,189 @@
+{
+  "id": "G48",
+  "version": 1,
+  "title": "LB1 retail as the principal use: listed L (limited)",
+  "district": "LB1",
+  "parcel": {
+    "source": "real",
+    "taxkey": "2520272000",
+    "address": "7665 W Appleton Av",
+    "lot_area_sqft": 13200,
+    "base_zoning": [
+      "LB1"
+    ],
+    "lot_area_suspect": false,
+    "overlays": [],
+    "special_districts": [],
+    "floodplain": [],
+    "gis_ambiguity": false,
+    "stacked_condo_candidates": [],
+    "source_layer": "parcels_mprop/MapServer/2",
+    "retrieved_at": "2026-09-23"
+  },
+  "scenario": {
+    "use": "retail",
+    "units": 0,
+    "stories": 1,
+    "height_ft": 20,
+    "footprint_sqft": 4000,
+    "setback_front_ft": 10,
+    "setback_side_ft": 0,
+    "setback_rear_ft": 15,
+    "parking_spaces": 4,
+    "ground_floor_use": "retail",
+    "ground_floor_commercial_sqft": 9000
+  },
+  "expected": {
+    "findings": {
+      "use": {
+        "status": "verify",
+        "criticality": "critical",
+        "reason": "use_label:L",
+        "proposed": {
+          "value": "retail"
+        },
+        "allowed": {
+          "value": "L",
+          "operator": "in"
+        },
+        "note": "proposed: retail | allowed: L (limited, Table 295-603-1)"
+      },
+      "height": {
+        "status": "pass",
+        "criticality": "critical",
+        "proposed": {
+          "value": 20,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 45,
+          "unit": "ft",
+          "operator": "<="
+        },
+        "note": "proposed: 20 ft | allowed: <= 45 ft"
+      },
+      "setback_front": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": {
+          "value": 10,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 70,
+          "unit": "ft",
+          "operator": "<="
+        },
+        "note": "proposed: 10 ft | allowed: max 70 ft"
+      },
+      "setback_side": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": {
+          "value": 0,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 0,
+          "unit": "ft",
+          "operator": ">="
+        },
+        "note": "proposed: 0 ft | allowed: none required"
+      },
+      "setback_rear": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": {
+          "value": 15,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 0,
+          "unit": "ft",
+          "operator": ">="
+        },
+        "note": "proposed: 15 ft | allowed: none required"
+      },
+      "density": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": {
+          "value": 0,
+          "unit": "sq ft"
+        },
+        "allowed": {
+          "value": 13200,
+          "unit": "sq ft",
+          "operator": "<="
+        },
+        "note": "proposed: 0 units x 1200 = 0 sq ft | allowed: <= lot area 13200 sq ft"
+      }
+    },
+    "coverage": {
+      "checked": [
+        "height",
+        "setback_front",
+        "setback_side",
+        "setback_rear",
+        "density"
+      ],
+      "manual_review": [
+        "use"
+      ],
+      "unknown": [
+        "parking",
+        "lot_coverage"
+      ]
+    },
+    "evidence": {
+      "citation_validator_passed": true,
+      "active_code_version": true
+    },
+    "policy_flags": {
+      "deterministic_critical_fail": false,
+      "special_district_detected": false,
+      "missing_required_input": false,
+      "gis_ambiguity": false
+    },
+    "final_status": "verify_before_committing",
+    "route": "engage_zoning_professional",
+    "triggers": [],
+    "reasons": [
+      "O4:finding_verify"
+    ]
+  },
+  "citations": [
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 16,
+      "printed_page": 824,
+      "section": "295-605-2",
+      "table": "Table 295-605-2",
+      "note": "Principal building design standards: height max, lot area per dwelling unit, setbacks by district"
+    },
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 2,
+      "section": "295-603-1",
+      "table": "Table 295-603-1",
+      "note": "Use table row 'Multi-family dwelling' = Y in LB1/LB2/LB3/RB1/RB2"
+    },
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 3,
+      "section": "295-603-1",
+      "table": "Table 295-603-1",
+      "note": "Use table row 'Retail establishment, general' = L (limited use)"
+    }
+  ],
+  "review": {
+    "status": "unreviewed",
+    "drafted_by": "claude-opus-5-5 (draft for reviewer correction, MOO-842)",
+    "drafted_at": "2026-09-23",
+    "reviewer": null,
+    "notes": ""
+  }
+}

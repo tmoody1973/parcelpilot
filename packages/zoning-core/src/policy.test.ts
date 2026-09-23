@@ -95,7 +95,7 @@ test("citation gate: settled findings need a page-level citation to an active so
   assert.deepEqual([r.final_status, r.route, r.reasons], ["insufficient_evidence", "insufficient_evidence", ["O1:citation_validator_failed"]]);
 });
 
-test("all 15 gold cases: final_status, route, reasons, flags, triggers reproduce from expected findings + parcel + evidence", () => {
+test("every gold case: final_status, route, reasons, flags, triggers reproduce from expected findings + parcel + evidence", () => {
   const dir = join(import.meta.dirname, "..", "..", "contracts", "gold");
   for (const file of readdirSync(dir).filter((f) => f.endsWith(".json")).sort()) {
     const g = GoldCase.parse(JSON.parse(readFileSync(join(dir, file), "utf8")));

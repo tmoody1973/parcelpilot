@@ -1,0 +1,83 @@
+{
+  "id": "G37",
+  "version": 1,
+  "title": "Stacked condo: point resolves to two TAXKEYs (synthetic)",
+  "district": "LB1",
+  "parcel": {
+    "source": "synthetic",
+    "taxkey": "2510193100",
+    "address": "7424 W Appleton Av",
+    "lot_area_sqft": 19200,
+    "base_zoning": [
+      "LB1"
+    ],
+    "lot_area_suspect": false,
+    "overlays": [],
+    "special_districts": [],
+    "floodplain": [],
+    "gis_ambiguity": false,
+    "stacked_condo_candidates": [
+      "2510193101",
+      "2510193102"
+    ],
+    "source_layer": "parcels_mprop/MapServer/2",
+    "retrieved_at": "2026-09-23"
+  },
+  "scenario": {
+    "use": "multifamily",
+    "units": 12,
+    "stories": 3,
+    "height_ft": 36,
+    "footprint_sqft": 4000,
+    "setback_front_ft": 5,
+    "setback_side_ft": 0,
+    "setback_rear_ft": 15,
+    "parking_spaces": 12,
+    "ground_floor_use": "retail",
+    "ground_floor_commercial_sqft": 2500
+  },
+  "expected": {
+    "pre_run_block": "stacked_condo_selection",
+    "findings": {},
+    "coverage": {
+      "checked": [],
+      "manual_review": [],
+      "unknown": [
+        "use",
+        "height",
+        "setback_front",
+        "setback_side",
+        "setback_rear",
+        "density",
+        "parking",
+        "lot_coverage"
+      ]
+    },
+    "evidence": {
+      "citation_validator_passed": true,
+      "active_code_version": true
+    },
+    "policy_flags": {
+      "deterministic_critical_fail": false,
+      "special_district_detected": false,
+      "missing_required_input": false,
+      "gis_ambiguity": true
+    },
+    "final_status": "insufficient_evidence",
+    "route": "collect_missing_information",
+    "triggers": [
+      "stacked_condo:2_candidates"
+    ],
+    "reasons": [
+      "pre_run_block:stacked_condo_selection"
+    ]
+  },
+  "citations": [],
+  "review": {
+    "status": "unreviewed",
+    "drafted_by": "claude-opus-5-5 (draft for reviewer correction, MOO-842)",
+    "drafted_at": "2026-09-23",
+    "reviewer": null,
+    "notes": "Synthetic: the real parcel is a single record; two condo unit TAXKEYs are invented so the run is blocked until the user picks one."
+  }
+}

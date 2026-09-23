@@ -1,0 +1,178 @@
+{
+  "id": "G36",
+  "version": 1,
+  "title": "LB1 missing input: front setback omitted",
+  "district": "LB1",
+  "parcel": {
+    "source": "real",
+    "taxkey": "2510191000",
+    "address": "7324 W Capitol Dr",
+    "lot_area_sqft": 19400,
+    "base_zoning": [
+      "LB1"
+    ],
+    "lot_area_suspect": false,
+    "overlays": [],
+    "special_districts": [],
+    "floodplain": [],
+    "gis_ambiguity": false,
+    "stacked_condo_candidates": [],
+    "source_layer": "parcels_mprop/MapServer/2",
+    "retrieved_at": "2026-09-23"
+  },
+  "scenario": {
+    "use": "multifamily",
+    "units": 12,
+    "stories": 3,
+    "height_ft": 36,
+    "footprint_sqft": 4000,
+    "setback_side_ft": 0,
+    "setback_rear_ft": 15,
+    "parking_spaces": 12,
+    "ground_floor_use": "retail",
+    "ground_floor_commercial_sqft": 2500
+  },
+  "expected": {
+    "findings": {
+      "use": {
+        "status": "pass",
+        "criticality": "critical",
+        "proposed": {
+          "value": "multifamily"
+        },
+        "allowed": {
+          "value": "Y",
+          "operator": "in"
+        },
+        "note": "proposed: multifamily | allowed: Y (Table 295-603-1)"
+      },
+      "height": {
+        "status": "pass",
+        "criticality": "critical",
+        "proposed": {
+          "value": 36,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 45,
+          "unit": "ft",
+          "operator": "<="
+        },
+        "note": "proposed: 36 ft | allowed: <= 45 ft"
+      },
+      "setback_front": {
+        "status": "insufficient_evidence",
+        "criticality": "high",
+        "reason": "missing_input:setback_front_ft"
+      },
+      "setback_side": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": {
+          "value": 0,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 0,
+          "unit": "ft",
+          "operator": ">="
+        },
+        "note": "proposed: 0 ft | allowed: none required"
+      },
+      "setback_rear": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": {
+          "value": 15,
+          "unit": "ft"
+        },
+        "allowed": {
+          "value": 0,
+          "unit": "ft",
+          "operator": ">="
+        },
+        "note": "proposed: 15 ft | allowed: none required"
+      },
+      "density": {
+        "status": "pass",
+        "criticality": "high",
+        "proposed": {
+          "value": 14400,
+          "unit": "sq ft"
+        },
+        "allowed": {
+          "value": 19400,
+          "unit": "sq ft",
+          "operator": "<="
+        },
+        "note": "proposed: 12 units x 1200 = 14400 sq ft | allowed: <= lot area 19400 sq ft"
+      }
+    },
+    "coverage": {
+      "checked": [
+        "use",
+        "height",
+        "setback_side",
+        "setback_rear",
+        "density"
+      ],
+      "manual_review": [
+        "setback_front"
+      ],
+      "unknown": [
+        "parking",
+        "lot_coverage"
+      ]
+    },
+    "evidence": {
+      "citation_validator_passed": true,
+      "active_code_version": true
+    },
+    "policy_flags": {
+      "deterministic_critical_fail": false,
+      "special_district_detected": false,
+      "missing_required_input": true,
+      "gis_ambiguity": false
+    },
+    "final_status": "insufficient_evidence",
+    "route": "collect_missing_information",
+    "triggers": [],
+    "reasons": [
+      "O2:missing_required_input"
+    ]
+  },
+  "citations": [
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 16,
+      "printed_page": 824,
+      "section": "295-605-2",
+      "table": "Table 295-605-2",
+      "note": "Principal building design standards: height max, lot area per dwelling unit, setbacks by district"
+    },
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 2,
+      "section": "295-603-1",
+      "table": "Table 295-603-1",
+      "note": "Use table row 'Multi-family dwelling' = Y in LB1/LB2/LB3/RB1/RB2"
+    },
+    {
+      "document": "CH295-sub6.pdf",
+      "sha256_prefix": "198a9062664e",
+      "pdf_page": 3,
+      "section": "295-603-1",
+      "table": "Table 295-603-1",
+      "note": "Use table row 'Retail establishment, general' = L (limited use)"
+    }
+  ],
+  "review": {
+    "status": "unreviewed",
+    "drafted_by": "claude-opus-5-5 (draft for reviewer correction, MOO-842)",
+    "drafted_at": "2026-09-23",
+    "reviewer": null,
+    "notes": ""
+  }
+}
