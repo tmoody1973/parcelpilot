@@ -11,7 +11,7 @@ Generated 2026-09-23 for MOO-842 from the 50 files in `packages/contracts/gold/`
 | Setback failures | G27, G32, G33, G34 (LB1 front maximum). Side and rear cannot fail under the seeded rules: both minimums are 0, none required |
 | Density failures | G01, G03 (by a sliver), G07, G09 |
 | Use not allowed | G26, G27, G28 (adult retail, N) |
-| Mixed-use classification questions | G47 (mixed use, L), G48 (retail as principal use, L), G05 and G50 (residential at street level) |
+| Mixed-use classification questions | G47 (mixed use: no row in Table 295-603-1; the seeded rule says L), G48 (retail as principal use, L), G05 and G50 (residential at street level) |
 | Incomplete parking facts | G19 (parking spaces not given). Parking has no reviewed rule, so every case reports it as not checked |
 | Missing inputs | G09 (height), G35 (units), G36 (front setback) |
 | Floodplain or overlay triggers | G11 (SPROZ overlay, synthetic), G44 (FEMA flood hazard, synthetic) |
@@ -48,3 +48,8 @@ Generated 2026-09-23 for MOO-842 from the 50 files in `packages/contracts/gold/`
 - Real parcels: 41; synthetic: 9 (the reason is in each case title and review note).
 - Districts: LB1 41, LB2 9. LB2 can never reach proceed: its front setback maximum is the average of neighbouring buildings, not a parcel fact yet.
 - Real parcels for G16–G50 came from the City parcel layer (`parcels_mprop/MapServer/2`) on 2026-09-23. Each clean parcel was checked against the planned-development (zoning 1–2), overlay (zoning 4–10), special-district (6, 8, 17, 18, 23) and FEMA (1–2) layers and had no hit.
+
+## Questions for the reviewer (MOO-843)
+
+1. **Ground-floor retail in proceed cases.** "Retail establishment, general" is L (limited use) in Table 295-603-1, and the v1 engine checks only the principal use. So a multifamily building over retail proceeds without evaluating the retail limitations. This affects G02, G16, G18, G19, G21, G22, G23 and G24. If the right answer is verify, those cases change label and the engine needs a new rule. That would be a new issue, not an edit to the case.
+2. **Mixed use has no row in Table 295-603-1.** The seeded use rule lists `mixed_use` (and `commercial`) as L with no table row behind it. G47 and G48 test that entry. Should it stay?

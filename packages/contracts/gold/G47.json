@@ -166,17 +166,19 @@
       "document": "CH295-sub6.pdf",
       "sha256_prefix": "198a9062664e",
       "pdf_page": 2,
+      "printed_page": 812,
       "section": "295-603-1",
       "table": "Table 295-603-1",
-      "note": "Use table row 'Multi-family dwelling' = Y in LB1/LB2/LB3/RB1/RB2"
+      "note": "Table 295-603-1 has no 'mixed use' row. The residential part falls under 'Multi-family dwelling' = Y; the seeded rule maps mixed_use to L (reviewer to confirm, MOO-843)"
     },
     {
       "document": "CH295-sub6.pdf",
       "sha256_prefix": "198a9062664e",
       "pdf_page": 3,
+      "printed_page": 813,
       "section": "295-603-1",
       "table": "Table 295-603-1",
-      "note": "Use table row 'Retail establishment, general' = L (limited use)"
+      "note": "The commercial part of a mixed-use building falls under 'Retail establishment, general' = L (limited use)"
     }
   ],
   "review": {
@@ -184,6 +186,6 @@
     "drafted_by": "claude-opus-5-5 (draft for reviewer correction, MOO-842)",
     "drafted_at": "2026-09-23",
     "reviewer": null,
-    "notes": "Mixed use is L in Table 295-603-1: allowed only under limitations the screen does not evaluate."
+    "notes": "Table 295-603-1 has no 'mixed use' row; the seeded LB1 use rule lists mixed_use as L, so the screen verifies. The residential part is 'Multi-family dwelling' = Y and the commercial part 'Retail establishment, general' = L. Reviewer (MOO-843): confirm verify, and whether the rule's mixed_use entry should exist."
   }
 }

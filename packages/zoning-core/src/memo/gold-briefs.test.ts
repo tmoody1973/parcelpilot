@@ -26,6 +26,7 @@ const memoInput = (c: GoldCase) => goldMemoInput(c, goldDecision(c, RULES, ANALY
 const withBrief = cases.filter((c) => briefs.has(c.id));
 test("the fixture has a validated brief for every recorded gold case", () => {
   for (let i = 1; i <= 15; i++) assert.ok(briefs.has(`G${String(i).padStart(2, "0")}`), `G${i} must stay recorded`);
+  for (const id of briefs.keys()) assert.ok(cases.some((c) => c.id === id), `saved brief for ${id}, which is not a gold case`);
   const missing = cases.filter((c) => !briefs.has(c.id)).map((c) => c.id);
   if (missing.length) console.log(`no saved brief yet: ${missing.join(", ")}`);
 });

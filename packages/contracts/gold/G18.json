@@ -162,17 +162,19 @@
       "document": "CH295-sub6.pdf",
       "sha256_prefix": "198a9062664e",
       "pdf_page": 2,
+      "printed_page": 812,
       "section": "295-603-1",
       "table": "Table 295-603-1",
-      "note": "Use table row 'Multi-family dwelling' = Y in LB1/LB2/LB3/RB1/RB2"
+      "note": "Use table row 'Multi-family dwelling' = Y in LB1 and LB2"
     },
     {
       "document": "CH295-sub6.pdf",
       "sha256_prefix": "198a9062664e",
       "pdf_page": 3,
+      "printed_page": 813,
       "section": "295-603-1",
       "table": "Table 295-603-1",
-      "note": "Use table row 'Retail establishment, general' = L (limited use)"
+      "note": "Use table row 'Retail establishment, general' = L (limited use) in LB1 and LB2"
     }
   ],
   "review": {
@@ -180,6 +182,6 @@
     "drafted_by": "claude-opus-5-5 (draft for reviewer correction, MOO-842)",
     "drafted_at": "2026-09-23",
     "reviewer": null,
-    "notes": ""
+    "notes": "Ground-floor retail is L (limited use) in Table 295-603-1. The v1 engine checks the principal use only, so this case proceeds; the limited-use conditions on the retail part are not evaluated. Reviewer (MOO-843): confirm proceed, or label it verify."
   }
 }

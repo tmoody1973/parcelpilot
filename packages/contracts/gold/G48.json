@@ -165,18 +165,11 @@
     {
       "document": "CH295-sub6.pdf",
       "sha256_prefix": "198a9062664e",
-      "pdf_page": 2,
-      "section": "295-603-1",
-      "table": "Table 295-603-1",
-      "note": "Use table row 'Multi-family dwelling' = Y in LB1/LB2/LB3/RB1/RB2"
-    },
-    {
-      "document": "CH295-sub6.pdf",
-      "sha256_prefix": "198a9062664e",
       "pdf_page": 3,
+      "printed_page": 813,
       "section": "295-603-1",
       "table": "Table 295-603-1",
-      "note": "Use table row 'Retail establishment, general' = L (limited use)"
+      "note": "Use table row 'Retail establishment, general' = L (limited use) in LB1 and LB2"
     }
   ],
   "review": {
