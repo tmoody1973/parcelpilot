@@ -44,3 +44,23 @@ test("proceed_to_concept_design only when every checked category passes", () => 
     for (const cat of c.expected.coverage.checked) assert.equal(c.expected.findings[cat]?.status, "pass", `${c.id} ${cat}`);
   }
 });
+
+// MOO-843: once frozen, the gold set cannot drift. Every case file must match its hash in gold-manifest.json; changing
+// a case means bumping its version and re-running `pnpm gold:freeze`, which refuses a change without a bump.
+test("the frozen gold set matches its manifest", async () => {
+  const { createHash } = await import("node:crypto");
+  const { existsSync } = await import("node:fs");
+  const manifestPath = join(import.meta.dirname, "..", "gold-manifest.json");
+  if (!existsSync(manifestPath)) return; // not frozen yet
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { cases: { id: string; version: number; sha256: string }[] };
+  const drift: string[] = [];
+  for (const f of files) {
+    const raw = readFileSync(join(dir, f), "utf8");
+    const id = f.replace(".json", "");
+    const m = manifest.cases.find((x) => x.id === id);
+    if (!m) drift.push(`${id}: not in the manifest`);
+    else if (m.sha256 !== createHash("sha256").update(raw).digest("hex")) drift.push(`${id}: changed since the freeze (bump its version and run pnpm gold:freeze)`);
+  }
+  for (const m of manifest.cases) if (!files.includes(`${m.id}.json`)) drift.push(`${m.id}: in the manifest but the file is gone`);
+  assert.deepEqual(drift, []);
+});

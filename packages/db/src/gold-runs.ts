@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type postgres from "postgres";
-import { DECISION_POLICY_V1, type GoldCase, type ScenarioInputs, type ZoningRule } from "@parcelpilot/contracts";
+import { DECISION_POLICY_V1, expertLabel, type GoldCase, type ScenarioInputs, type ZoningRule } from "@parcelpilot/contracts";
 import type { GoldDecision, ShadowRow } from "@parcelpilot/zoning-core";
 import { decisionPolicyVersionId } from "./decision-policy.ts";
 
@@ -58,7 +58,7 @@ export async function lockGoldRun(tx: postgres.TransactionSql, i: {
       gold_case_id, gold_case_version, gold_expected_status, gold_expected_route)
     values (${i.orgId}, ${project!.id}, ${scenario!.id}, ${i.snapshotId}, '{}', ${inputHash}, ${tx.json(inputs as never)}, ${tx.json(ruleVersionSet)},
       'shadow', 'succeeded', ${d.policy.final_status}, ${d.policy.route}, ${tx.json(stored as never)}, now(), ${policyVersionId},
-      ${c.id}, ${c.version}, ${c.expected.final_status}, ${c.expected.route})
+      ${c.id}, ${c.version}, ${expertLabel(c).final_status}, ${expertLabel(c).route}) -- the reviewer's label where they changed it
     returning id`;
   for (const f of d.findings) {
     // ponytail: gold rule ids are slugs (lb1-use-v1), not zoning_rules uuids, so zoning_rule_id stays null; the slug is in the finding
