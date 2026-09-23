@@ -1,5 +1,5 @@
 import { BriefingOutput, findBannedPhrases, type BriefingContract, type CitedSentence, type ValidationEffect, type ValidationResult, type ValidatorName } from "@parcelpilot/contracts";
-import { numbersInValue, stripIds } from "./text.ts";
+import { numbersInValue, stripIds, IDENTIFIERS } from "./text.ts";
 
 // The eleven deterministic brief validators (MOO-838; 05 §7). They run in the order of the §7 table, each on the brief
 // the previous one left, and each reports what it did. A sentence can be removed; an action can be removed; or the
@@ -47,9 +47,6 @@ const countNumbers = (c: BriefingContract) => new Set([8, c.verified_findings.le
   ...(["pass", "fail", "verify", "unknown", "insufficient_evidence"] as const).map((st) => c.verified_findings.filter((f) => f.status === st).length),
   c.verified_findings.filter((f) => f.status !== "unknown").length].map(String)); // e.g. "2 of the 3 findings were reviewed"
 const UNIT_AFTER = /^\s*-?\s*(ft\b|feet\b|foot\b|sq\b|square\b|%|percent\b|stor(y|ies)\b|units?\b|spaces?\b|acres?\b)/i;
-// Section, table and chapter references ("s. 295-403-2", "Table 295-603-1", "Chapter 295", "subchapter 6") are names,
-// not quantities, so they are removed before numbers are read.
-const IDENTIFIERS = /\b\d{3}-\d{1,4}(?:-[0-9A-Za-z]+)*\b|\b(?:chapter|subchapter|section|sections|table|tables|s\.|ss\.|§)\s*\d+[0-9A-Za-z-]*/gi;
 function numbersInSentence(text: string): Array<{ n: string; measured: boolean }> {
   const t = stripIds(text).replace(IDENTIFIERS, " ");
   return [...t.matchAll(/(?<![\w.])\d[\d,]*(?:\.\d+)?(?![\w])/g)].map((m) => ({ n: m[0].replaceAll(",", ""), measured: UNIT_AFTER.test(t.slice(m.index! + m[0].length)) }));

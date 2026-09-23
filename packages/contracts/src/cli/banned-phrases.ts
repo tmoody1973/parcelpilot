@@ -11,7 +11,8 @@ function* walk(path: string): Generator<string> {
   const st = statSync(path);
   if (st.isFile()) { if (EXTS.has(extname(path))) yield path; return; }
   for (const entry of readdirSync(path)) {
-    if (entry === "node_modules" || entry === ".next" || entry === "dist") continue;
+    // __fixtures__ holds recorded test data (quoted ordinance text, saved model output); the tests scan it themselves.
+    if (entry === "node_modules" || entry === ".next" || entry === "dist" || entry === "__fixtures__") continue;
     yield* walk(join(path, entry));
   }
 }

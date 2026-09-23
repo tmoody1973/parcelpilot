@@ -1,4 +1,5 @@
 import { MemoInput, type Finding } from "@parcelpilot/contracts";
+import { renderBriefSections, type MemoBrief } from "./brief-sections.ts";
 import { ALL_CATEGORIES, CATEGORY, DISCLAIMER, FINDING, INPUT, LIMITATIONS, MEMO_VERSION, RISK, ROUTE, STATUS, reason, trigger } from "./copy.ts";
 
 // Templated memo renderer (memo.v1): a locked run in, one standalone HTML document out. Deterministic:
@@ -18,8 +19,16 @@ function cite(f: Finding, sources: MemoInput["sources"]): string {
   }).join("; ");
 }
 
-export function renderMemo(raw: MemoInput): string {
+// With a validated brief (MOO-839) the memo adds the brief's summary, reasoned next actions, finding explanations,
+// questions and cited sources; everything code-generated stays. With none, it is the template, byte for byte, plus an
+// optional neutral note when the caller wants to say so.
+const BRIEF_CSS = `
+  sup .cite { text-decoration: none; font-size: 7.5pt; padding: 0 1px; }
+  .sources li { margin: 6px 0; } blockquote.excerpt { margin: 4px 0 0 0; padding: 4px 8px; border-left: 3px solid var(--line); color: var(--muted); font-size: 9.5pt; white-space: pre-wrap; }`;
+
+export function renderMemo(raw: MemoInput, opts: { brief?: MemoBrief | null; templateNote?: boolean } = {}): string {
   const m = MemoInput.parse(raw);
+  const brief = opts.brief ? renderBriefSections(opts.brief) : null;
   const status = m.decision.final_status ? STATUS[m.decision.final_status] : null;
   const unknown = ALL_CATEGORIES.filter((c) => m.coverage.unknown.includes(c));
   const manual = ALL_CATEGORIES.filter((c) => m.coverage.manual_review.includes(c));
@@ -46,7 +55,7 @@ export function renderMemo(raw: MemoInput): string {
   .muted { color: var(--muted); } .small { font-size: 9pt; }
   table { width: 100%; border-collapse: collapse; font-size: 10pt; } th, td { text-align: left; vertical-align: top; padding: 4px 6px; border-bottom: 1px solid var(--line); } th { color: var(--muted); font-weight: 600; }
   .status { font-size: 14pt; font-weight: 700; } ul { margin: 4px 0; padding-left: 18px; } code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9pt; }
-  @media print { body { padding: 0; } a { color: inherit; text-decoration: none; } }
+  @media print { body { padding: 0; } a { color: inherit; text-decoration: none; } }${brief ? BRIEF_CSS : ""}
 </style>
 </head>
 <body>
@@ -54,16 +63,16 @@ export function renderMemo(raw: MemoInput): string {
   <h1>Preliminary zoning screen</h1>
   <div class="muted">${esc(m.parcel.address)} · TAXKEY ${esc(m.parcel.taxkey)} · project “${esc(m.project.name)}” · scenario “${esc(m.scenario.name)}”</div>
   <div class="disclaimer">${DISCLAIMER}</div>
-</header>
+${opts.templateNote ? `  <div class="small muted">Summary generated from template.</div>\n` : ""}</header>
 
 <h2>Status</h2>
 <div class="status">${status ? esc(status.label) : "Not scored"}${m.decision.risk ? ` <span class="muted small">(${RISK[m.decision.risk]} risk)</span>` : ""}</div>
 ${status ? `<p>${esc(status.meaning)}</p>` : ""}
 ${m.decision.reasons.length ? `<ul>${m.decision.reasons.map((r) => `<li>${esc(reason(r))}</li>`).join("")}</ul>` : ""}
 <p class="small muted">Checked ${m.coverage.checked.length} of ${ALL_CATEGORIES.length} categories against reviewed rules. ${esc(LIMITATIONS)}</p>
-
+${brief ? `${brief.summary}\n` : ""}
 <h2>Next action</h2>
-<ul>${actions.map((a) => `<li>${esc(ROUTE[a] ?? a)}</li>`).join("")}</ul>
+${brief?.actions || `<ul>${actions.map((a) => `<li>${esc(ROUTE[a] ?? a)}</li>`).join("")}</ul>`}
 ${missing.length ? `<p><strong>Missing inputs:</strong> ${missing.map((x) => esc(x.replaceAll("_", " "))).join(", ")}.</p>` : ""}
 
 <h2>Parcel facts</h2>
@@ -87,7 +96,7 @@ ${m.findings.map((f) => `<tr><td>${esc(CATEGORY[f.category] ?? f.category)}</td>
 </tbody>
 </table>
 
-<h2>Not covered by this screen</h2>
+${brief?.body ? `${brief.body}\n\n` : ""}<h2>Not covered by this screen</h2>
 <p>${unknown.length ? `Not checked at all (no reviewed rule yet): ${unknown.map((c) => esc(CATEGORY[c])).join(", ")}.` : "Every category in scope has a reviewed rule."}${manual.length ? ` Needs manual review: ${manual.map((c) => esc(CATEGORY[c])).join(", ")}.` : ""}</p>
 
 <h2>Routing triggers</h2>

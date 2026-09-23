@@ -72,3 +72,48 @@ test("renders every status and the abstention actions without a verdict word", (
     if (status === "verify_before_committing") assert.ok(html.includes("Special district: NORTH 27TH - WEST FOND DU LAC"));
   }
 });
+
+// MOO-839: the memo with a validated brief.
+const S = (text: string, kind: "fact" | "code" | "finding" | "advice" | "framing", source_ids: string[] = []) => ({ text, kind, source_ids });
+const BRIEF = {
+  output: {
+    contract_hash: "a".repeat(64), status_echo: "revise_scenario" as const,
+    executive_summary: [S("The scenario does not fit LB1 on height and density.", "framing"), S("The proposed height of 46 ft is above the ≤ 45 ft limit.", "finding", ["fam-h@1"])],
+    status_explanation: [S("Two high-priority checks failed.", "finding", ["fam-h@1", "fam-d@1"])],
+    verified_findings: [{ finding_id: "f2", sentences: [S("LB1 caps height at 45 ft.", "code", ["fam-h@1"])] }],
+    open_questions: [S("Which parking rule applies? <script>x</script>", "advice")],
+    suggested_actions: [{ action_id: "revise_scenario", rationale: S("Lower the building and reduce the unit count.", "advice") }],
+    questions_for_experts: [{ recipient: "architect" as const, question: S("Can the program fit in a shorter building?", "advice") }],
+    disclaimer: "Preliminary zoning screen — not an official zoning determination.",
+  },
+  evidence: [
+    { source_id: "fam-h@1", document_title: "Chapter 295 Subchapter 6 — Commercial Districts", section: "295-605-2", page: 16, printed_page: 824, official_url: "https://example.test/sub6.pdf", verbatim_excerpt: "Table 295-605-2. Height, maximum (ft.). LB1: 45. Uses permitted by right are listed in table 295-603-1." }, // banned-ok: validator test data
+    { source_id: "fam-d@1", document_title: "Chapter 295 Subchapter 6 — Commercial Districts", section: "295-605-2", page: 16, printed_page: 824, official_url: null, verbatim_excerpt: "Lot area per dwelling unit, minimum (sq. ft.). LB1: 1,200." },
+    { source_id: "fam-unused@1", document_title: "Unused", section: "295-601", page: 1, printed_page: 811, official_url: null, verbatim_excerpt: "Not cited." },
+  ],
+  findingCategories: { f1: "use", f2: "height", f6: "density" },
+};
+
+test("with a validated brief: its sections, numbered citations to the frozen bundle, verbatim excerpts, and a passing validator", () => {
+  const html = renderMemo(G01_MEMO, { brief: BRIEF });
+  for (const h of ["<h2>Summary</h2>", "<h2>What the findings mean</h2>", "<h2>Open questions</h2>", "<h2>Questions to ask</h2>", "<h2>Sources cited</h2>"]) assert.ok(html.includes(h), h);
+  assert.ok(html.includes("Preliminary zoning screen — not an official zoning determination."), "the label is always there");
+  assert.ok(!html.includes("Summary generated from template"), "no fallback note when the brief is shown");
+  assert.match(html, /LB1 caps height at 45 ft\.<sup><a href="#src-1" class="cite">1<\/a><\/sup>/);
+  assert.match(html, /<li id="src-1">Chapter 295 Subchapter 6 — Commercial Districts, 295-605-2, p\. 824 · <a href="https:\/\/example\.test\/sub6\.pdf#page=16"/);
+  assert.match(html, /<li id="src-2">[^<]*, p\. 824 \(page 16 of the PDF\)<blockquote class="excerpt">Lot area per dwelling unit/, "no URL: a plain page reference");
+  assert.ok(!html.includes("Not cited."), "an uncited bundle item is not listed");
+  assert.ok(html.includes("&lt;script&gt;x&lt;/script&gt;") && !html.includes("<script>x"), "model text is escaped");
+  assert.ok(html.includes("<strong>Revise the scenario.</strong> Lower the building"), "actions keep their reason");
+  const v = validateMemo(html, G01_MEMO, BRIEF);
+  assert.deepEqual(v, { passed: true, problems: [] }, "the excerpt's own 'permitted by right' is quoted text, not memo prose"); // banned-ok: validator test data
+  const leaked = renderMemo(G01_MEMO, { brief: { ...BRIEF, output: { ...BRIEF.output, open_questions: [S("Is this use permitted?", "advice")] } } }); // banned-ok: validator test data
+  assert.deepEqual(validateMemo(leaked, G01_MEMO, BRIEF).problems, ["banned_phrase:permitted"], "outside an excerpt it is caught"); // banned-ok: validator test data
+});
+
+test("without a brief: the template, plus a neutral note only when asked", () => {
+  const noted = renderMemo(G01_MEMO, { templateNote: true });
+  assert.ok(noted.includes("Summary generated from template."));
+  assert.ok(!noted.includes("<h2>Summary</h2>"));
+  assert.equal(renderMemo(G01_MEMO), readFileSync(golden, "utf8"), "no options: byte for byte the golden template");
+});
