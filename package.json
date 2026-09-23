@@ -32,7 +32,9 @@
     "retrieve": "node --conditions=development packages/retrieval/src/cli/retrieve.ts",
     "retrieval:eval": "node --conditions=development packages/retrieval/src/cli/eval.ts",
     "retrieval:bakeoff": "node --conditions=development packages/retrieval/src/cli/bakeoff.ts",
-    "evidence:bundle": "node --conditions=development packages/retrieval/src/cli/bundle.ts"
+    "evidence:bundle": "node --conditions=development packages/retrieval/src/cli/bundle.ts",
+    "briefing:eval": "node --conditions=development packages/retrieval/src/cli/briefing-eval.ts",
+    "briefing:run": "node --conditions=development packages/retrieval/src/cli/briefing-run.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
