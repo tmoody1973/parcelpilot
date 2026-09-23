@@ -12,3 +12,4 @@ export * from "./prepared-state.ts";
 export * from "./jev-client.ts";
 export * from "./briefing-contract.ts";
 export * from "./briefing-client.ts";
+export * from "./briefing-openrouter.ts";
