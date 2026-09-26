@@ -8,10 +8,10 @@
     "taxkey": "1180271000",
     "address": "6863 N 76th St",
     "lot_area_sqft": 30016,
+    "lot_area_suspect": false,
     "base_zoning": [
       "LB2"
     ],
-    "lot_area_suspect": false,
     "overlays": [],
     "special_districts": [],
     "floodplain": [],
@@ -173,10 +173,16 @@
     }
   ],
   "review": {
-    "status": "unreviewed",
+    "status": "approved",
     "drafted_by": "claude-opus-5-5 (draft for reviewer correction, MOO-842)",
     "drafted_at": "2026-09-23",
-    "reviewer": null,
-    "notes": ""
+    "reviewer": "tarik",
+    "notes": "",
+    "reviewed_at": "2026-09-26",
+    "label": {
+      "final_status": "revise_scenario",
+      "route": "revise_scenario",
+      "reason": "A clear fail should tell the user to revise; the unknown LB2 front setback is secondary (Tarik, in chat; same as G07/G08/G28)."
+    }
   }
 }

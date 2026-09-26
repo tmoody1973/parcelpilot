@@ -34,8 +34,15 @@ test("final status is never more permissive than the strictest override implied 
   }
 });
 
-test("no gold case is marked reviewed yet (no reviewer on record)", () => {
-  for (const { c } of cases) assert.equal(c.review.status, "unreviewed");
+// MOO-843 (decision 018): every case carries a reviewer's decision. A changed answer keeps the drafted one in
+// `expected` and records the reviewer's next to it, with a reason; a rejection records why.
+test("every gold case is reviewed, and every changed answer or rejection says why", () => {
+  for (const { c } of cases) {
+    assert.ok(c.review.status === "approved" || c.review.status === "rejected", `${c.id}: ${c.review.status}`);
+    assert.ok(c.review.reviewer && c.review.reviewed_at, `${c.id}: reviewer and date on record`);
+    if (c.review.label) assert.ok(c.review.label.reason.trim(), `${c.id}: a changed answer needs a reason`);
+    if (c.review.status === "rejected") assert.ok(c.review.reason?.trim(), `${c.id}: a rejection needs a reason`);
+  }
 });
 
 test("proceed_to_concept_design only when every checked category passes", () => {

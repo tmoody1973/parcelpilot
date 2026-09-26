@@ -8,10 +8,10 @@
     "taxkey": "2510380100",
     "address": "7100 W Capitol Dr",
     "lot_area_sqft": 30960,
+    "lot_area_suspect": false,
     "base_zoning": [
       "LB1"
     ],
-    "lot_area_suspect": false,
     "overlays": [],
     "special_districts": [],
     "floodplain": [],
@@ -180,10 +180,11 @@
     }
   ],
   "review": {
-    "status": "unreviewed",
+    "status": "approved",
     "drafted_by": "claude-opus-5-5 (draft for reviewer correction, MOO-842)",
     "drafted_at": "2026-09-23",
-    "reviewer": null,
-    "notes": "Synthetic source state: the cited Chapter 295 subchapter is marked superseded, so the citation gate must fail closed even though every check passes."
+    "reviewer": "tarik",
+    "notes": "Synthetic source state: the cited Chapter 295 subchapter is marked superseded, so the citation gate must fail closed even though every check passes.",
+    "reviewed_at": "2026-09-26"
   }
 }

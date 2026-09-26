@@ -8,10 +8,10 @@
     "taxkey": "2510126000",
     "address": "7526 W Appleton Av",
     "lot_area_sqft": 4800,
+    "lot_area_suspect": false,
     "base_zoning": [
       "LB1"
     ],
-    "lot_area_suspect": false,
     "overlays": [],
     "special_districts": [],
     "floodplain": [],
@@ -178,10 +178,11 @@
     }
   ],
   "review": {
-    "status": "unreviewed",
+    "status": "approved",
     "drafted_by": "claude-opus-5-5 (draft for reviewer correction, MOO-842)",
     "drafted_at": "2026-09-23",
-    "reviewer": null,
-    "notes": "Ground-floor retail is L (limited use) in Table 295-603-1. The v1 engine checks the principal use only, so this case proceeds; the limited-use conditions on the retail part are not evaluated. Reviewer (MOO-843): confirm proceed, or label it verify."
+    "reviewer": "tarik",
+    "notes": "Ground-floor retail is L (limited use) in Table 295-603-1. The v1 engine checks the principal use only, so this case proceeds; the limited-use conditions on the retail part are not evaluated. Reviewer (MOO-843): confirm proceed, or label it verify.",
+    "reviewed_at": "2026-09-26"
   }
 }
