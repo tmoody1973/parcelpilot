@@ -4,13 +4,13 @@
 // --baseline also asks the structured-output baseline (comparator 2, MOO-844) the same four questions about the same
 // prepared state, in one Message Batch, and records each answer with provider = baseline. --max-usd caps briefs and
 // baseline together.
-//   pnpm decision:gold [--cases G01,G02] [--max-usd 3] [--no-brief] [--baseline] [--citation-support]
+//   pnpm decision:gold [--cases G01,G02] [--max-usd 3] [--no-brief] [--baseline | --baseline-only | --report-only] [--baseline] [--citation-support]
 // Needs TYPESAFE_API_KEY (JEV) and ANTHROPIC_API_KEY (briefs, baseline). Writes docs/eval/shadow-<date>.md and the recorded JEV
 // fixture the CI gate reads (packages/zoning-core/src/__fixtures__/jev-gold.json).
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import postgres from "postgres";
-import { DECISION_POLICY_V1, GoldCase, ZoningRule, expertLabel, inScoredSet, type JevRoute, type PolicyFlags, type PreparedState } from "@parcelpilot/contracts";
+import { DECISION_POLICY_V1, GoldCase, PreparedState, ZoningRule, expertLabel, inScoredSet, type JevRoute, type PolicyFlags } from "@parcelpilot/contracts";
 import { briefRun, goldComparisons, goldOrgId, goldSnapshot, lockGoldRun, recordJevRun } from "@parcelpilot/db";
 import { RULES_ENGINE_VERSION } from "@parcelpilot/rules-engine";
 import {
@@ -28,6 +28,11 @@ const withBaseline = args.includes("--baseline");
 if (withBaseline && !process.env["ANTHROPIC_API_KEY"]) throw new Error("--baseline needs ANTHROPIC_API_KEY");
 const reportOnly = args.includes("--report-only"); // rebuild the report from the latest gold runs already in the database: no model calls
 if (reportOnly && withBaseline) throw new Error("--report-only makes no model calls; drop --baseline");
+// The baseline on the latest gold runs, asked about the exact prepared state JEV was given (stored with its answer), so the
+// two comparators see identical input. No new runs, no JEV calls, no briefs; the report is rebuilt afterwards.
+const baselineOnly = args.includes("--baseline-only");
+if (baselineOnly && !process.env["ANTHROPIC_API_KEY"]) throw new Error("--baseline-only needs ANTHROPIC_API_KEY");
+const reuse = reportOnly || baselineOnly; // work on the latest gold runs instead of locking new ones
 const citationSupport = args.includes("--citation-support"); // the twelfth check (MOO-841); needs TYPESAFE_API_KEY
 
 const JURISDICTION = "milwaukee-wi";
@@ -53,7 +58,7 @@ try {
   const orgId = await goldOrgId(service);
   const inOrg = <T>(fn: (tx: postgres.TransactionSql) => Promise<T>) => app.begin(async (tx) => { await tx`select set_config('app.org_id', ${orgId}, true)`; return fn(tx); }) as Promise<T>;
 
-  if (reportOnly) {
+  if (reuse) {
     // Report only on runs made for the current case: same version, and the expert label it was scored against then
     // still the expert label now. Anything else means the case changed since, and a fresh run is needed.
     const latest = new Map((await inOrg((tx) => goldComparisons(tx))).map((r) => [r.case_id, r]));
@@ -63,7 +68,13 @@ try {
       if (!r) { stale.push(`${c.id}: no gold run yet`); continue; }
       const want = expertLabel(c);
       if (r.case_version !== c.version || r.expert_route !== want.route || r.expert_status !== want.final_status) { stale.push(`${c.id}: its latest run predates the current case (v${r.case_version}, ${r.expert_route}); run decision:gold again`); continue; }
-      done.push({ c, runId: r.run_id, decision: goldDecision(c, RULES, ANALYSIS_DATE) });
+      let state: PreparedState | undefined;
+      if (baselineOnly) {
+        const [j] = await inOrg((tx) => tx<{ input_state: unknown }[]>`select input_state from jev_runs where feasibility_run_id = ${r.run_id} and provider = 'jev' order by created_at desc limit 1`);
+        if (!j) { stale.push(`${c.id}: no JEV call on its latest run, so there is no prepared state to reuse`); continue; }
+        state = PreparedState.parse(j.input_state);
+      }
+      done.push({ c, runId: r.run_id, decision: goldDecision(c, RULES, ANALYSIS_DATE), ...(state ? { state } : {}) });
     }
     if (stale.length) throw new Error(stale.join("\n"));
   } else for (const c of cases) {
@@ -88,7 +99,7 @@ try {
   let reserved = 0;
   const batchOptions = { log: (m: string) => console.log(m), approve: (n: number, worst: number) => { if (reserved + worst > maxUsd) throw new Error(`spend cap: ${n} request(s) could cost up to $${worst.toFixed(2)}, over $${maxUsd}`); reserved += worst; } };
   const baselines = async () => {
-    if (!withBaseline || reportOnly) return;
+    if (!(withBaseline || baselineOnly) || reportOnly) return;
     const batcher = messageBatcher(batchOptions);
     await Promise.all(done.map(async (d) => {
       const call = await askBaseline(d.state!, { send: (p) => batcher.send(p) });
@@ -97,7 +108,7 @@ try {
     }));
   };
   const briefs = async () => {
-    if (reportOnly || !withBrief || !process.env["ANTHROPIC_API_KEY"]) return;
+    if (reuse || !withBrief || !process.env["ANTHROPIC_API_KEY"]) return;
     const system = readFileSync(join(root, "prompts", `${BRIEFING_PROMPT_VERSION}.md`), "utf8");
     const batcher = briefingBatcher(batchOptions);
     await Promise.all(done.map((d) => inOrg((tx) => briefRun(tx, d.runId, { orgId, model: DEFAULT_BRIEFING_MODEL, system, effort: DEFAULT_BRIEFING_EFFORT, write: (i) => batcher.write(i), ...(citationSupport ? { citationSupport: { apiKey: process.env["TYPESAFE_API_KEY"], jurisdictionId: JURISDICTION } } : {}) }))));
@@ -157,7 +168,7 @@ function report(rows: (ShadowRow & { memo: string })[]) {
   writeFileSync(join(root, "docs", "eval", reportName), lines.join("\n"));
   const fixturePath = join(root, "packages", "zoning-core", "src", "__fixtures__", "jev-gold.json");
   const previous = only && existsSync(fixturePath) ? (JSON.parse(readFileSync(fixturePath, "utf8")).cases as typeof fixture) : {};
-  if (!reportOnly) writeFileSync(fixturePath, JSON.stringify({ recorded: date, cases: { ...previous, ...fixture } }, null, 1) + "\n"); // report-only asks JEV nothing, so it records nothing
+  if (!reuse) writeFileSync(fixturePath, JSON.stringify({ recorded: date, cases: { ...previous, ...fixture } }, null, 1) + "\n"); // report-only asks JEV nothing, so it records nothing
   console.log(summary.join("\n"));
-  console.log(`\nreport: docs/eval/${reportName}  fixture: packages/zoning-core/src/__fixtures__/jev-gold.json (${reportOnly ? "not written: report-only" : `${Object.keys(fixture).length} case(s) ${only ? "merged" : "written"}`})`);
+  console.log(`\nreport: docs/eval/${reportName}  fixture: packages/zoning-core/src/__fixtures__/jev-gold.json (${reuse ? "not written: JEV was not asked" : `${Object.keys(fixture).length} case(s) ${only ? "merged" : "written"}`})`);
 }
