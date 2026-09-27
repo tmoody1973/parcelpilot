@@ -73,11 +73,11 @@ export async function lockGoldRun(tx: postgres.TransactionSql, i: {
 
 // The latest shadow comparison per gold case, with its JEV call and brief (the reviewer page and decision:gold).
 // Runs in a transaction scoped to the gold org, so RLS still applies: nothing outside the gold org can come back.
-export type GoldComparison = ShadowRow & { run_id: string; locked_at: string };
+export type GoldComparison = ShadowRow & { run_id: string; locked_at: string; case_version: number };
 export async function goldComparisons(tx: postgres.TransactionSql, runIds?: string[]): Promise<GoldComparison[]> {
   return tx<GoldComparison[]>`
     select distinct on (c.gold_case_id)
-      c.feasibility_run_id as run_id, c.created_at::text as locked_at, c.gold_case_id as case_id, c.rules_only_route as rules_route,
+      c.feasibility_run_id as run_id, c.created_at::text as locked_at, c.gold_case_id as case_id, c.gold_case_version as case_version, c.rules_only_route as rules_route,
       c.expert_route, c.gold_expected_status as expert_status, c.jev_status, c.jev_route, c.jev_confidence::float8 as jev_confidence,
       j.error as jev_error, j.latency_ms as jev_latency_ms, j.cost_estimate_usd::float8 as jev_cost_usd,
       b.outcome as brief_outcome, b.cost as brief_cost_usd

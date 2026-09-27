@@ -7,7 +7,7 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import postgres from "postgres";
-import { DECISION_POLICY_V1, GoldCase, ZoningRule, inScoredSet, type JevRoute, type PolicyFlags } from "@parcelpilot/contracts";
+import { DECISION_POLICY_V1, GoldCase, ZoningRule, expertLabel, inScoredSet, type JevRoute, type PolicyFlags } from "@parcelpilot/contracts";
 import { briefRun, goldComparisons, goldOrgId, goldSnapshot, lockGoldRun, recordJevRun } from "@parcelpilot/db";
 import { RULES_ENGINE_VERSION } from "@parcelpilot/rules-engine";
 import {
@@ -48,12 +48,18 @@ try {
   const inOrg = <T>(fn: (tx: postgres.TransactionSql) => Promise<T>) => app.begin(async (tx) => { await tx`select set_config('app.org_id', ${orgId}, true)`; return fn(tx); }) as Promise<T>;
 
   if (reportOnly) {
-    const latest = new Map((await inOrg((tx) => goldComparisons(tx))).map((r) => [r.case_id, r.run_id]));
+    // Report only on runs made for the current case: same version, and the expert label it was scored against then
+    // still the expert label now. Anything else means the case changed since, and a fresh run is needed.
+    const latest = new Map((await inOrg((tx) => goldComparisons(tx))).map((r) => [r.case_id, r]));
+    const stale: string[] = [];
     for (const c of cases) {
-      const runId = latest.get(c.id);
-      if (!runId) throw new Error(`${c.id}: no gold run in the database yet`);
-      done.push({ c, runId, decision: goldDecision(c, RULES, ANALYSIS_DATE) });
+      const r = latest.get(c.id);
+      if (!r) { stale.push(`${c.id}: no gold run yet`); continue; }
+      const want = expertLabel(c);
+      if (r.case_version !== c.version || r.expert_route !== want.route || r.expert_status !== want.final_status) { stale.push(`${c.id}: its latest run predates the current case (v${r.case_version}, ${r.expert_route}); run decision:gold again`); continue; }
+      done.push({ c, runId: r.run_id, decision: goldDecision(c, RULES, ANALYSIS_DATE) });
     }
+    if (stale.length) throw new Error(stale.join("\n"));
   } else for (const c of cases) {
     const decision = goldDecision(c, RULES, ANALYSIS_DATE);
     const snapshotId = await goldSnapshot(service, c, JURISDICTION);

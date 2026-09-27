@@ -58,7 +58,7 @@ test("the frozen gold set matches its manifest", async () => {
   const { createHash } = await import("node:crypto");
   const { existsSync } = await import("node:fs");
   const manifestPath = join(import.meta.dirname, "..", "gold-manifest.json");
-  if (!existsSync(manifestPath)) return; // not frozen yet
+  assert.ok(existsSync(manifestPath), "gold-manifest.json is missing: the frozen set has no drift check");
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { cases: { id: string; version: number; sha256: string }[] };
   const drift: string[] = [];
   for (const f of files) {

@@ -88,7 +88,8 @@ export const GoldCase = z.object({
 // The expert answer the M6 gates score against: the reviewer's label where they changed it, else the drafted one.
 export const expertLabel = (c: GoldCase): { final_status: GoldCase["expected"]["final_status"]; route: GoldCase["expected"]["route"] } =>
   c.review.label ? { final_status: c.review.label.final_status, route: c.review.label.route } : { final_status: c.expected.final_status, route: c.expected.route };
-// A rejected case stays in the repo for the record but is not part of the scored set.
-export const inScoredSet = (c: GoldCase) => c.review.status !== "rejected";
+// Only an approved case is scored: an unreviewed draft is not an expert answer, and a rejected case stays in the repo
+// for the record only.
+export const inScoredSet = (c: GoldCase) => c.review.status === "approved";
 export type GoldCase = z.infer<typeof GoldCase>;
 export { CoverageBucket };

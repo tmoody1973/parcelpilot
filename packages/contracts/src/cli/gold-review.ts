@@ -6,7 +6,7 @@
 //     Writes packages/contracts/gold-manifest.json: every case's version and file hash, plus one hash over the set.
 //     Refuses unreviewed cases, and a changed case whose version was not bumped.
 import { createHash } from "node:crypto";
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
 import { FinalStatus, JevRoute } from "../enums.ts";
@@ -24,8 +24,9 @@ const Review = z.object({
 });
 
 function apply(dir: string, partial: boolean) {
+  // Pass 1: check every label against its case. Nothing is written unless the whole batch is sound (or --partial).
   const problems: string[] = [];
-  let applied = 0;
+  const writes: { path: string; body: string }[] = [];
   for (const f of files()) {
     const raw = readFileSync(join(GOLD, f), "utf8");
     const c = GoldCase.parse(JSON.parse(raw));
@@ -33,6 +34,7 @@ function apply(dir: string, partial: boolean) {
     if (!existsSync(path)) { problems.push(`${c.id}: no label yet`); continue; }
     const doc = JSON.parse(readFileSync(path, "utf8"));
     const r = Review.parse(doc.data ?? doc);
+    if (r.case_id !== c.id) { problems.push(`${c.id}: the saved label names ${r.case_id}`); continue; }
     if (r.case_hash !== sha(raw).slice(0, 16)) { problems.push(`${c.id}: labeled on a different version of the case; label it again`); continue; }
     if (r.decision === "change" && (!r.final_status || !r.route || !r.reason.trim())) { problems.push(`${c.id}: a changed answer needs a status, a route and a reason`); continue; }
     if (r.decision === "reject" && !r.reason.trim()) { problems.push(`${c.id}: a rejection needs a reason`); continue; }
@@ -43,11 +45,12 @@ function apply(dir: string, partial: boolean) {
       ...(r.decision === "change" && !same ? { label: { final_status: r.final_status!, route: r.route!, reason: r.reason.trim() } } : {}),
       ...(r.reason.trim() && !(r.decision === "change" && !same) ? { reason: r.reason.trim() } : {}),
     };
-    writeFileSync(join(GOLD, f), JSON.stringify({ ...c, review }, null, 2) + "\n");
-    applied++;
+    writes.push({ path: join(GOLD, f), body: JSON.stringify({ ...c, review }, null, 2) + "\n" });
   }
-  console.log(`${applied} label(s) applied`);
-  if (problems.length) { console.error(problems.join("\n")); if (!partial) process.exit(1); }
+  if (problems.length) { console.error(problems.join("\n")); if (!partial) { console.error("nothing written"); process.exit(1); } }
+  // Pass 2: write each file through a temporary file and a rename, so no reader sees half a file.
+  for (const w of writes) { writeFileSync(`${w.path}.tmp`, w.body); renameSync(`${w.path}.tmp`, w.path); }
+  console.log(`${writes.length} label(s) applied`);
 }
 
 type Manifest = { version: 1; frozen_at: string; set_sha256: string; cases: { id: string; version: number; sha256: string; status: string }[] };
@@ -63,6 +66,7 @@ function freeze(allowUnreviewed: boolean) {
     if (was && was.sha256 !== sha(raw) && c.version <= was.version) problems.push(`${c.id}: changed since the last freeze without a version bump (v${c.version})`);
     return { id: c.id, version: c.version, sha256: sha(raw), status: c.review.status };
   });
+  for (const was of prev?.cases ?? []) if (!cases.some((c) => c.id === was.id)) problems.push(`${was.id}: frozen in the last manifest but its file is gone (removing a case is a new gold-set version)`);
   if (problems.length) { console.error(problems.join("\n")); process.exit(1); }
   const manifest: Manifest = { version: 1, frozen_at: new Date().toISOString().slice(0, 10), set_sha256: sha(cases.map((c) => `${c.id}:${c.version}:${c.sha256}`).join("\n")), cases };
   writeFileSync(MANIFEST, JSON.stringify(manifest, null, 2) + "\n");
