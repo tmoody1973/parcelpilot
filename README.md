@@ -20,4 +20,4 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Postgres 16 + PostGIS + pgvector on `localhost:5432`, MinIO on `localhost:9100` (console `9101`, user `parcelpilot` / `parcelpilot-local`), Python worker on `localhost:8000/health`. Ports are overridable in `.env`.
+Postgres 16 + PostGIS + pgvector on `localhost:5432`, S3-compatible storage (Adobe S3Mock) on `localhost:9100`, bucket `parcelpilot-sources`, any credentials, Python worker on `localhost:8000/health`. Ports are overridable in `.env`.

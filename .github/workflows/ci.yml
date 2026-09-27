@@ -88,10 +88,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: uv sync --frozen
         working-directory: services/worker-py
-      - name: Start Postgres and MinIO
-        run: |
-          docker compose up -d --wait db minio
-          docker compose run --rm minio-init
+      - name: Start Postgres and S3 storage
+        run: docker compose up -d --wait db s3
       # Builds subchapter 6 from the committed PDF, embeds it with the local model, and fails below the 04 §9.3 gates.
       - run: ./scripts/ci-retrieval-corpus.sh
       - if: always()

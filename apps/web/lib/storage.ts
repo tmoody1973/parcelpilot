@@ -1,6 +1,6 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
-// Object storage for page images (MinIO locally, S3-compatible in production). Same env names as the Python worker.
+// Object storage for page images (S3Mock locally and in CI, S3-compatible in production). Same env names as the Python worker.
 let client: S3Client | undefined;
 function s3(): S3Client {
   return (client ??= new S3Client({
