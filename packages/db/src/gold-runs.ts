@@ -80,9 +80,12 @@ export async function goldComparisons(tx: postgres.TransactionSql, runIds?: stri
       c.feasibility_run_id as run_id, c.created_at::text as locked_at, c.gold_case_id as case_id, c.gold_case_version as case_version, c.rules_only_route as rules_route,
       c.expert_route, c.gold_expected_status as expert_status, c.jev_status, c.jev_route, c.jev_confidence::float8 as jev_confidence,
       j.error as jev_error, j.latency_ms as jev_latency_ms, j.cost_estimate_usd::float8 as jev_cost_usd,
+      bl.status as baseline_status, c.baseline_route, bl.route_confidence::float8 as baseline_confidence, bl.error as baseline_error,
+      bl.latency_ms as baseline_latency_ms, bl.cost_estimate_usd::float8 as baseline_cost_usd,
       b.outcome as brief_outcome, b.cost as brief_cost_usd
     from decision_comparisons c
     left join jev_runs j on j.id = c.jev_run_id
+    left join jev_runs bl on bl.id = c.baseline_run_id
     left join lateral (
       -- A brief's attempts are recorded in one transaction, so they share created_at: never pick "the latest" by time.
       -- The pipeline stops at the first validated attempt, so the series is validated exactly when any attempt is.

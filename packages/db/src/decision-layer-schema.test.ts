@@ -31,9 +31,9 @@ async function lockedRun(tx: postgres.TransactionSql, tag: string) {
       'G05', 1, 'verify_before_committing', 'engage_zoning_professional') returning id`;
   return { org: org as string, run: run as string };
 }
-const jevRow = (tx: postgres.TransactionSql, r: { org: string; run: string }, route: string, extra: Partial<{ status: string; error: string | null; used: boolean; mode: string }> = {}) =>
+const jevRow = (tx: postgres.TransactionSql, r: { org: string; run: string }, route: string, extra: Partial<{ status: string; error: string | null; used: boolean; mode: string; provider: string }> = {}) =>
   tx`insert into jev_runs (org_id, feasibility_run_id, provider, decision_mode, input_state, input_state_hash, question_set_version, model_version, answers, recommended_route, route_confidence, status, error, used_by_policy)
-     values (${r.org}, ${r.run}, 'jev', ${extra.mode ?? "shadow"}, '{}', ${HASH}, 'q.v1', 'jev-1.13', '{}', ${route}, 0.8, ${extra.status ?? "ok"}, ${extra.error ?? null}, ${extra.used ?? false}) returning id`.then((x) => x[0]!["id"] as string);
+     values (${r.org}, ${r.run}, ${extra.provider ?? "jev"}, ${extra.mode ?? "shadow"}, '{}', ${HASH}, 'q.v1', 'jev-1.13', '{}', ${route}, 0.8, ${extra.status ?? "ok"}, ${extra.error ?? null}, ${extra.used ?? false}) returning id`.then((x) => x[0]!["id"] as string);
 
 test("policy v1 is seeded, equals the code's copy, and carries the 05 §4.6 values", () => rolledBack(async (tx) => {
   const t = DECISION_POLICY_V1.thresholds;
@@ -57,6 +57,9 @@ test("jev_runs, briefing_runs and validation_runs are append-only and enforce th
   await rejects(tx, (sp) => jevRow(sp, r, "engage_zoning_professional", { used: true }), /jev_runs_shadow_never_used/);
   await rejects(tx, (sp) => jevRow(sp, r, "engage_zoning_professional", { status: "failed" }), /jev_runs_failed_has_error/);
   await jevRow(tx, r, "engage_zoning_professional", { status: "failed", error: "timeout after 2000 ms" });
+  const baseline = { provider: "baseline", mode: "structured_output_baseline" };
+  await rejects(tx, (sp) => jevRow(sp, r, "engage_zoning_professional", { ...baseline, used: true }), /jev_runs_baseline_never_used/);
+  await jevRow(tx, r, "engage_zoning_professional", baseline);
   const [{ id: brief }] = await tx`insert into briefing_runs (org_id, feasibility_run_id, contract, contract_hash, prompt_version, schema_version, outcome, error)
     values (${r.org}, ${r.run}, '{}', ${HASH}, 'briefing.v1', 'briefing_output.v1', 'fallback', 'status_lock failed') returning id`;
   await rejects(tx, (sp) => sp`insert into briefing_runs (org_id, feasibility_run_id, contract, contract_hash, prompt_version, schema_version, outcome)
