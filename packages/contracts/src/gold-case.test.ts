@@ -34,8 +34,15 @@ test("final status is never more permissive than the strictest override implied 
   }
 });
 
-test("no gold case is marked reviewed yet (no reviewer on record)", () => {
-  for (const { c } of cases) assert.equal(c.review.status, "unreviewed");
+// MOO-843 (decision 018): every case carries a reviewer's decision. A changed answer keeps the drafted one in
+// `expected` and records the reviewer's next to it, with a reason; a rejection records why.
+test("every gold case is reviewed, and every changed answer or rejection says why", () => {
+  for (const { c } of cases) {
+    assert.ok(c.review.status === "approved" || c.review.status === "rejected", `${c.id}: ${c.review.status}`);
+    assert.ok(c.review.reviewer && c.review.reviewed_at, `${c.id}: reviewer and date on record`);
+    if (c.review.label) assert.ok(c.review.label.reason.trim(), `${c.id}: a changed answer needs a reason`);
+    if (c.review.status === "rejected") assert.ok(c.review.reason?.trim(), `${c.id}: a rejection needs a reason`);
+  }
 });
 
 test("proceed_to_concept_design only when every checked category passes", () => {
@@ -43,4 +50,24 @@ test("proceed_to_concept_design only when every checked category passes", () => 
     if (c.expected.final_status !== "proceed_to_concept_design") continue;
     for (const cat of c.expected.coverage.checked) assert.equal(c.expected.findings[cat]?.status, "pass", `${c.id} ${cat}`);
   }
+});
+
+// MOO-843: once frozen, the gold set cannot drift. Every case file must match its hash in gold-manifest.json; changing
+// a case means bumping its version and re-running `pnpm gold:freeze`, which refuses a change without a bump.
+test("the frozen gold set matches its manifest", async () => {
+  const { createHash } = await import("node:crypto");
+  const { existsSync } = await import("node:fs");
+  const manifestPath = join(import.meta.dirname, "..", "gold-manifest.json");
+  assert.ok(existsSync(manifestPath), "gold-manifest.json is missing: the frozen set has no drift check");
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { cases: { id: string; version: number; sha256: string }[] };
+  const drift: string[] = [];
+  for (const f of files) {
+    const raw = readFileSync(join(dir, f), "utf8");
+    const id = f.replace(".json", "");
+    const m = manifest.cases.find((x) => x.id === id);
+    if (!m) drift.push(`${id}: not in the manifest`);
+    else if (m.sha256 !== createHash("sha256").update(raw).digest("hex")) drift.push(`${id}: changed since the freeze (bump its version and run pnpm gold:freeze)`);
+  }
+  for (const m of manifest.cases) if (!files.includes(`${m.id}.json`)) drift.push(`${m.id}: in the manifest but the file is gone`);
+  assert.deepEqual(drift, []);
 });

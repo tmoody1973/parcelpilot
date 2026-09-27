@@ -8,10 +8,10 @@
     "taxkey": "0690032200",
     "address": "7420 W Bradley Rd",
     "lot_area_sqft": 16575,
+    "lot_area_suspect": false,
     "base_zoning": [
       "LB1"
     ],
-    "lot_area_suspect": false,
     "overlays": [],
     "special_districts": [
       "redevelopment_plan"
@@ -184,10 +184,11 @@
     }
   ],
   "review": {
-    "status": "unreviewed",
+    "status": "approved",
     "drafted_by": "claude-opus-5-5 (draft for reviewer correction, MOO-842)",
     "drafted_at": "2026-09-23",
-    "reviewer": null,
-    "notes": "Real: the City's Redevelopment plans layer (special_districts/MapServer/6) intersects this parcel (checked 2026-09-23)."
+    "reviewer": "tarik",
+    "notes": "Real: the City's Redevelopment plans layer (special_districts/MapServer/6) intersects this parcel (checked 2026-09-23).",
+    "reviewed_at": "2026-09-26"
   }
 }

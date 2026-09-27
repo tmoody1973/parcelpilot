@@ -49,7 +49,19 @@ Generated 2026-09-23 for MOO-842 from the 50 files in `packages/contracts/gold/`
 - Districts: LB1 41, LB2 9. LB2 can never reach proceed: its front setback maximum is the average of neighbouring buildings, not a parcel fact yet.
 - Real parcels for G16–G50 came from the City parcel layer (`parcels_mprop/MapServer/2`) on 2026-09-23. Each clean parcel was checked against the planned-development (zoning 1–2), overlay (zoning 4–10), special-district (6, 8, 17, 18, 23) and FEMA (1–2) layers and had no hit.
 
-## Questions for the reviewer (MOO-843)
+## Review and freeze (MOO-843, decision 018)
 
-1. **Ground-floor retail in proceed cases.** "Retail establishment, general" is L (limited use) in Table 295-603-1, and the v1 engine checks only the principal use. So a multifamily building over retail proceeds without evaluating the retail limitations. This affects G02, G16, G18, G19, G21, G22, G23 and G24. If the right answer is verify, those cases change label and the engine needs a new rule. That would be a new issue, not an edit to the case.
-2. **Mixed use has no row in Table 295-603-1.** The seeded use rule lists `mixed_use` (and `commercial`) as L with no table row behind it. G47 and G48 test that entry. Should it stay?
+All 50 cases were reviewed by Tarik as interim reviewer (2026-09-23 to 2026-09-26): **50 approved, 0 rejected, 6 with a changed answer**. The drafted answer stays in `expected` (what the engine must reproduce), and the reviewer's answer is `review.label` (what the launch gates score against):
+
+| Case | Drafted route | Reviewer's route | Why |
+|---|---|---|---|
+| G07, G08, G28, G31 | engage_zoning_professional | revise_scenario | A clear fail should say revise; the unknown LB2 front setback is secondary |
+| G47, G48 | engage_zoning_professional | proceed_to_concept_design | Judged by its parts; the shop's only limit is an hours rule (s. 295-603-2-h) |
+
+The two open questions:
+1. **Ground-floor retail keeps proceed.** Its only limited-use standard is an hours limit; the memo should say so (MOO-851).
+2. **Mixed use is judged by its parts.** The invented `mixed_use` entry goes (MOO-850).
+
+Frozen as v1 in `packages/contracts/gold-manifest.json`. CI fails if any case changes without a version bump.
+
+These are product-owner labels on Claude-drafted cases, not an independent zoning expert's, and reviewer agreement (Q-28) can't be measured with one labeler.

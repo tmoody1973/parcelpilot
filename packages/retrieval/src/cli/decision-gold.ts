@@ -7,7 +7,7 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import postgres from "postgres";
-import { DECISION_POLICY_V1, GoldCase, ZoningRule, type JevRoute, type PolicyFlags } from "@parcelpilot/contracts";
+import { DECISION_POLICY_V1, GoldCase, ZoningRule, expertLabel, inScoredSet, type JevRoute, type PolicyFlags } from "@parcelpilot/contracts";
 import { briefRun, goldComparisons, goldOrgId, goldSnapshot, lockGoldRun, recordJevRun } from "@parcelpilot/db";
 import { RULES_ENGINE_VERSION } from "@parcelpilot/rules-engine";
 import {
@@ -21,6 +21,7 @@ const flag = (n: string) => { const i = args.indexOf(n); return i >= 0 ? args[i 
 const only = flag("--cases")?.split(",");
 const maxUsd = Number(flag("--max-usd") ?? 3);
 const withBrief = !args.includes("--no-brief");
+const reportOnly = args.includes("--report-only"); // rebuild the report from the latest gold runs already in the database: no model calls
 const citationSupport = args.includes("--citation-support"); // the twelfth check (MOO-841); needs TYPESAFE_API_KEY
 
 const JURISDICTION = "milwaukee-wi";
@@ -31,7 +32,7 @@ const contracts = join(root, "packages", "contracts");
 const RULES = readdirSync(join(contracts, "rules")).filter((f) => f.endsWith(".json"))
   .flatMap((f) => (JSON.parse(readFileSync(join(contracts, "rules", f), "utf8")).rules as unknown[]).map((r) => ZoningRule.parse(r)));
 const cases = readdirSync(join(contracts, "gold")).filter((f) => f.endsWith(".json")).sort()
-  .map((f) => GoldCase.parse(JSON.parse(readFileSync(join(contracts, "gold", f), "utf8")))).filter((c) => !only || only.includes(c.id));
+  .map((f) => GoldCase.parse(JSON.parse(readFileSync(join(contracts, "gold", f), "utf8")))).filter((c) => (!only || only.includes(c.id)) && inScoredSet(c)); // rejected cases are not scored
 const knownUses = RULES.filter((r) => r.kind === "allowed_use").flatMap((r) => Object.keys((r.params as { uses?: Record<string, string> }).uses ?? {}));
 
 const service = postgres(process.env["DATABASE_SERVICE_URL"] ?? "postgres://parcelpilot_service:parcelpilot-service@localhost:5432/parcelpilot", { max: 2 });
@@ -46,7 +47,20 @@ try {
   const orgId = await goldOrgId(service);
   const inOrg = <T>(fn: (tx: postgres.TransactionSql) => Promise<T>) => app.begin(async (tx) => { await tx`select set_config('app.org_id', ${orgId}, true)`; return fn(tx); }) as Promise<T>;
 
-  for (const c of cases) {
+  if (reportOnly) {
+    // Report only on runs made for the current case: same version, and the expert label it was scored against then
+    // still the expert label now. Anything else means the case changed since, and a fresh run is needed.
+    const latest = new Map((await inOrg((tx) => goldComparisons(tx))).map((r) => [r.case_id, r]));
+    const stale: string[] = [];
+    for (const c of cases) {
+      const r = latest.get(c.id);
+      if (!r) { stale.push(`${c.id}: no gold run yet`); continue; }
+      const want = expertLabel(c);
+      if (r.case_version !== c.version || r.expert_route !== want.route || r.expert_status !== want.final_status) { stale.push(`${c.id}: its latest run predates the current case (v${r.case_version}, ${r.expert_route}); run decision:gold again`); continue; }
+      done.push({ c, runId: r.run_id, decision: goldDecision(c, RULES, ANALYSIS_DATE) });
+    }
+    if (stale.length) throw new Error(stale.join("\n"));
+  } else for (const c of cases) {
     const decision = goldDecision(c, RULES, ANALYSIS_DATE);
     const snapshotId = await goldSnapshot(service, c, JURISDICTION);
     const runId = await inOrg((tx) => lockGoldRun(tx, { orgId, c, decision, rules: RULES, snapshotId, analysisDate: ANALYSIS_DATE, engineVersion: RULES_ENGINE_VERSION }));
@@ -65,7 +79,7 @@ try {
     done.push({ c, runId, decision });
   }
 
-  if (withBrief && process.env["ANTHROPIC_API_KEY"]) {
+  if (!reportOnly && withBrief && process.env["ANTHROPIC_API_KEY"]) {
     const system = readFileSync(join(root, "prompts", `${BRIEFING_PROMPT_VERSION}.md`), "utf8");
     let reserved = 0;
     const batcher = briefingBatcher({ log: (m) => console.log(m), approve: (n, worst) => { if (reserved + worst > maxUsd) throw new Error(`spend cap: ${n} brief(s) could cost up to $${worst.toFixed(2)}, over $${maxUsd}`); reserved += worst; } });
@@ -78,7 +92,7 @@ try {
   const rows: (ShadowRow & { memo: string })[] = [];
   for (const d of done) {
     const [final] = await inOrg((tx) => tx<{ outcome: "validated" | "fallback"; validated_output: unknown; contract: unknown }[]>`
-      select outcome, validated_output, contract from briefing_runs where feasibility_run_id = ${d.runId} order by created_at desc limit 1`);
+      select outcome, validated_output, contract from briefing_runs where feasibility_run_id = ${d.runId} order by (outcome = 'validated') desc, created_at desc limit 1`); // attempts share created_at (one transaction)
     const brief = final?.outcome === "validated" ? memoBrief(final.validated_output, final.contract) : null;
     const input = goldMemoInput(d.c, d.decision, ANALYSIS_DATE);
     const memo = validateMemo(brief ? renderMemo(input, { brief }) : renderMemo(input, { templateNote: true }), input, brief);
@@ -120,7 +134,7 @@ function report(rows: (ShadowRow & { memo: string })[]) {
   writeFileSync(join(root, "docs", "eval", reportName), lines.join("\n"));
   const fixturePath = join(root, "packages", "zoning-core", "src", "__fixtures__", "jev-gold.json");
   const previous = only && existsSync(fixturePath) ? (JSON.parse(readFileSync(fixturePath, "utf8")).cases as typeof fixture) : {};
-  writeFileSync(fixturePath, JSON.stringify({ recorded: date, cases: { ...previous, ...fixture } }, null, 1) + "\n");
+  if (!reportOnly) writeFileSync(fixturePath, JSON.stringify({ recorded: date, cases: { ...previous, ...fixture } }, null, 1) + "\n"); // report-only asks JEV nothing, so it records nothing
   console.log(lines.slice(4, 15).join("\n"));
-  console.log(`\nreport: docs/eval/${reportName}  fixture: packages/zoning-core/src/__fixtures__/jev-gold.json (${Object.keys(fixture).length} case(s) ${only ? "merged" : "written"})`);
+  console.log(`\nreport: docs/eval/${reportName}  fixture: packages/zoning-core/src/__fixtures__/jev-gold.json (${reportOnly ? "not written: report-only" : `${Object.keys(fixture).length} case(s) ${only ? "merged" : "written"}`})`);
 }
