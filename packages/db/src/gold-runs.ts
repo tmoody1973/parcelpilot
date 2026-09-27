@@ -84,7 +84,9 @@ export async function goldComparisons(tx: postgres.TransactionSql, runIds?: stri
     from decision_comparisons c
     left join jev_runs j on j.id = c.jev_run_id
     left join lateral (
-      select (array_agg(outcome order by created_at desc))[1] as outcome, sum(cost_estimate_usd)::float8 as cost
+      -- A brief's attempts are recorded in one transaction, so they share created_at: never pick "the latest" by time.
+      -- The pipeline stops at the first validated attempt, so the series is validated exactly when any attempt is.
+      select case when bool_or(outcome = 'validated') then 'validated' when count(*) > 0 then 'fallback' end as outcome, sum(cost_estimate_usd)::float8 as cost
       from briefing_runs where feasibility_run_id = c.feasibility_run_id) b on true
     where c.gold_case_id is not null ${runIds ? tx`and c.feasibility_run_id = any(${runIds})` : tx``}
     order by c.gold_case_id, c.created_at desc`;

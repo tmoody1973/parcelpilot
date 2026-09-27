@@ -21,6 +21,7 @@ const flag = (n: string) => { const i = args.indexOf(n); return i >= 0 ? args[i 
 const only = flag("--cases")?.split(",");
 const maxUsd = Number(flag("--max-usd") ?? 3);
 const withBrief = !args.includes("--no-brief");
+const reportOnly = args.includes("--report-only"); // rebuild the report from the latest gold runs already in the database: no model calls
 const citationSupport = args.includes("--citation-support"); // the twelfth check (MOO-841); needs TYPESAFE_API_KEY
 
 const JURISDICTION = "milwaukee-wi";
@@ -46,7 +47,14 @@ try {
   const orgId = await goldOrgId(service);
   const inOrg = <T>(fn: (tx: postgres.TransactionSql) => Promise<T>) => app.begin(async (tx) => { await tx`select set_config('app.org_id', ${orgId}, true)`; return fn(tx); }) as Promise<T>;
 
-  for (const c of cases) {
+  if (reportOnly) {
+    const latest = new Map((await inOrg((tx) => goldComparisons(tx))).map((r) => [r.case_id, r.run_id]));
+    for (const c of cases) {
+      const runId = latest.get(c.id);
+      if (!runId) throw new Error(`${c.id}: no gold run in the database yet`);
+      done.push({ c, runId, decision: goldDecision(c, RULES, ANALYSIS_DATE) });
+    }
+  } else for (const c of cases) {
     const decision = goldDecision(c, RULES, ANALYSIS_DATE);
     const snapshotId = await goldSnapshot(service, c, JURISDICTION);
     const runId = await inOrg((tx) => lockGoldRun(tx, { orgId, c, decision, rules: RULES, snapshotId, analysisDate: ANALYSIS_DATE, engineVersion: RULES_ENGINE_VERSION }));
@@ -65,7 +73,7 @@ try {
     done.push({ c, runId, decision });
   }
 
-  if (withBrief && process.env["ANTHROPIC_API_KEY"]) {
+  if (!reportOnly && withBrief && process.env["ANTHROPIC_API_KEY"]) {
     const system = readFileSync(join(root, "prompts", `${BRIEFING_PROMPT_VERSION}.md`), "utf8");
     let reserved = 0;
     const batcher = briefingBatcher({ log: (m) => console.log(m), approve: (n, worst) => { if (reserved + worst > maxUsd) throw new Error(`spend cap: ${n} brief(s) could cost up to $${worst.toFixed(2)}, over $${maxUsd}`); reserved += worst; } });
@@ -78,7 +86,7 @@ try {
   const rows: (ShadowRow & { memo: string })[] = [];
   for (const d of done) {
     const [final] = await inOrg((tx) => tx<{ outcome: "validated" | "fallback"; validated_output: unknown; contract: unknown }[]>`
-      select outcome, validated_output, contract from briefing_runs where feasibility_run_id = ${d.runId} order by created_at desc limit 1`);
+      select outcome, validated_output, contract from briefing_runs where feasibility_run_id = ${d.runId} order by (outcome = 'validated') desc, created_at desc limit 1`); // attempts share created_at (one transaction)
     const brief = final?.outcome === "validated" ? memoBrief(final.validated_output, final.contract) : null;
     const input = goldMemoInput(d.c, d.decision, ANALYSIS_DATE);
     const memo = validateMemo(brief ? renderMemo(input, { brief }) : renderMemo(input, { templateNote: true }), input, brief);
@@ -120,7 +128,7 @@ function report(rows: (ShadowRow & { memo: string })[]) {
   writeFileSync(join(root, "docs", "eval", reportName), lines.join("\n"));
   const fixturePath = join(root, "packages", "zoning-core", "src", "__fixtures__", "jev-gold.json");
   const previous = only && existsSync(fixturePath) ? (JSON.parse(readFileSync(fixturePath, "utf8")).cases as typeof fixture) : {};
-  writeFileSync(fixturePath, JSON.stringify({ recorded: date, cases: { ...previous, ...fixture } }, null, 1) + "\n");
+  if (!reportOnly) writeFileSync(fixturePath, JSON.stringify({ recorded: date, cases: { ...previous, ...fixture } }, null, 1) + "\n"); // report-only asks JEV nothing, so it records nothing
   console.log(lines.slice(4, 15).join("\n"));
-  console.log(`\nreport: docs/eval/${reportName}  fixture: packages/zoning-core/src/__fixtures__/jev-gold.json (${Object.keys(fixture).length} case(s) ${only ? "merged" : "written"})`);
+  console.log(`\nreport: docs/eval/${reportName}  fixture: packages/zoning-core/src/__fixtures__/jev-gold.json (${reportOnly ? "not written: report-only" : `${Object.keys(fixture).length} case(s) ${only ? "merged" : "written"}`})`);
 }
