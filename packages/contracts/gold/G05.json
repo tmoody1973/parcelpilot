@@ -139,7 +139,7 @@
       "gis_ambiguity": false
     },
     "final_status": "verify_before_committing",
-    "route": "engage_zoning_professional",
+    "route": "contact_city",
     "triggers": [],
     "reasons": [
       "O4:finding_verify"
