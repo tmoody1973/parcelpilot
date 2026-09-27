@@ -8,10 +8,10 @@
     "taxkey": "2510408000",
     "address": "7210 W Capitol Dr",
     "lot_area_sqft": 19440,
+    "lot_area_suspect": false,
     "base_zoning": [
       "LB1"
     ],
-    "lot_area_suspect": false,
     "overlays": [],
     "special_districts": [],
     "floodplain": [],
@@ -180,10 +180,11 @@
     }
   ],
   "review": {
-    "status": "unreviewed",
+    "status": "approved",
     "drafted_by": "claude-opus-5-5 (draft for reviewer correction, MOO-842)",
     "drafted_at": "2026-09-23",
-    "reviewer": null,
-    "notes": "Synthetic source state, as G38. A fail on superseded code is not a reliable fail either: the screen abstains and reports only the evidence reason (05 §7 abstention, as G09); the height fail stays visible in the findings."
+    "reviewer": "tarik",
+    "notes": "Synthetic source state, as G38. A fail on superseded code is not a reliable fail either: the screen abstains and reports only the evidence reason (05 §7 abstention, as G09); the height fail stays visible in the findings.",
+    "reviewed_at": "2026-09-26"
   }
 }

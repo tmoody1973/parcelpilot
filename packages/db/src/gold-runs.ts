@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type postgres from "postgres";
-import { DECISION_POLICY_V1, type GoldCase, type ScenarioInputs, type ZoningRule } from "@parcelpilot/contracts";
+import { DECISION_POLICY_V1, expertLabel, type GoldCase, type ScenarioInputs, type ZoningRule } from "@parcelpilot/contracts";
 import type { GoldDecision, ShadowRow } from "@parcelpilot/zoning-core";
 import { decisionPolicyVersionId } from "./decision-policy.ts";
 
@@ -58,7 +58,7 @@ export async function lockGoldRun(tx: postgres.TransactionSql, i: {
       gold_case_id, gold_case_version, gold_expected_status, gold_expected_route)
     values (${i.orgId}, ${project!.id}, ${scenario!.id}, ${i.snapshotId}, '{}', ${inputHash}, ${tx.json(inputs as never)}, ${tx.json(ruleVersionSet)},
       'shadow', 'succeeded', ${d.policy.final_status}, ${d.policy.route}, ${tx.json(stored as never)}, now(), ${policyVersionId},
-      ${c.id}, ${c.version}, ${c.expected.final_status}, ${c.expected.route})
+      ${c.id}, ${c.version}, ${expertLabel(c).final_status}, ${expertLabel(c).route}) -- the reviewer's label where they changed it
     returning id`;
   for (const f of d.findings) {
     // ponytail: gold rule ids are slugs (lb1-use-v1), not zoning_rules uuids, so zoning_rule_id stays null; the slug is in the finding
@@ -73,11 +73,11 @@ export async function lockGoldRun(tx: postgres.TransactionSql, i: {
 
 // The latest shadow comparison per gold case, with its JEV call and brief (the reviewer page and decision:gold).
 // Runs in a transaction scoped to the gold org, so RLS still applies: nothing outside the gold org can come back.
-export type GoldComparison = ShadowRow & { run_id: string; locked_at: string };
+export type GoldComparison = ShadowRow & { run_id: string; locked_at: string; case_version: number };
 export async function goldComparisons(tx: postgres.TransactionSql, runIds?: string[]): Promise<GoldComparison[]> {
   return tx<GoldComparison[]>`
     select distinct on (c.gold_case_id)
-      c.feasibility_run_id as run_id, c.created_at::text as locked_at, c.gold_case_id as case_id, c.rules_only_route as rules_route,
+      c.feasibility_run_id as run_id, c.created_at::text as locked_at, c.gold_case_id as case_id, c.gold_case_version as case_version, c.rules_only_route as rules_route,
       c.expert_route, c.gold_expected_status as expert_status, c.jev_status, c.jev_route, c.jev_confidence::float8 as jev_confidence,
       j.error as jev_error, j.latency_ms as jev_latency_ms, j.cost_estimate_usd::float8 as jev_cost_usd,
       bl.status as baseline_status, c.baseline_route, bl.route_confidence::float8 as baseline_confidence, bl.error as baseline_error,
@@ -87,7 +87,9 @@ export async function goldComparisons(tx: postgres.TransactionSql, runIds?: stri
     left join jev_runs j on j.id = c.jev_run_id
     left join jev_runs bl on bl.id = c.baseline_run_id
     left join lateral (
-      select (array_agg(outcome order by created_at desc))[1] as outcome, sum(cost_estimate_usd)::float8 as cost
+      -- A brief's attempts are recorded in one transaction, so they share created_at: never pick "the latest" by time.
+      -- The pipeline stops at the first validated attempt, so the series is validated exactly when any attempt is.
+      select case when bool_or(outcome = 'validated') then 'validated' when count(*) > 0 then 'fallback' end as outcome, sum(cost_estimate_usd)::float8 as cost
       from briefing_runs where feasibility_run_id = c.feasibility_run_id) b on true
     where c.gold_case_id is not null ${runIds ? tx`and c.feasibility_run_id = any(${runIds})` : tx``}
     order by c.gold_case_id, c.created_at desc`;

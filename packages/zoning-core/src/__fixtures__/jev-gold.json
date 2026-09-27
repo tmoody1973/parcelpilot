@@ -1,31 +1,31 @@
 {
- "recorded": "2026-09-23",
+ "recorded": "2026-09-27",
  "cases": {
   "G01": {
    "status": "ok",
    "route": "revise_scenario",
-   "confidence": 0.91,
+   "confidence": 0.9,
    "risk_bucket": "high",
    "error": null
   },
   "G02": {
    "status": "ok",
    "route": "engage_zoning_professional",
-   "confidence": 0.27,
+   "confidence": 0.28,
    "risk_bucket": "medium",
    "error": null
   },
   "G03": {
    "status": "ok",
    "route": "revise_scenario",
-   "confidence": 0.81,
+   "confidence": 0.83,
    "risk_bucket": "high",
    "error": null
   },
   "G04": {
    "status": "ok",
    "route": "collect_missing_information",
-   "confidence": 0.28,
+   "confidence": 0.27,
    "risk_bucket": "medium",
    "error": null
   },
@@ -33,27 +33,27 @@
    "status": "ok",
    "route": "engage_zoning_professional",
    "confidence": 0.98,
-   "risk_bucket": "medium",
+   "risk_bucket": "high",
    "error": null
   },
   "G06": {
    "status": "ok",
    "route": "engage_zoning_professional",
-   "confidence": 0.74,
+   "confidence": 0.75,
    "risk_bucket": "medium",
    "error": null
   },
   "G07": {
    "status": "ok",
    "route": "revise_scenario",
-   "confidence": 0.68,
+   "confidence": 0.72,
    "risk_bucket": "high",
    "error": null
   },
   "G08": {
    "status": "ok",
    "route": "revise_scenario",
-   "confidence": 0.85,
+   "confidence": 0.81,
    "risk_bucket": "high",
    "error": null
   },
@@ -67,28 +67,28 @@
   "G10": {
    "status": "ok",
    "route": "engage_zoning_professional",
-   "confidence": 0.83,
+   "confidence": 0.85,
    "risk_bucket": "high",
    "error": null
   },
   "G11": {
    "status": "ok",
    "route": "contact_city",
-   "confidence": 0.87,
-   "risk_bucket": "high",
+   "confidence": 0.9,
+   "risk_bucket": "medium",
    "error": null
   },
   "G12": {
    "status": "ok",
    "route": "contact_city",
-   "confidence": 0.5,
+   "confidence": 0.62,
    "risk_bucket": "high",
    "error": null
   },
   "G13": {
    "status": "ok",
    "route": "contact_city",
-   "confidence": 0.96,
+   "confidence": 0.95,
    "risk_bucket": "high",
    "error": null
   },
@@ -102,8 +102,253 @@
   "G15": {
    "status": "ok",
    "route": "insufficient_evidence",
-   "confidence": 0.96,
+   "confidence": 0.95,
    "risk_bucket": "medium",
+   "error": null
+  },
+  "G16": {
+   "status": "ok",
+   "route": "engage_zoning_professional",
+   "confidence": 0.25,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G17": {
+   "status": "ok",
+   "route": "collect_missing_information",
+   "confidence": 0.33,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G18": {
+   "status": "ok",
+   "route": "collect_missing_information",
+   "confidence": 0.28,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G19": {
+   "status": "ok",
+   "route": "engage_zoning_professional",
+   "confidence": 0.26,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G20": {
+   "status": "ok",
+   "route": "collect_missing_information",
+   "confidence": 0.39,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G21": {
+   "status": "ok",
+   "route": "engage_zoning_professional",
+   "confidence": 0.32,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G22": {
+   "status": "ok",
+   "route": "engage_zoning_professional",
+   "confidence": 0.31,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G23": {
+   "status": "ok",
+   "route": "collect_missing_information",
+   "confidence": 0.29,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G24": {
+   "status": "failed",
+   "route": null,
+   "confidence": null,
+   "risk_bucket": null,
+   "error": "timeout after 2000 ms"
+  },
+  "G25": {
+   "status": "ok",
+   "route": "collect_missing_information",
+   "confidence": 0.28,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G26": {
+   "status": "ok",
+   "route": "engage_zoning_professional",
+   "confidence": 0.78,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G27": {
+   "status": "ok",
+   "route": "engage_zoning_professional",
+   "confidence": 0.53,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G28": {
+   "status": "ok",
+   "route": "engage_zoning_professional",
+   "confidence": 0.84,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G29": {
+   "status": "ok",
+   "route": "revise_scenario",
+   "confidence": 0.9,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G30": {
+   "status": "ok",
+   "route": "revise_scenario",
+   "confidence": 0.91,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G31": {
+   "status": "ok",
+   "route": "revise_scenario",
+   "confidence": 0.84,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G32": {
+   "status": "ok",
+   "route": "revise_scenario",
+   "confidence": 0.77,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G33": {
+   "status": "ok",
+   "route": "revise_scenario",
+   "confidence": 0.81,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G34": {
+   "status": "ok",
+   "route": "revise_scenario",
+   "confidence": 0.82,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G35": {
+   "status": "ok",
+   "route": "collect_missing_information",
+   "confidence": 1,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G36": {
+   "status": "ok",
+   "route": "collect_missing_information",
+   "confidence": 1,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G37": {
+   "status": "ok",
+   "route": "contact_city",
+   "confidence": 0.97,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G38": {
+   "status": "ok",
+   "route": "insufficient_evidence",
+   "confidence": 0.95,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G39": {
+   "status": "ok",
+   "route": "insufficient_evidence",
+   "confidence": 0.87,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G40": {
+   "status": "ok",
+   "route": "engage_zoning_professional",
+   "confidence": 0.45,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G41": {
+   "status": "ok",
+   "route": "contact_city",
+   "confidence": 0.95,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G42": {
+   "status": "ok",
+   "route": "contact_city",
+   "confidence": 0.57,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G43": {
+   "status": "ok",
+   "route": "contact_city",
+   "confidence": 0.92,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G44": {
+   "status": "ok",
+   "route": "contact_city",
+   "confidence": 0.91,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G45": {
+   "status": "ok",
+   "route": "engage_zoning_professional",
+   "confidence": 0.46,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G46": {
+   "status": "ok",
+   "route": "contact_city",
+   "confidence": 0.97,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G47": {
+   "status": "ok",
+   "route": "engage_zoning_professional",
+   "confidence": 0.98,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G48": {
+   "status": "ok",
+   "route": "engage_zoning_professional",
+   "confidence": 0.99,
+   "risk_bucket": "high",
+   "error": null
+  },
+  "G49": {
+   "status": "ok",
+   "route": "engage_zoning_professional",
+   "confidence": 0.71,
+   "risk_bucket": "medium",
+   "error": null
+  },
+  "G50": {
+   "status": "ok",
+   "route": "engage_zoning_professional",
+   "confidence": 0.98,
+   "risk_bucket": "high",
    "error": null
   }
  }

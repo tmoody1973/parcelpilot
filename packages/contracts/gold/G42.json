@@ -8,10 +8,10 @@
     "taxkey": "0839997113",
     "address": "6011 W Bradley Rd",
     "lot_area_sqft": 22500,
+    "lot_area_suspect": false,
     "base_zoning": [
       "LB1"
     ],
-    "lot_area_suspect": false,
     "overlays": [],
     "special_districts": [
       "DPD"
@@ -184,10 +184,11 @@
     }
   ],
   "review": {
-    "status": "unreviewed",
+    "status": "approved",
     "drafted_by": "claude-opus-5-5 (draft for reviewer correction, MOO-842)",
     "drafted_at": "2026-09-23",
-    "reviewer": null,
-    "notes": "Real: the City's Detailed planned development layer (zoning/MapServer/1) intersects this parcel (checked 2026-09-23). Recorded as a special district, as G12 does, because the gold recipe has no planned-development field."
+    "reviewer": "tarik",
+    "notes": "Real: the City's Detailed planned development layer (zoning/MapServer/1) intersects this parcel (checked 2026-09-23). Recorded as a special district, as G12 does, because the gold recipe has no planned-development field.",
+    "reviewed_at": "2026-09-26"
   }
 }

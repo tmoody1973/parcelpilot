@@ -8,10 +8,10 @@
     "taxkey": "2520272000",
     "address": "7665 W Appleton Av",
     "lot_area_sqft": 13200,
+    "lot_area_suspect": false,
     "base_zoning": [
       "LB1"
     ],
-    "lot_area_suspect": false,
     "overlays": [],
     "special_districts": [],
     "floodplain": [],
@@ -38,7 +38,6 @@
       "use": {
         "status": "verify",
         "criticality": "critical",
-        "reason": "use_label:L",
         "proposed": {
           "value": "retail"
         },
@@ -46,6 +45,7 @@
           "value": "L",
           "operator": "in"
         },
+        "reason": "use_label:L",
         "note": "proposed: retail | allowed: L (limited, Table 295-603-1)"
       },
       "height": {
@@ -173,10 +173,16 @@
     }
   ],
   "review": {
-    "status": "unreviewed",
+    "status": "approved",
     "drafted_by": "claude-opus-5-5 (draft for reviewer correction, MOO-842)",
     "drafted_at": "2026-09-23",
-    "reviewer": null,
-    "notes": ""
+    "reviewer": "tarik",
+    "notes": "",
+    "reviewed_at": "2026-09-26",
+    "label": {
+      "final_status": "proceed_to_concept_design",
+      "route": "proceed_to_concept_design",
+      "reason": "Per Q1/Q2 (Tarik, in chat): judged by its parts; the shop's only limited-use standard is an hours limit (s. 295-603-2-h), so proceed."
+    }
   }
 }

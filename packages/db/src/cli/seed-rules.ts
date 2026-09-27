@@ -17,7 +17,7 @@ const sql = postgres(URL, { max: 1 });
 try {
   const files = readdirSync(RULES_DIR).filter((f) => f.endsWith(".json")).sort().map((f) => JSON.parse(readFileSync(join(RULES_DIR, f), "utf8")) as { documents?: Doc[]; rules: unknown[] });
   const rules: Rule[] = files.flatMap((f) => RuleList.parse(f.rules));
-  // The cited documents, registered if `pnpm seed:sources` has not run here (CI has no PDFs or MinIO).
+  // The cited documents, registered if `pnpm seed:sources` has not run here (CI has no PDFs or object storage).
   // Keyed by sha256 like the Python seed, so whichever runs second is a no-op.
   for (const d of files.flatMap((f) => f.documents ?? [])) {
     // effective_start is the printed publication stamp (M/D/YYYY): the review queue mints a rule's effective_start from it (MOO-819).

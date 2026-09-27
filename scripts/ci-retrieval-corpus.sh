@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Builds the subchapter 6 corpus from the committed PDF fixture and scores retrieval against it (MOO-831).
-# Used by the CI job `retrieval-eval`; runnable locally against a scratch database. Needs Postgres + MinIO (compose),
+# Used by the CI job `retrieval-eval`; runnable locally against a scratch database. Needs Postgres + S3 storage (compose),
 # node/pnpm and uv. Env: DATABASE_URL (owner), DATABASE_SERVICE_URL, S3_ENDPOINT.
 set -euo pipefail
 cd "$(dirname "$0")/.."

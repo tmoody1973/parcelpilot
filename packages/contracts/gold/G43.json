@@ -8,10 +8,10 @@
     "taxkey": "1900941100",
     "address": "5332 W Villard Av",
     "lot_area_sqft": 7800,
+    "lot_area_suspect": false,
     "base_zoning": [
       "LB2"
     ],
-    "lot_area_suspect": false,
     "overlays": [],
     "special_districts": [
       "redevelopment_plan"
@@ -177,10 +177,11 @@
     }
   ],
   "review": {
-    "status": "unreviewed",
+    "status": "approved",
     "drafted_by": "claude-opus-5-5 (draft for reviewer correction, MOO-842)",
     "drafted_at": "2026-09-23",
-    "reviewer": null,
-    "notes": "Real: Redevelopment plans layer intersects this parcel (checked 2026-09-23)."
+    "reviewer": "tarik",
+    "notes": "Real: Redevelopment plans layer intersects this parcel (checked 2026-09-23).",
+    "reviewed_at": "2026-09-26"
   }
 }
